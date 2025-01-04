@@ -1,0 +1,12 @@
+// Media query for screens larger than 992px
+@media (min-width: 992px) {
+    // Hide dropdown menu by default
+    .navbar .dropdown-menu {
+        display: none;
+    }
+
+    // Show dropdown menu on hover
+    .navbar .dropdown:hover .dropdown-menu {
+        display: block;
+    }
+}

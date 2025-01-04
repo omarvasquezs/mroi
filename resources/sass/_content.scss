@@ -1,0 +1,34 @@
+// Ensure all links inside the .container class have no text decoration
+.container {
+  a {
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: none;
+  }
+}
+
+// Custom styles for list groups
+.custom-list-group {
+  .list-group,
+  .list-group-item {
+    // Ensure links inside list group items have no text decoration and custom color
+    a {
+      text-decoration: none;
+      color: var(--bs-list-group-color);
+    }
+    // Hover effect for list group items
+    &:hover {
+      transition: background-color 0.3s ease, color 0.3s ease;
+      background-color: #f8f8f8;
+      color: var(--bs-list-group-hover-color);
+    }
+    cursor: pointer;
+    // Disable pointer events on click
+    &:click {
+      a {
+        pointer-events: none;
+      }
+    }
+  }
+}
