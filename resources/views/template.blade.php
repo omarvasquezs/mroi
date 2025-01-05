@@ -3,17 +3,20 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Sistema Optica</title>
+        <title>G&F - Sistema Optica</title>
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link rel="icon" type="image/png" href="{{ asset('images/gyf_logo.png') }}">
         @vite(['resources/sass/app.scss', 'resources/js/app.js'])
     </head>
     <body class="d-flex flex-column min-vh-100">
         <div id="app" class="flex-grow-1">
             <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
                 <div class="container">
-                    <a class="navbar-brand" href="/">Sistema Optica</a>
+                    <a class="navbar-brand" href="/">
+                        <img src="{{ asset('images/gyf_logo.png') }}" alt="GYF Logo" height="30">
+                    </a>
                     <div class="collapse navbar-collapse" id="navbarNav">
                         <ul class="navbar-nav">
                             <li class="nav-item me-3">
@@ -53,7 +56,7 @@
         </div>
         <footer class="bg-light py-3 mt-auto">
             <div class="container text-center">
-                <p class="mb-0">&copy; {{ date('Y') }} Sistema Optica. All rights reserved.</p>
+                <p class="mb-0">&copy; {{ date('Y') }} Sistema Optica.</p>
             </div>
         </footer>
         @vite('resources/js/main.js')
