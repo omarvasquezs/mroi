@@ -74,7 +74,7 @@ class UsuarioController extends Controller
         $user = Usuario::where('username', $credentials['username'])->first();
 
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
-            return response()->json(['error' => 'Invalid credentials'], 401);
+            return response()->json(['error' => 'Credenciales Invalidas'], 401);
         }
 
         $token = $user->createToken('default')->plainTextToken;
