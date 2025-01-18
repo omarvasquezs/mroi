@@ -2,14 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('template');
-});
+// Ensure there are no conflicting routes here
 
-Route::get('/pacientes/agregar', function () {
-    return view('pacientes');
-})->name('pacientes.agregar');
+Route::get('/{any}', function () {
+    return view('welcome');
 
-Route::get('/', function () {
-    return view('main');
-});
+})->where('any', '.*');

@@ -1,0 +1,43 @@
+<template>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <img :src="`${baseUrl}/images/gyf_logo.png`" alt="GYF Logo" height="30">
+            </a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <!-- User Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user me-1"></i> user
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><router-link class="dropdown-item" to="/profile">Perfil</router-link></li>
+                            <li><router-link class="dropdown-item" to="/settings">Configuración</router-link></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <form @submit.prevent="handleLogout">
+                                    <button type="submit" class="dropdown-item">Salir del Sistema</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</template>
+
+<script>
+export default {
+    data() {
+        return {
+            baseUrl: window.location.origin,
+            username: ''
+        };
+    }
+};
+</script>

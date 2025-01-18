@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# Run the npm dev command with the --host option
+ddev npm run dev -- --host

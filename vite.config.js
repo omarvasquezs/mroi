@@ -2,36 +2,18 @@ import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
 
-const port = 5173;
-const origin = `${process.env.DDEV_PRIMARY_URL}:${port}`;
-
 export default defineConfig({
+    server: {
+        hmr: {
+            host: process.env.DDEV_HOSTNAME,
+            protocol: 'wss'
+        }
+    },
     plugins: [
         laravel({
-            input: [
-                'resources/sass/app.scss',
-                'resources/js/app.js',
-            ],
+            input: ['resources/sass/app.scss', 'resources/js/app.js'],
             refresh: true,
         }),
-        vue({
-            template: {
-                transformAssetUrls: {
-                    base: null,
-                    includeAbsolute: false,
-                },
-            },
-        }),
+        vue(),
     ],
-    resolve: {
-        alias: {
-            vue: 'vue/dist/vue.esm-bundler.js',
-        },
-    },
-    server: {
-        host: '0.0.0.0',
-        port: port,
-        strictPort: true,
-        origin: origin
-    }
 });

@@ -1,27 +1,18 @@
-/**
- * First we will load all of this project's JavaScript dependencies which
- * includes Vue and other libraries. It is a great starting point when
- * building robust, powerful web applications using Vue and Laravel.
- */
-
 import './bootstrap';
 import { createApp } from 'vue';
-import PacientesForm from './components/PacientesForm.vue';
+import App from './components/App.vue';
+import router from './router';
+import Footer from '@/layouts/Footer.vue';
+import Navbar from '@/layouts/Navbar.vue';
+import HomePage from './components/HomePage.vue';
+import Layout from '@/layouts/index.vue';
 
-/**
- * Next, we will create a fresh Vue application instance. You may then begin
- * registering components with the application instance so they are ready
- * to use in your application's views. An example is included for you.
- */
+const app = createApp(App);
 
-createApp({
-    components: {
-        PacientesForm,
-    },
-}).mount('#app');
+// Register components globally
+app.component('Footer', Footer);
+app.component('Navbar', Navbar);
+app.component('HomePage', HomePage);
+app.component('Layout', Layout);
 
-/**
- * The following block of code may be used to automatically register your
- * Vue components. It will recursively scan this directory for the Vue
- * components and automatically register them with their "basename".
- */
+app.use(router).mount('#app');

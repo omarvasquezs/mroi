@@ -1,19 +1,10 @@
-// Variables
-@use 'variables' as *;
-
 // Custom SCSS
-@use 'header';
 @use 'content';
 @use 'footer';
+@use 'header';
 
 // Bootstrap
 @import 'bootstrap/dist/css/bootstrap.min.css';
-
-// Import Tailwind CSS
-//@import '../css/app.css';
-
-// Fonts
-@import url('https://fonts.bunny.net/css?family=Nunito');
 
 // Font Awesome
 @import '@fortawesome/fontawesome-free/css/all.min.css';
