@@ -49,16 +49,13 @@ export default {
                 // Store user data in localStorage for persistence
                 localStorage.setItem('user', JSON.stringify(response.data.user));
                 
-                // Redirect based on role
-                this.redirectBasedOnRole(response.data.user.role);
+                // Redirect to home page
+                window.location.href = '/';
             } catch (error) {
                 this.errorMessage = error.response?.data?.error || 'Error al iniciar sesión';
             } finally {
                 this.isLoading = false;
             }
-        },
-        redirectBasedOnRole() {
-            window.location.href = '/';
         }
     }
 }
