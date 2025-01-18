@@ -38,9 +38,30 @@ const router = createRouter({
     routes,
 });
 
+// This function is a global navigation guard for the Vue Router.
+// It runs before each route change.
 router.beforeEach((to, from, next) => {
+    // Start the progress bar animation.
     NProgress.start();
-    next();
+
+    // Retrieve the 'user' item from local storage.
+    const storedUser = localStorage.getItem('user');
+
+    // Determine if the user is authenticated based on the presence of 'user' in local storage.
+    const isAuthenticated = !!storedUser;
+
+    // If the user is authenticated and trying to access the login page, redirect to the home page.
+    if (isAuthenticated && to.path === '/login') {
+        next('/');
+    } 
+    // If the user is not authenticated and trying to access any page other than the login page, redirect to the login page.
+    else if (!isAuthenticated && to.path !== '/login') {
+        next('/login');
+    } 
+    // Otherwise, allow the navigation to proceed.
+    else {
+        next();
+    }
 });
 
 router.afterEach(() => {

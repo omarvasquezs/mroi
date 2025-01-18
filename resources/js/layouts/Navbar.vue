@@ -10,7 +10,7 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-user me-1"></i> user
+                            <i class="fas fa-user me-1"></i> {{ username }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                             <li><router-link class="dropdown-item" to="/profile">Perfil</router-link></li>
@@ -32,12 +32,32 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
     data() {
         return {
             baseUrl: window.location.origin,
             username: ''
         };
+    },
+    mounted() {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            const userObj = JSON.parse(storedUser);
+            this.username = userObj.username;
+        }
+    },
+    methods: {
+        async handleLogout() {
+            try {
+                await axios.post('/api/logout');
+            } catch (error) {
+                // Optionally handle errors
+            }
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        }
     }
 };
 </script>

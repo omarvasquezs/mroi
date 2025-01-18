@@ -1,5 +1,5 @@
 <template>
-    <div class="login-container">
+    <div class="login-container" id="login">
         <form @submit.prevent="handleSubmit" class="login-form">
             <img :src="`${baseUrl}/images/gyf_logo_transparent.png`" alt="GYF Logo" class="logo" style="max-width: 100px;"/>
             <h2>SISTEMA OPTICA v1.0.0</h2>
@@ -57,23 +57,8 @@ export default {
                 this.isLoading = false;
             }
         },
-        redirectBasedOnRole(role) {
-            switch(role) {
-                case 'a': // admin
-                    window.location.href = '/admin';
-                    break;
-                case 'o': // optometrist
-                    window.location.href = '/optometrist';
-                    break;
-                case 'm': // medical
-                    window.location.href = '/medical';
-                    break;
-                case 's': // secretary
-                    window.location.href = '/secretary';
-                    break;
-                default:
-                    window.location.href = '/';
-            }
+        redirectBasedOnRole() {
+            window.location.href = '/';
         }
     }
 }

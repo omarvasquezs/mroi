@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Usuario;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class UsuarioController extends Controller
 {
@@ -65,5 +66,27 @@ class UsuarioController extends Controller
         $username = $request->query('username');
         $exists = Usuario::where('username', $username)->exists();
         return response()->json(['exists' => $exists]);
+    }
+
+    public function login(Request $request)
+    {
+        $credentials = $request->only('username', 'password');
+        $user = Usuario::where('username', $credentials['username'])->first();
+
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            return response()->json(['error' => 'Invalid credentials'], 401);
+        }
+
+        $token = $user->createToken('default')->plainTextToken;
+        return response()->json([
+            'user' => $user,
+            'token' => $token
+        ]);
+    }
+
+    public function logout(Request $request)
+    {
+        $request->user()->tokens()->delete();
+        return response()->json(['message' => 'Logged out']);
     }
 }
