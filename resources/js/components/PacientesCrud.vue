@@ -22,7 +22,8 @@
         <tr>
           <th>
             <div class="position-relative">
-              <input type="text" v-model="filters.num_historia" @input="applyFilters" class="form-control" placeholder="Filtrar por Num Historia">
+              <input type="text" v-model="filters.num_historia" @input="applyFilters" class="form-control"
+                placeholder="Filtrar por Num Historia">
               <button v-if="filters.num_historia" @click="clearFilter('num_historia')" class="btn-clear">
                 <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
               </button>
@@ -30,7 +31,8 @@
           </th>
           <th>
             <div class="position-relative">
-              <input type="text" v-model="filters.nombres" @input="applyFilters" class="form-control" placeholder="Filtrar por Nombres">
+              <input type="text" v-model="filters.nombres" @input="applyFilters" class="form-control"
+                placeholder="Filtrar por Nombres">
               <button v-if="filters.nombres" @click="clearFilter('nombres')" class="btn-clear">
                 <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
               </button>
@@ -38,7 +40,8 @@
           </th>
           <th>
             <div class="position-relative">
-              <input type="text" v-model="filters.apellidos" @input="applyFilters" class="form-control" placeholder="Filtrar por Apellidos">
+              <input type="text" v-model="filters.apellidos" @input="applyFilters" class="form-control"
+                placeholder="Filtrar por Apellidos">
               <button v-if="filters.apellidos" @click="clearFilter('apellidos')" class="btn-clear">
                 <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
               </button>
@@ -46,7 +49,8 @@
           </th>
           <th>
             <div class="position-relative">
-              <input type="text" v-model="filters.doc_identidad" @input="onlyNumbers($event)" class="form-control" placeholder="Filtrar por DNI">
+              <input type="text" :value="filters.doc_identidad" @input="e => { filters.doc_identidad = e.target.value.replace(/\D/g, ''); applyFilters(); }"
+                class="form-control" placeholder="Filtrar por DNI">
               <button v-if="filters.doc_identidad" @click="clearFilter('doc_identidad')" class="btn-clear">
                 <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
               </button>
@@ -90,7 +94,8 @@
     </nav>
 
     <!-- Modal for Viewing Paciente -->
-    <div class="modal fade" id="viewPacienteModal" tabindex="-1" aria-labelledby="viewPacienteModalLabel" aria-hidden="true">
+    <div class="modal fade" id="viewPacienteModal" tabindex="-1" aria-labelledby="viewPacienteModalLabel"
+      aria-hidden="true">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -188,7 +193,8 @@
           </div>
           <div class="modal-body p-4">
             <form @submit.prevent="submitForm" class="mb-3" autocomplete="off">
-              <div v-if="formErrors.includes('DNI ya existe en la base de datos.')" class="alert alert-danger alert-dismissible fade show" role="alert">
+              <div v-if="formErrors.includes('DNI ya existe en la base de datos.')"
+                class="alert alert-danger alert-dismissible fade show" role="alert">
                 DNI ya existe en la base de datos.
                 <button type="button" class="btn-close" @click="closeFormErrorAlert" aria-label="Close"></button>
               </div>
@@ -225,9 +231,10 @@
                     <label for="PacientesDocIdentidad" class="form-label">DNI*:</label>
                     <div class="input-group">
                       <span class="input-group-text"><i class="fas fa-id-card"></i></span>
-                        <input type="text" v-model="form.doc_identidad" @input="onlyNumbers($event)" id="PacientesDocIdentidad"
-                        name="PacientesDocIdentidad" class="form-control" placeholder="Ej: 00123456"
-                        autocomplete="new-doc_identidad" required minlength="8" maxlength="8">
+                      <input type="text" v-model="form.doc_identidad" @input="onlyNumbers($event)"
+                        id="PacientesDocIdentidad" name="PacientesDocIdentidad" class="form-control"
+                        placeholder="Ej: 00123456" autocomplete="new-doc_identidad" required minlength="8"
+                        maxlength="8">
                     </div>
                   </div>
                   <div class="col-md-6 mb-3">
@@ -275,8 +282,8 @@
                     <div class="input-group">
                       <span class="input-group-text"><i class="fas fa-address-book"></i></span>
                       <input type="text" v-model="form.direccion_personal" id="PacientesDireccionPersonal"
-                        name="PacientesDireccionPersonal" class="form-control"
-                        placeholder="Ej: Av. Siempre Viva 123" autocomplete="new-direccion_personal" required>
+                        name="PacientesDireccionPersonal" class="form-control" placeholder="Ej: Av. Siempre Viva 123"
+                        autocomplete="new-direccion_personal" required>
                     </div>
                   </div>
                 </div>
@@ -338,19 +345,21 @@
                   <div class="col-md-6 mb-3">
                     <label class="form-label">Estado de Historia*:</label>
                     <div class="form-check">
-                      <input class="form-check-input" type="radio" v-model="form.estado_historia" id="estadoActivo" value="1" required>
+                      <input class="form-check-input" type="radio" v-model="form.estado_historia" id="estadoActivo"
+                        value="1" required>
                       <label class="form-check-label" for="estadoActivo">ACTIVO</label>
                     </div>
                     <div class="form-check">
-                      <input class="form-check-input" type="radio" v-model="form.estado_historia" id="estadoInactivo" value="0" required>
+                      <input class="form-check-input" type="radio" v-model="form.estado_historia" id="estadoInactivo"
+                        value="0" required>
                       <label class="form-check-label" for="estadoInactivo">INACTIVO</label>
                     </div>
                   </div>
                   <div class="col-md-12 mb-3">
                     <label for="PacientesObservaciones" class="form-label">Observaciones:</label>
                     <textarea v-model="form.observaciones" id="PacientesObservaciones" name="PacientesObservaciones"
-                      class="form-control" placeholder="Escriba sus observaciones aquí"
-                      autocomplete="new-observaciones" rows="5"></textarea>
+                      class="form-control" placeholder="Escriba sus observaciones aquí" autocomplete="new-observaciones"
+                      rows="5"></textarea>
                   </div>
                 </div>
               </fieldset>

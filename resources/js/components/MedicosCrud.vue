@@ -47,7 +47,7 @@
           </th>
           <th>
             <div class="position-relative">
-              <input type="text" v-model="filters.dni" @input="onlyNumbers($event)" class="form-control" placeholder="Filtrar por DNI">
+                <input type="text" :value="filters.dni" @input="e => { filters.dni = e.target.value.replace(/\D/g, ''); applyFilters(); }" class="form-control" placeholder="Filtrar por DNI">
               <button v-if="filters.dni" @click="clearFilter('dni')" class="btn-clear">
                 <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
               </button>
@@ -55,7 +55,7 @@
           </th>
           <th>
             <div class="position-relative">
-              <input type="text" v-model="filters.cmp" @input="onlyNumbers($event)" class="form-control" placeholder="Filtrar por CMP">
+                <input type="text" :value="filters.cmp" @input="e => { filters.cmp = e.target.value.replace(/\D/g, ''); applyFilters(); }" class="form-control" placeholder="Filtrar por CMP">
               <button v-if="filters.cmp" @click="clearFilter('cmp')" class="btn-clear">
                 <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
               </button>
