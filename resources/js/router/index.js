@@ -28,6 +28,11 @@ const routes = [
         component: () => import("../components/PacientesCrud.vue"),
     },
     {
+        path: "/registro-citas",
+        name: "RegistroCitas",
+        component: () => import("../components/RegistroCitasCrud.vue"),
+    },
+    {
         path: "/:pathMatch(.*)*",
         component: () => import("../components/NotfoundPage.vue"),
     }

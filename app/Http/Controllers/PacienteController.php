@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Paciente;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PacienteController extends Controller
 {
@@ -65,5 +66,13 @@ class PacienteController extends Controller
     {
         $exists = Paciente::where('doc_identidad', $request->doc_identidad)->exists();
         return response()->json(['exists' => $exists]);
+    }
+
+    public function getAllPacientes()
+    {
+        $pacientes = Paciente::select('num_historia', 
+            DB::raw("CONCAT(nombres, ' ', ap_paterno, ' ', ap_materno) as nombre"))
+            ->get();
+        return response()->json($pacientes);
     }
 }

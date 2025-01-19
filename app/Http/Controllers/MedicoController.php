@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Medico;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MedicoController extends Controller
 {
@@ -70,5 +71,12 @@ class MedicoController extends Controller
     {
         $exists = Medico::where('cmp', $request->cmp)->exists();
         return response()->json(['exists' => $exists]);
+    }
+    public function getAllMedicos()
+    {
+        $medicos = Medico::select('id', 
+            DB::raw("CONCAT(nombres, ' ', ap_paterno, ' ', ap_materno) as nombre"))
+            ->get();
+        return response()->json($medicos);
     }
 }
