@@ -1,67 +1,62 @@
 <template>
-  <div>
-    <div class="mb-4">
-      <button @click="goBack" class="btn btn-link">← Regresar</button>
+  <div class="mb-4">
+    <button @click="goBack" class="btn btn-link">← Regresar</button>
+  </div>
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <h2>Registro de Citas</h2>
     </div>
-    <h1>Registro de Citas</h1>
-    <div class="mb-3">
-      <label for="medicoSelect" class="form-label">Seleccionar Médico:</label>
-      <select v-model="selectedMedico" id="medicoSelect" class="form-select">
-        <option value="" disabled>Seleccione un médico</option>
-        <option v-if="loading">Cargando médicos...</option>
-        <option v-else-if="error">Error al cargar médicos</option>
-        <option v-else v-for="medico in medicos" 
-                :key="medico?.id" 
-                :value="medico?.id">
-          {{ medico?.nombre || 'Médico sin nombre' }}
-        </option>
-      </select>
-    </div>
-    <div class="mb-3">
-      <div class="calendar-section">
-        <label class="form-label mb-2">Seleccionar Fecha:</label>
-        <Calendar
-          v-model="selectedFecha"
-          :min-date="new Date()"
-          :attributes="attributes"
-          is-expanded
-          class="calendar-container"
-        />
+  </div>
+  <div class="row">
+    <div class="col-md-3">
+      <div class="mb-3">
+        <label for="medicoSelect" class="form-label">Seleccionar Médico:</label>
+        <select v-model="selectedMedico" id="medicoSelect" class="form-select">
+          <option value="" disabled>Seleccione un médico</option>
+          <option v-if="loading">Cargando médicos...</option>
+          <option v-else-if="error">Error al cargar médicos</option>
+          <option v-else v-for="medico in medicos" :key="medico?.id" :value="medico?.id">
+            {{ medico?.nombre || 'Médico sin nombre' }}
+          </option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <div class="calendar-section">
+          <label class="form-label mb-2">Seleccionar Fecha:</label>
+          <Calendar v-model="selectedFecha" :min-date="new Date()" :attributes="attributes" locale="es" expanded
+            class="calendar-container" />
+        </div>
       </div>
     </div>
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th style="width: 5%">No.</th>
-          <th style="width: 10%">Hora</th>
-          <th style="width: 15%">Historia</th>
-          <th style="width: 30%">Paciente</th>
-          <th style="width: 15%">Teléfono</th>
-          <th style="width: 25%">Observación</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(cita, index) in citas" 
-            :key="index"
-            @click="openModal(cita.hora)"
-            :class="{ 'cursor-pointer': !cita.paciente }">
-          <td>{{ index + 1 }}</td>
-          <td>{{ cita.hora }}</td>
-          <td>{{ cita.historia }}</td>
-          <td>{{ cita.paciente }}</td>
-          <td>{{ cita.telefono }}</td>
-          <td>{{ cita.observacion }}</td>
-        </tr>
-      </tbody>
-    </table>
-    
-    <CitaModal
-      ref="citaModal"
-      :selected-time="selectedTime"
-      :selected-date="selectedFecha"
-      :selected-medico="selectedMedico"
-      @citaCreated="fetchCitas"
-    />
+    <div class="col-md-9">
+      <div class="table-responsive table-wrapper">
+        <table class="table table-striped">
+          <thead class="table-header">
+            <tr>
+              <th style="width: 5%">No.</th>
+              <th style="width: 10%">Hora</th>
+              <th style="width: 15%">Historia</th>
+              <th style="width: 30%">Paciente</th>
+              <th style="width: 15%">Teléfono</th>
+              <th style="width: 25%">Observación</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(cita, index) in citas" :key="index" @click="openModal(cita.hora)"
+              :class="{ 'cursor-pointer': !cita.paciente }">
+              <td>{{ index + 1 }}</td>
+              <td>{{ cita.hora }}</td>
+              <td>{{ cita.historia }}</td>
+              <td>{{ cita.paciente }}</td>
+              <td>{{ cita.telefono }}</td>
+              <td>{{ cita.observacion }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <CitaModal ref="citaModal" :selected-time="selectedTime" :selected-date="selectedFecha"
+      :selected-medico="selectedMedico" @citaCreated="fetchCitas" />
   </div>
 </template>
 
@@ -100,7 +95,7 @@ export default {
     fetchMedicos() {
       this.loading = true;
       this.error = null;
-      
+
       fetch('/api/medicos-list')
         .then(response => {
           if (!response.ok) {
@@ -139,10 +134,10 @@ export default {
 
       while (startTime < endTime) {
         slots.push({
-          hora: startTime.toLocaleTimeString('es-ES', { 
-            hour: '2-digit', 
+          hora: startTime.toLocaleTimeString('es-ES', {
+            hour: '2-digit',
             minute: '2-digit',
-            hour12: false 
+            hour12: false
           }),
           historia: '',
           paciente: '',
@@ -194,6 +189,20 @@ export default {
   background: white;
 }
 
+.table-wrapper {
+  max-height: 600px;
+  /* Increased height */
+  overflow-y: auto;
+  position: relative;
+}
+
+.table-header {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
+}
+
 .table {
   font-size: 0.9rem;
 }
@@ -201,7 +210,8 @@ export default {
 .cursor-pointer {
   cursor: pointer;
 }
+
 tr:hover {
-  background-color: rgba(0,0,0,0.05);
+  background-color: rgba(0, 0, 0, 0.05);
 }
 </style>
