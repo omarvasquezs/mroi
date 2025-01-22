@@ -23,7 +23,7 @@
       <div class="mb-3">
         <div class="calendar-section">
           <label class="form-label mb-2">Seleccionar Fecha:</label>
-          <Calendar v-model="selectedFecha" :min-date="new Date()" :attributes="attributes" locale="es" expanded
+          <DatePicker v-model="selectedFecha" :min-date="new Date()" :attributes="attributes" locale="es" expanded
             class="calendar-container" />
         </div>
       </div>
@@ -61,22 +61,22 @@
 </template>
 
 <script>
-import { Calendar } from 'v-calendar';
+import { DatePicker } from 'v-calendar';
 import CitaModal from './CitaModal.vue';
 
 export default {
   components: {
-    Calendar,
+    DatePicker,
     CitaModal
   },
   data() {
     return {
       medicos: [],
       selectedMedico: '',
-      selectedFecha: new Date(), // Set to today's date
+      selectedFecha: new Date(), // Initialize with today's date
       loading: false,
       error: null,
-      citas: [], // Add this new data property
+      citas: [],
       attributes: [
         {
           highlight: true,
@@ -164,8 +164,15 @@ export default {
     }
   },
   watch: {
-    selectedFecha() {
+    selectedFecha(newDate) {
+      this.attributes = [
+        {
+          highlight: true,
+          dates: newDate
+        }
+      ];
       this.fetchCitas();
+      console.log('Selected date changed:', newDate); // Debug line
     },
     selectedMedico() {
       this.fetchCitas();
