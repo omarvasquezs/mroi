@@ -30,7 +30,7 @@
     </div>
     <div class="col-md-9">
       <div class="table-responsive table-wrapper">
-        <table class="table table-striped">
+        <table class="table table-bordered table-hover excel-table">
           <thead class="table-header">
             <tr>
               <th style="width: 5%">No.</th>
@@ -56,7 +56,7 @@
       </div>
     </div>
     <CitaModal ref="citaModal" :selected-time="selectedTime" :selected-date="selectedFecha"
-      :selected-medico="selectedMedico" @citaCreated="fetchCitas" />
+      :selected-medico="selectedMedico" :selected-medico-name="selectedMedicoName" @citaCreated="fetchCitas" />
   </div>
 </template>
 
@@ -226,5 +226,24 @@ export default {
 
 tr:hover {
   background-color: rgba(0, 0, 0, 0.05);
+}
+
+.excel-table {
+  border-collapse: collapse;
+}
+
+.excel-table th,
+.excel-table td {
+  border: 1px solid #000;
+  padding: 8px;
+  text-align: left;
+}
+
+.excel-table th {
+  background-color: #f2f2f2;
+}
+
+.excel-table tr:nth-child(even) {
+  background-color: #f9f9f9;
 }
 </style>
