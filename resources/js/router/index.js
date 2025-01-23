@@ -33,6 +33,11 @@ const routes = [
         component: () => import("../components/RegistroCitasCrud.vue"),
     },
     {
+        path: "/control-stock",
+        name: "ControlStock",
+        component: () => import("../components/ControlStockCrud.vue"),
+    },
+    {
         path: "/:pathMatch(.*)*",
         component: () => import("../components/NotfoundPage.vue"),
     }

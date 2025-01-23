@@ -6,6 +6,7 @@ use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\PacienteController;
 use App\Http\Controllers\MedicoController;
 use App\Http\Controllers\CitaController;
+use App\Http\Controllers\StockController;  // Add this line
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -28,3 +29,4 @@ Route::get('/citas/check', [CitaController::class, 'checkCita']); // Add this li
 Route::apiResource('usuarios', UsuarioController::class);
 Route::apiResource('pacientes', PacienteController::class);
 Route::apiResource('medicos', MedicoController::class);
+Route::apiResource('stock', StockController::class);
