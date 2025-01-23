@@ -87,6 +87,12 @@ export default {
       selectedTime: '',
     };
   },
+  computed: {
+    selectedMedicoName() {
+      const medico = this.medicos.find(m => m.id === this.selectedMedico);
+      return medico ? medico.nombre : '';
+    }
+  },
   created() {
     this.fetchMedicos();
     this.generateTimeSlots();
