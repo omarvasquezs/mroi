@@ -12,11 +12,31 @@
           </div>
           <div v-else>
             <div v-if="showCitaInfo">
-              <p><strong>Hora:</strong> {{ cita.hora }}</p>
-              <p><strong>Historia:</strong> {{ cita.historia }}</p>
-              <p><strong>Paciente:</strong> {{ cita.paciente }}</p>
-              <p><strong>Teléfono:</strong> {{ cita.telefono }}</p>
-              <p><strong>Observación:</strong> {{ cita.observacion }}</p>
+              <div class="row mb-3">
+                <div class="col-md-3"><strong>Historia:</strong></div>
+                <div class="col-md-9">{{ cita.num_historia }}</div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-3"><strong>Paciente:</strong></div>
+                <div class="col-md-9">{{ cita.paciente.nombres }} {{ cita.paciente.ap_paterno }} {{
+                  cita.paciente.ap_materno }}</div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-3"><strong>Médico:</strong></div>
+                <div class="col-md-9">{{ selectedMedicoName }}</div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-3"><strong>Fecha:</strong></div>
+                <div class="col-md-9">{{ formattedDate }}</div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-3"><strong>Hora:</strong></div>
+                <div class="col-md-9">{{ formattedTime }}</div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-3"><strong>Observaciones:</strong></div>
+                <div class="col-md-9">{{ cita.observaciones }}</div>
+              </div>
             </div>
             <div v-else>
               <div class="row mb-3">
@@ -157,40 +177,40 @@ export default {
       const adjustedDate = new Date(this.selectedDate.getTime() - (5 * 60 * 60 * 1000));
       const date = adjustedDate.toISOString().split('T')[0];
       const time = this.selectedTime.padStart(5, '0'); // Ensure HH:mm format
-      
+
       // Encode parameters
       const params = new URLSearchParams({
-          medico: this.selectedMedico,
-          fecha: date,
-          hora: `${time}:00`
+        medico: this.selectedMedico,
+        fecha: date,
+        hora: `${time}:00`
       });
-      
-      const url = `/api/citas/check?${params.toString()}`;
-      
-      try {
-          const response = await fetch(url);
-          const contentType = response.headers.get('content-type');
 
-          if (response.ok && contentType && contentType.includes('application/json')) {
-            const cita = await response.json();
-            console.log('Cita found:', cita); // Debug line
-            if (cita && Object.keys(cita).length > 0) {
-              // Display cita information in the modal
-              this.showCitaInfoMethod(cita);
-            } else {
-              // Show form to create a new cita
-              this.showForm();
-            }
+      const url = `/api/citas/check?${params.toString()}`;
+
+      try {
+        const response = await fetch(url);
+        const contentType = response.headers.get('content-type');
+
+        if (response.ok && contentType && contentType.includes('application/json')) {
+          const cita = await response.json();
+          console.log('Cita found:', cita); // Debug line
+          if (cita && Object.keys(cita).length > 0) {
+            // Display cita information in the modal
+            this.showCitaInfoMethod(cita);
           } else {
-            const responseText = await response.text();
-            console.error('Expected JSON response but got:', contentType, responseText);
+            // Show form to create a new cita
             this.showForm();
           }
-      } catch (error) {
-          console.error('Error checking cita:', error);
+        } else {
+          const responseText = await response.text();
+          console.error('Expected JSON response but got:', contentType, responseText);
           this.showForm();
+        }
+      } catch (error) {
+        console.error('Error checking cita:', error);
+        this.showForm();
       } finally {
-          this.loading = false;
+        this.loading = false;
       }
     },
     showCitaInfoMethod(cita) {
