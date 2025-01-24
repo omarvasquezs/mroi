@@ -11,15 +11,15 @@
             <p>Cargando...</p>
           </div>
           <div v-else>
-            <div v-if="cita">
+            <div v-if="localCita">
               <div class="row mb-3">
                 <div class="col-md-3"><strong>Historia:</strong></div>
-                <div class="col-md-9">{{ cita.num_historia }}</div>
+                <div class="col-md-9">{{ localCita.num_historia }}</div>
               </div>
               <div class="row mb-3">
                 <div class="col-md-3"><strong>Paciente:</strong></div>
-                <div class="col-md-9">{{ cita.paciente.nombres }} {{ cita.paciente.ap_paterno }} {{
-                  cita.paciente.ap_materno }}</div>
+                <div class="col-md-9">{{ localCita.paciente.nombres }} {{ localCita.paciente.ap_paterno }} {{
+                  localCita.paciente.ap_materno }}</div>
               </div>
               <div class="row mb-3">
                 <div class="col-md-3"><strong>Médico:</strong></div>
@@ -35,7 +35,7 @@
               </div>
               <div class="row mb-3">
                 <div class="col-md-3"><strong>Observaciones:</strong></div>
-                <div class="col-md-9">{{ cita.observaciones }}</div>
+                <div class="col-md-9">{{ localCita.observaciones }}</div>
               </div>
             </div>
             <div v-else>
@@ -102,6 +102,7 @@ export default {
   },
   data() {
     return {
+      localCita: null, // Store the cita data locally
       pacientes: [],
       formData: {
         num_historia: '',
@@ -133,6 +134,7 @@ export default {
   },
   created() {
     this.fetchPacientes();
+    this.localCita = this.cita; // Initialize localCita with the prop's value
   },
   methods: {
     async fetchPacientes() {
@@ -196,12 +198,11 @@ export default {
 
         if (response.ok && contentType && contentType.includes('application/json')) {
           const cita = await response.json();
-          console.log('Cita found:', cita); // Debug line
-          if (cita && Object.keys(cita).length > 0) {
-            // Display cita information in the modal
+          console.log('Cita found:', cita);
+          // Only show cita info if cita.id is valid
+          if (cita && cita.id && cita.id !== 0) {
             this.showCitaInfoMethod(cita);
           } else {
-            // Show form to create a new cita
             this.showForm();
           }
         } else {
@@ -218,7 +219,7 @@ export default {
     },
     showCitaInfoMethod(cita) {
       console.log('Showing cita info:', cita); // Debug line
-      this.cita = cita; // Directly assign the cita property
+      this.localCita = cita; // Assign to the local data property
       this.showCitaInfo = true;
       this.modalTitle = 'Información de la Cita';
       const modalElement = document.getElementById('citaModal');
@@ -226,6 +227,8 @@ export default {
       modal.show();
     },
     showForm() {
+      this.localCita = null; // Reset the localCita data
+      this.formData = { num_historia: '', observaciones: '' }; // Reset form
       this.showCitaInfo = false;
       this.modalTitle = 'Crear Cita';
       const modalElement = document.getElementById('citaModal');
