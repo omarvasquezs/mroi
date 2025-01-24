@@ -95,7 +95,7 @@ export default {
   },
   created() {
     this.fetchMedicos();
-    this.generateTimeSlots();
+    this.citas = this.generateTimeSlots(); // Initialize citas with time slots
   },
   methods: {
     fetchMedicos() {
@@ -144,7 +144,7 @@ export default {
             hour: '2-digit',
             minute: '2-digit',
             hour12: false
-          }),
+          }), // Format as HH:MM
           historia: '',
           paciente: '',
           telefono: '',
@@ -152,7 +152,7 @@ export default {
         });
         startTime.setMinutes(startTime.getMinutes() + 5);
       }
-      this.citas = slots;
+      return slots;
     },
     openModal(hora) {
       if (!this.selectedMedico) {
@@ -160,14 +160,50 @@ export default {
         return;
       }
       this.selectedTime = hora;
-      const modalElement = document.getElementById('citaModal');
-      const modal = new window.bootstrap.Modal(modalElement);
-      modal.show();
+      console.log('Selected time:', this.selectedTime); // Debug line
+      this.$refs.citaModal.openModal();
     },
     async fetchCitas() {
-      // Implement this to refresh the citas list after creating a new one
-      // You'll need a new API endpoint to fetch citas by date and médico
-    }
+      if (!this.selectedMedico || !this.selectedFecha) {
+        this.citas = this.generateTimeSlots();
+        return;
+      }
+
+      const formattedDate = this.selectedFecha.toISOString().split('T')[0]; // Format date as YYYY-MM-DD
+      const url = `/api/citas?medico=${this.selectedMedico}&fecha=${formattedDate}`;
+      try {
+        const response = await fetch(url);
+        const contentType = response.headers.get('content-type');
+
+        if (response.ok && contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          if (Array.isArray(data)) {
+            const citasMap = new Map(data.map(cita => {
+              const paciente = cita.paciente || ''; // Ensure paciente property is set
+              return [new Date(cita.fecha).toLocaleTimeString('es-ES', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+              }), { ...cita, paciente }];
+            })); // Extract HH:MM from fecha
+            this.citas = this.generateTimeSlots().map(slot => citasMap.get(slot.hora) || slot);
+          } else {
+            this.citas = this.generateTimeSlots();
+          }
+        } else {
+          const responseText = await response.text();
+          console.error('Expected JSON response but got:', contentType, responseText);
+          console.error('Response URL:', url);
+          console.error('Response Status:', response.status);
+          this.citas = this.generateTimeSlots();
+        }
+      } catch (error) {
+        console.error('Error fetching citas:', error);
+        console.error('Response URL:', url);
+        this.citas = this.generateTimeSlots();
+      }
+      console.log('Citas:', this.citas); // Debug line
+    },
   },
   watch: {
     selectedFecha(newDate) {

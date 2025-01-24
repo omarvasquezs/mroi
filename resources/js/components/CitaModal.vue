@@ -3,39 +3,53 @@
     <div class="modal-dialog modal-lg"> <!-- Add modal-lg class for larger modal -->
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="citaModalLabel">Registrar Cita</h5>
+          <h5 class="modal-title" id="citaModalLabel">{{ modalTitle }}</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-            <div class="row mb-3">
-            <div class="col-md-3"><strong>Fecha Seleccionada:</strong></div>
-            <div class="col-md-9">{{ formattedDate }}</div>
-            </div>
-            <div class="row mb-3">
-            <div class="col-md-3"><strong>Hora Seleccionada:</strong></div>
-            <div class="col-md-9">{{ formattedTime }}</div>
-            </div>
-            <div class="row mb-3">
-            <div class="col-md-3"><strong>Médico Seleccionado:</strong></div>
-            <div class="col-md-9">{{ selectedMedicoName.toUpperCase() }}</div>
-            </div>
-          <div class="mb-3">
-            <label class="form-label"><strong>Paciente:</strong></label>
-            <select v-model="formData.num_historia" class="form-select">
-              <option value="" disabled>Seleccione un paciente</option>
-              <option v-for="paciente in pacientes" :key="paciente.num_historia" :value="paciente.num_historia">
-                {{ paciente.nombre.toUpperCase() }}
-              </option>
-            </select>
+          <div v-if="loading">
+            <p>Cargando...</p>
           </div>
-          <div class="mb-3">
-            <label class="form-label"><strong>Observaciones:</strong></label>
-            <textarea v-model="formData.observaciones" class="form-control" rows="3"></textarea>
+          <div v-else>
+            <div v-if="showCitaInfo">
+              <p><strong>Hora:</strong> {{ cita.hora }}</p>
+              <p><strong>Historia:</strong> {{ cita.historia }}</p>
+              <p><strong>Paciente:</strong> {{ cita.paciente }}</p>
+              <p><strong>Teléfono:</strong> {{ cita.telefono }}</p>
+              <p><strong>Observación:</strong> {{ cita.observacion }}</p>
+            </div>
+            <div v-else>
+              <div class="row mb-3">
+                <div class="col-md-3"><strong>Fecha Seleccionada:</strong></div>
+                <div class="col-md-9">{{ formattedDate }}</div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-3"><strong>Hora Seleccionada:</strong></div>
+                <div class="col-md-9">{{ formattedTime }}</div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-3"><strong>Médico Seleccionado:</strong></div>
+                <div class="col-md-9">{{ selectedMedicoName.toUpperCase() }}</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label"><strong>Paciente:</strong></label>
+                <select v-model="formData.num_historia" class="form-select">
+                  <option value="" disabled>Seleccione un paciente</option>
+                  <option v-for="paciente in pacientes" :key="paciente.num_historia" :value="paciente.num_historia">
+                    {{ paciente.nombre.toUpperCase() }}
+                  </option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label"><strong>Observaciones:</strong></label>
+                <textarea v-model="formData.observaciones" class="form-control" rows="3"></textarea>
+              </div>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-primary" @click="saveCita">Guardar</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <button type="button" class="btn btn-primary" v-if="!showCitaInfo" @click="saveCita">Guardar</button>
         </div>
       </div>
     </div>
@@ -68,7 +82,11 @@ export default {
       formData: {
         num_historia: '',
         observaciones: ''
-      }
+      },
+      showCitaInfo: false,
+      cita: {},
+      modalTitle: 'Crear Cita',
+      loading: false
     }
   },
   computed: {
@@ -132,6 +150,64 @@ export default {
       const modal = document.getElementById('citaModal');
       const bootstrapModal = bootstrap.Modal.getInstance(modal);
       bootstrapModal.hide();
+    },
+    async openModal() {
+      this.loading = true;
+      // Adjust date to UTC-5
+      const adjustedDate = new Date(this.selectedDate.getTime() - (5 * 60 * 60 * 1000));
+      const date = adjustedDate.toISOString().split('T')[0];
+      const time = this.selectedTime.padStart(5, '0'); // Ensure HH:mm format
+      
+      // Encode parameters
+      const params = new URLSearchParams({
+          medico: this.selectedMedico,
+          fecha: date,
+          hora: `${time}:00`
+      });
+      
+      const url = `/api/citas/check?${params.toString()}`;
+      
+      try {
+          const response = await fetch(url);
+          const contentType = response.headers.get('content-type');
+
+          if (response.ok && contentType && contentType.includes('application/json')) {
+            const cita = await response.json();
+            console.log('Cita found:', cita); // Debug line
+            if (cita && Object.keys(cita).length > 0) {
+              // Display cita information in the modal
+              this.showCitaInfoMethod(cita);
+            } else {
+              // Show form to create a new cita
+              this.showForm();
+            }
+          } else {
+            const responseText = await response.text();
+            console.error('Expected JSON response but got:', contentType, responseText);
+            this.showForm();
+          }
+      } catch (error) {
+          console.error('Error checking cita:', error);
+          this.showForm();
+      } finally {
+          this.loading = false;
+      }
+    },
+    showCitaInfoMethod(cita) {
+      console.log('Showing cita info:', cita); // Debug line
+      this.cita = cita;
+      this.showCitaInfo = true;
+      this.modalTitle = 'Información de la Cita';
+      const modalElement = document.getElementById('citaModal');
+      const modal = new window.bootstrap.Modal(modalElement);
+      modal.show();
+    },
+    showForm() {
+      this.showCitaInfo = false;
+      this.modalTitle = 'Crear Cita';
+      const modalElement = document.getElementById('citaModal');
+      const modal = new window.bootstrap.Modal(modalElement);
+      modal.show();
     }
   }
 }
