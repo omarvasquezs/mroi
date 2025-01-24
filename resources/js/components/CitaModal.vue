@@ -11,7 +11,7 @@
             <p>Cargando...</p>
           </div>
           <div v-else>
-            <div v-if="showCitaInfo">
+            <div v-if="cita">
               <div class="row mb-3">
                 <div class="col-md-3"><strong>Historia:</strong></div>
                 <div class="col-md-9">{{ cita.num_historia }}</div>
@@ -94,6 +94,10 @@ export default {
     selectedMedicoName: {
       type: String,
       required: true
+    },
+    cita: {
+      type: Object,
+      default: null
     }
   },
   data() {
@@ -104,7 +108,6 @@ export default {
         observaciones: ''
       },
       showCitaInfo: false,
-      cita: {},
       modalTitle: 'Crear Cita',
       loading: false
     }
@@ -215,7 +218,7 @@ export default {
     },
     showCitaInfoMethod(cita) {
       console.log('Showing cita info:', cita); // Debug line
-      this.cita = cita;
+      this.cita = cita; // Directly assign the cita property
       this.showCitaInfo = true;
       this.modalTitle = 'Información de la Cita';
       const modalElement = document.getElementById('citaModal');

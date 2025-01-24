@@ -56,7 +56,7 @@
       </div>
     </div>
     <CitaModal ref="citaModal" :selected-time="selectedTime" :selected-date="selectedFecha"
-      :selected-medico="selectedMedico" :selected-medico-name="selectedMedicoName" @citaCreated="fetchCitas" />
+      :selected-medico="selectedMedico" :selected-medico-name="selectedMedicoName" :cita="selectedCita" @citaCreated="fetchCitas" />
   </div>
 </template>
 
@@ -85,6 +85,7 @@ export default {
       ],
       timeSlots: [],
       selectedTime: '',
+      selectedCita: null, // Add selectedCita to store the selected cita
     };
   },
   computed: {
@@ -154,14 +155,51 @@ export default {
       }
       return slots;
     },
-    openModal(hora) {
+    async openModal(hora) {
       if (!this.selectedMedico) {
         alert('Por favor seleccione un médico');
         return;
       }
       this.selectedTime = hora;
       console.log('Selected time:', this.selectedTime); // Debug line
-      this.$refs.citaModal.openModal();
+
+      // Adjust date to UTC-5
+      const adjustedDate = new Date(this.selectedFecha.getTime() - (5 * 60 * 60 * 1000));
+      const date = adjustedDate.toISOString().split('T')[0];
+      const time = this.selectedTime.padStart(5, '0'); // Ensure HH:mm format
+
+      // Encode parameters
+      const params = new URLSearchParams({
+        medico: this.selectedMedico,
+        fecha: date,
+        hora: `${time}:00`
+      });
+
+      const url = `/api/citas/check?${params.toString()}`;
+
+      try {
+        const response = await fetch(url);
+        const contentType = response.headers.get('content-type');
+
+        if (response.ok && contentType && contentType.includes('application/json')) {
+          const cita = await response.json();
+          console.log('Cita found:', cita); // Debug line
+          if (cita && Object.keys(cita).length > 0) {
+            this.selectedCita = cita; // Set the selected cita
+          } else {
+            this.selectedCita = null; // No matching cita found
+          }
+        } else {
+          const responseText = await response.text();
+          console.error('Expected JSON response but got:', contentType, responseText);
+          this.selectedCita = null; // Error in fetching cita
+        }
+      } catch (error) {
+        console.error('Error checking cita:', error);
+        this.selectedCita = null; // Error in fetching cita
+      }
+
+      this.$refs.citaModal.openModal(); // Open the modal
     },
     async fetchCitas() {
       if (!this.selectedMedico || !this.selectedFecha) {
