@@ -36,13 +36,33 @@ class CitaController extends Controller
         $fecha = $request->query('fecha');
 
         if (!$medicoId || !$fecha) {
-            return response()->json([], 400); // Bad request if parameters are missing
+            return response()->json([], 400);
         }
 
         $citas = Cita::where('id_medico', $medicoId)
             ->whereDate('fecha', $fecha)
-            ->with('paciente') // Ensure paciente information is included
-            ->get();
+            ->with(['paciente' => function($query) {
+                $query->select('num_historia', 'nombres', 'ap_paterno', 'ap_materno');
+            }])
+            ->get([
+                'id',
+                'num_historia',
+                'id_medico',
+                'fecha',
+                'observaciones'
+            ]);
+
+        // Transform the data to ensure we have the time in the right format
+        $citas = $citas->map(function ($cita) {
+            return [
+                'id' => $cita->id,
+                'num_historia' => $cita->num_historia,
+                'fecha' => $cita->fecha,
+                'hora' => date('H:i:s', strtotime($cita->fecha)),
+                'observaciones' => $cita->observaciones,
+                'paciente' => $cita->paciente
+            ];
+        });
 
         return response()->json($citas);
     }

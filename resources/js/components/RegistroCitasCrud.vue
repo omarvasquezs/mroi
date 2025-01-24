@@ -37,19 +37,15 @@
               <th style="width: 10%">Hora</th>
               <th style="width: 15%">Historia</th>
               <th style="width: 30%">Paciente</th>
-              <th style="width: 15%">Teléfono</th>
-              <th style="width: 25%">Observación</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(cita, index) in citas" :key="index" @click="openModal(cita.hora)"
-              :class="{ 'cursor-pointer': !cita.paciente }">
+              class="cursor-pointer">
               <td>{{ index + 1 }}</td>
               <td>{{ cita.hora }}</td>
               <td>{{ cita.historia }}</td>
               <td>{{ cita.paciente }}</td>
-              <td>{{ cita.telefono }}</td>
-              <td>{{ cita.observacion }}</td>
             </tr>
           </tbody>
         </table>
@@ -77,13 +73,13 @@ export default {
       loading: false,
       error: null,
       citas: [],
+      timeSlots: [], // Reintroduce timeSlots array
       attributes: [
         {
           highlight: true,
           dates: new Date()
         }
       ],
-      timeSlots: [],
       selectedTime: '',
       selectedCita: null, // Add selectedCita to store the selected cita
     };
@@ -96,7 +92,7 @@ export default {
   },
   created() {
     this.fetchMedicos();
-    this.citas = this.generateTimeSlots(); // Initialize citas with time slots
+    this.citas = this.generateTimeSlots(); // Initialize the table with all time slots
   },
   methods: {
     fetchMedicos() {
@@ -131,29 +127,6 @@ export default {
     },
     goBack() {
       this.$router.go(-1);
-    },
-    generateTimeSlots() {
-      const slots = [];
-      const startTime = new Date();
-      startTime.setHours(8, 0, 0); // 8:00 AM
-      const endTime = new Date();
-      endTime.setHours(19, 0, 0); // 7:00 PM
-
-      while (startTime < endTime) {
-        slots.push({
-          hora: startTime.toLocaleTimeString('es-ES', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-          }), // Format as HH:MM
-          historia: '',
-          paciente: '',
-          telefono: '',
-          observacion: ''
-        });
-        startTime.setMinutes(startTime.getMinutes() + 5);
-      }
-      return slots;
     },
     async openModal(hora) {
       if (!this.selectedMedico) {
@@ -201,47 +174,98 @@ export default {
 
       this.$refs.citaModal.openModal(); // Open the modal
     },
+    generateTimeSlots() {
+      const slots = [];
+      const startTime = new Date();
+      startTime.setHours(8, 0, 0); // 8:00 AM
+      const endTime = new Date();
+      endTime.setHours(19, 0, 0); // 7:00 PM
+
+      while (startTime < endTime) {
+        slots.push({
+          hora: startTime.toLocaleTimeString('es-ES', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          }),
+          historia: '',
+          paciente: ''
+        });
+        startTime.setMinutes(startTime.getMinutes() + 5);
+      }
+      return slots;
+    },
     async fetchCitas() {
       if (!this.selectedMedico || !this.selectedFecha) {
         this.citas = this.generateTimeSlots();
         return;
       }
 
-      const formattedDate = this.selectedFecha.toISOString().split('T')[0]; // Format date as YYYY-MM-DD
+      const formattedDate = this.selectedFecha.toISOString().split('T')[0];
       const url = `/api/citas?medico=${this.selectedMedico}&fecha=${formattedDate}`;
+
       try {
         const response = await fetch(url);
-        const contentType = response.headers.get('content-type');
-
-        if (response.ok && contentType && contentType.includes('application/json')) {
+        if (response.ok) {
           const data = await response.json();
+          console.log('Raw citas data:', data);
+          
+          const slots = this.generateTimeSlots();
           if (Array.isArray(data)) {
-            const citasMap = new Map(data.map(cita => {
-              const paciente = cita.paciente || ''; // Ensure paciente property is set
-              return [new Date(cita.fecha).toLocaleTimeString('es-ES', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-              }), { ...cita, paciente }];
-            })); // Extract HH:MM from fecha
-            this.citas = this.generateTimeSlots().map(slot => citasMap.get(slot.hora) || slot);
+            // Build citasMap with proper time formatting
+            const citasMap = new Map();
+            
+            // First, log each cita's data structure
+            data.forEach(cita => {
+              console.log('Processing cita:', {
+                original: cita,
+                fecha: cita.fecha,
+                hora: cita.hora,
+                num_historia: cita.num_historia,
+                paciente: cita.paciente
+              });
+              
+              // Extract time from hora field (assuming format "HH:mm:ss")
+              const timeStr = cita.hora ? cita.hora.substring(0, 5) : null;
+              if (timeStr) {
+                citasMap.set(timeStr, cita);
+              }
+            });
+
+            console.log('CitasMap built:', Array.from(citasMap.entries()));
+
+            // Map slots to citas
+            this.citas = slots.map(slot => {
+              console.log('Processing slot:', slot.hora);
+              const matchingCita = citasMap.get(slot.hora);
+              
+              if (matchingCita) {
+                console.log('Found match for slot', slot.hora, matchingCita);
+                const pacienteData = matchingCita.paciente || {};
+                const pacienteNombre = [
+                  pacienteData.nombres,
+                  pacienteData.ap_paterno,
+                  pacienteData.ap_materno
+                ].filter(Boolean).join(' ');
+                
+                return {
+                  hora: slot.hora,
+                  historia: matchingCita.num_historia || '',
+                  paciente: pacienteNombre
+                };
+              }
+              return slot;
+            });
           } else {
-            this.citas = this.generateTimeSlots();
+            this.citas = slots;
           }
-        } else {
-          const responseText = await response.text();
-          console.error('Expected JSON response but got:', contentType, responseText);
-          console.error('Response URL:', url);
-          console.error('Response Status:', response.status);
-          this.citas = this.generateTimeSlots();
+          console.log('Final processed citas:', this.citas);
         }
       } catch (error) {
-        console.error('Error fetching citas:', error);
-        console.error('Response URL:', url);
+        console.error('Error:', error);
         this.citas = this.generateTimeSlots();
       }
-      console.log('Citas:', this.citas); // Debug line
-    },
+    }
   },
   watch: {
     selectedFecha(newDate) {
