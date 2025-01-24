@@ -268,18 +268,31 @@ export default {
     }
   },
   watch: {
-    selectedFecha(newDate) {
-      this.attributes = [
-        {
-          highlight: true,
-          dates: newDate
+    selectedFecha: {
+      handler(newDate, oldDate) {
+        // Only update if the date actually changed (different day)
+        if (!oldDate || 
+            newDate.getDate() !== oldDate.getDate() || 
+            newDate.getMonth() !== oldDate.getMonth() || 
+            newDate.getFullYear() !== oldDate.getFullYear()) {
+          
+          this.attributes = [{
+            highlight: true,
+            dates: newDate
+          }];
+          
+          // Only fetch if we have a selected medico
+          if (this.selectedMedico) {
+            this.fetchCitas();
+          }
         }
-      ];
-      this.fetchCitas();
-      console.log('Selected date changed:', newDate); // Debug line
+      },
+      deep: true
     },
-    selectedMedico() {
-      this.fetchCitas();
+    selectedMedico(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.fetchCitas();
+      }
     }
   }
 };
