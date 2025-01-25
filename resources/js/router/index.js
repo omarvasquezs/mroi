@@ -38,6 +38,11 @@ const routes = [
         component: () => import("../components/ControlStockCrud.vue"),
     },
     {
+        path: "/catalogo-lentes",
+        name: "CatalogoLentes",
+        component: () => import("../components/CatalogoLentes.vue"),
+    },
+    {
         path: "/:pathMatch(.*)*",
         component: () => import("../components/NotfoundPage.vue"),
     }

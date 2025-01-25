@@ -98,7 +98,14 @@
               </div>
               <div class="mb-3">
                 <label for="imagen" class="form-label">Imagen{{ isEditing ? ' (dejar en blanco para mantener la actual)' : '*' }}:</label>
-                <input type="file" @change="handleImageUpload" id="imagen" class="form-control" :required="!isEditing">
+                <input 
+                  type="file" 
+                  @change="handleImageUpload" 
+                  id="imagen" 
+                  ref="fileInput"
+                  class="form-control" 
+                  :required="!isEditing"
+                >
               </div>
               <div v-if="imagePreview" class="mb-3">
                 <img :src="imagePreview" alt="Preview" style="max-height: 200px;" class="preview-image">
@@ -153,18 +160,28 @@ export default {
     fetchItems(url = '/api/stock') {
       this.loading = true;
       const params = {
-        producto: this.filters.producto,
-        precio: this.filters.precio,
+        producto: this.filters.producto || null,
+        precio: this.filters.precio || null,
         page: this.pagination.current_page
       };
       
       axios.get(url, { params })
         .then(response => {
-          const { data, ...pagination } = response.data;
-          this.items = data;
-          this.pagination = pagination;
+          console.log('Response:', response.data); // Add this for debugging
+          this.items = response.data.data;
+          this.pagination = {
+            current_page: response.data.current_page,
+            per_page: response.data.per_page,
+            total: response.data.total,
+            last_page: response.data.last_page,
+            next_page_url: response.data.next_page_url,
+            prev_page_url: response.data.prev_page_url
+          };
         })
-        .catch(error => console.error(error))
+        .catch(error => {
+          console.error('Error fetching items:', error);
+          this.alertMessage = 'Error al cargar los productos.';
+        })
         .finally(() => {
           this.loading = false;
         });
@@ -192,20 +209,20 @@ export default {
       const formData = new FormData();
       formData.append('producto', this.form.producto);
       formData.append('precio', this.form.precio);
-    if (this.form.imagen instanceof File) {
-      formData.append('imagen', this.form.imagen);
-      formData.append('imagen_path', '/images/stock/');  // Add the path where image should be stored
-    }
+      
+      if (this.form.imagen instanceof File) {
+        formData.append('imagen', this.form.imagen);
+      }
 
       try {
+        let response;
         if (this.isEditing) {
-          // Use PUT method directly for editing
-          await axios.put(`/api/stock/${this.editingId}`, formData, {
+          formData.append('_method', 'PUT'); // Add this for Laravel to handle PUT
+          response = await axios.post(`/api/stock/${this.editingId}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
         } else {
-          // Use POST for creating
-          await axios.post('/api/stock', formData, {
+          response = await axios.post('/api/stock', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
         }
@@ -216,8 +233,8 @@ export default {
         this.closeModal();
         setTimeout(() => this.alertMessage = '', 5000);
       } catch (error) {
-        console.error(error);
-        this.alertMessage = 'Error al ' + (this.isEditing ? 'actualizar' : 'crear') + ' el producto.';
+        console.error('Error details:', error.response?.data);
+        this.alertMessage = error.response?.data?.error || 'Error al ' + (this.isEditing ? 'actualizar' : 'crear') + ' el producto.';
       }
     },
     confirmDelete(id) {
@@ -243,10 +260,17 @@ export default {
       this.imagePreview = null;
       this.isEditing = false;
       this.editingId = null;
+      // Reset file input
+      if (this.$refs.fileInput) {
+        this.$refs.fileInput.value = '';
+      }
     },
     closeModal() {
       const modal = Modal.getInstance(document.getElementById('stockModal'));
-      if (modal) modal.hide();
+      if (modal) {
+        modal.hide();
+        this.resetForm(); // Add this line to ensure form is reset when modal is closed
+      }
     },
     changePage(url) {
       if (url) {
