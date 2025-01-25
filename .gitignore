@@ -21,3 +21,9 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Ignore stock folder contents
+public/images/stock/*
+
+# Keep the folder
+!public/images/stock/.gitkeep
