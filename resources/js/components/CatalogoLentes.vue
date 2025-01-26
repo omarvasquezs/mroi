@@ -58,45 +58,43 @@
       <!-- Products Grid Section -->
       <div class="col-md-9">
         <!-- Loading State -->
-        <div v-if="loading" class="text-center">
+        <div v-if="loading && !productos.length" class="text-center my-5">
           <div class="spinner-border" role="status">
             <span class="visually-hidden">Cargando...</span>
           </div>
         </div>
 
-        <!-- No Results -->
-        <div v-else-if="!productos.length" class="text-center">
-          <p>No se encontraron productos.</p>
-        </div>
-
         <!-- Products Grid -->
-        <div v-else class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-          <div v-for="producto in productos" :key="producto.id" class="col">
-            <div class="card h-100 product-card">
-              <img 
-                :src="`${baseUrl}/images/stock/${producto.imagen}`" 
-                class="card-img-top product-image" 
-                :alt="producto.producto"
-              >
-              <div class="card-body">
-                <h5 class="card-title">{{ producto.producto }}</h5>
-                <p class="card-text">S/. {{ producto.precio }}</p>
+        <template v-else>
+          <div v-if="!productos.length" class="text-center my-5">
+            <p>No se encontraron productos.</p>
+          </div>
+          <div v-else class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            <div v-for="producto in productos" :key="producto.id" class="col">
+              <div class="card h-100 product-card">
+                <img 
+                  :src="`${baseUrl}/images/stock/${producto.imagen}`" 
+                  class="card-img-top product-image" 
+                  :alt="producto.producto"
+                >
+                <div class="card-body">
+                  <h5 class="card-title">{{ producto.producto }}</h5>
+                  <p class="card-text">S/. {{ producto.precio }}</p>
+                </div>
               </div>
             </div>
           </div>
+        </template>
+
+        <!-- Loading More Indicator -->
+        <div v-if="loadingMore" class="text-center mt-4">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Cargando más...</span>
+          </div>
         </div>
 
-        <!-- Pagination -->
-        <nav v-if="pagination.total > pagination.per_page" class="mt-4">
-          <ul class="pagination justify-content-center">
-            <li class="page-item" :class="{ disabled: !pagination.prev_page_url }">
-              <a class="page-link" href="#" @click.prevent="changePage(pagination.prev_page_url)">Anterior</a>
-            </li>
-            <li class="page-item" :class="{ disabled: !pagination.next_page_url }">
-              <a class="page-link" href="#" @click.prevent="changePage(pagination.next_page_url)">Siguiente</a>
-            </li>
-          </ul>
-        </nav>
+        <!-- Intersection Observer Target -->
+        <div ref="infiniteScrollTrigger" class="my-4"></div>
       </div>
     </div>
   </div>
@@ -124,7 +122,10 @@ export default {
         precio_min: null,
         precio_max: null
       },
-      debounceTimeout: null
+      debounceTimeout: null,
+      hasMorePages: true,
+      observer: null,
+      loadingMore: false
     }
   },
   watch: {
@@ -139,15 +140,27 @@ export default {
     debouncedSearch() {
       if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
       this.debounceTimeout = setTimeout(() => {
-        this.handleSearch();
+        this.productos = []; // Clear existing products
+        this.pagination.current_page = 1; // Reset to first page
+        this.hasMorePages = true; // Reset pages flag
+        this.fetchProductos();
       }, 300);
     },
     handleSearch() {
-      this.pagination.current_page = 1;
+      this.productos = []; // Clear existing products
+      this.pagination.current_page = 1; // Reset to first page
+      this.hasMorePages = true; // Reset pages flag
       this.fetchProductos();
     },
     fetchProductos(url = '/api/stock') {
-      this.loading = true;
+      if (!this.hasMorePages || (this.loading && this.productos.length > 0)) return;
+      
+      if (this.productos.length === 0) {
+        this.loading = true;
+      } else {
+        this.loadingMore = true;
+      }
+
       const params = {
         ...this.filters,
         page: this.pagination.current_page
@@ -162,7 +175,12 @@ export default {
 
       axios.get(url, { params })
         .then(response => {
-          this.productos = response.data.data;
+          if (this.pagination.current_page === 1) {
+            this.productos = response.data.data;
+          } else {
+            this.productos = [...this.productos, ...response.data.data];
+          }
+          
           this.pagination = {
             current_page: response.data.current_page,
             per_page: response.data.per_page,
@@ -171,12 +189,14 @@ export default {
             next_page_url: response.data.next_page_url,
             prev_page_url: response.data.prev_page_url
           };
+          this.hasMorePages = !!response.data.next_page_url;
         })
         .catch(error => {
           console.error('Error:', error);
         })
         .finally(() => {
           this.loading = false;
+          this.loadingMore = false;
         });
     },
     resetFilters() {
@@ -185,13 +205,25 @@ export default {
         precio_min: null,
         precio_max: null
       };
+      this.productos = []; // Clear existing products
+      this.pagination.current_page = 1; // Reset to first page
+      this.hasMorePages = true; // Reset pages flag
       this.handleSearch();
     },
-    changePage(url) {
-      if (url) {
-        const page = new URL(url).searchParams.get('page');
-        this.pagination.current_page = page;
-        this.fetchProductos(url);
+    setupInfiniteScroll() {
+      this.observer = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting && this.hasMorePages && !this.loading) {
+          this.pagination.current_page++;
+          this.fetchProductos();
+        }
+      }, {
+        root: null,
+        rootMargin: '100px',
+        threshold: 0.1
+      });
+
+      if (this.$refs.infiniteScrollTrigger) {
+        this.observer.observe(this.$refs.infiniteScrollTrigger);
       }
     },
     goBack() {
@@ -200,6 +232,12 @@ export default {
   },
   mounted() {
     this.fetchProductos();
+    this.setupInfiniteScroll();
+  },
+  beforeUnmount() {
+    if (this.observer) {
+      this.observer.disconnect();
+    }
   }
 }
 </script>
