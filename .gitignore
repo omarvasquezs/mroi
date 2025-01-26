@@ -27,3 +27,17 @@ public/images/stock/*
 
 # Keep the folder
 !public/images/stock/.gitkeep
+
+# SQL files
+*.sql
+
+# Compressed files
+*.tar.gz
+*.tgz
+*.zip
+*.rar
+*.7z
+*.gz
+*.bz2
+*.xz
+*.zst
