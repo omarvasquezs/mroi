@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="mb-4">
-      <button @click="goBack" class="btn btn-link btn-link-custom">← Regresar</button>
+      <button @click="goBack" class="btn btn-link">← Regresar</button>
     </div>
     <h1>Gestión de Stock</h1>
     <button @click="showCreateForm" class="btn btn-primary mb-3">Crear Producto</button>
