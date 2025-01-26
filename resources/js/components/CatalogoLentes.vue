@@ -1,14 +1,14 @@
 <template>
-  <div class="container mt-4">
+  <div class="container-fluid mt-4">
     <div class="mb-4">
       <button @click="goBack" class="btn btn-link">← Regresar</button>
     </div>
     <h1 class="text-center mb-4">Catálogo de Productos</h1>
 
-    <!-- Filters Section -->
-    <div class="row mb-4">
-      <div class="col-md-6 mx-auto">
-        <div class="card">
+    <div class="row">
+      <!-- Filters Section -->
+      <div class="col-md-3">
+        <div class="card sticky-top" style="top: 1rem;">
           <div class="card-body">
             <h5 class="card-title mb-3">Filtros</h5>
             <div class="mb-3">
@@ -20,84 +20,85 @@
                 placeholder="Buscar productos..."
               >
             </div>
-            <div class="row">
-              <div class="col-6">
-                <label class="form-label">Precio mínimo</label>
-                <div class="input-group mb-3">
-                  <span class="input-group-text">S/.</span>
-                  <input 
-                    type="number" 
-                    v-model.number="filters.precio_min" 
-                    class="form-control" 
-                    placeholder="Mín"
-                    min="0"
-                    step="0.01"
-                  >
-                </div>
-              </div>
-              <div class="col-6">
-                <label class="form-label">Precio máximo</label>
-                <div class="input-group mb-3">
-                  <span class="input-group-text">S/.</span>
-                  <input 
-                    type="number" 
-                    v-model.number="filters.precio_max" 
-                    class="form-control" 
-                    placeholder="Máx"
-                    min="0"
-                    step="0.01"
-                  >
-                </div>
+            <div class="mb-3">
+              <label class="form-label">Precio mínimo</label>
+              <div class="input-group">
+                <span class="input-group-text">S/.</span>
+                <input 
+                  type="number" 
+                  v-model.number="filters.precio_min" 
+                  class="form-control" 
+                  placeholder="Mín"
+                  min="0"
+                  step="0.01"
+                >
               </div>
             </div>
-            <button @click="resetFilters" class="btn btn-secondary btn-sm">
+            <div class="mb-3">
+              <label class="form-label">Precio máximo</label>
+              <div class="input-group">
+                <span class="input-group-text">S/.</span>
+                <input 
+                  type="number" 
+                  v-model.number="filters.precio_max" 
+                  class="form-control" 
+                  placeholder="Máx"
+                  min="0"
+                  step="0.01"
+                >
+              </div>
+            </div>
+            <button @click="resetFilters" class="btn btn-secondary btn-sm w-100">
               Limpiar filtros
             </button>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="text-center">
-      <div class="spinner-border" role="status">
-        <span class="visually-hidden">Cargando...</span>
-      </div>
-    </div>
-
-    <!-- No Results -->
-    <div v-else-if="!productos.length" class="text-center">
-      <p>No se encontraron productos.</p>
-    </div>
-
-    <!-- Products Grid -->
-    <div v-else class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
-      <div v-for="producto in productos" :key="producto.id" class="col">
-        <div class="card h-100 product-card">
-          <img 
-            :src="`${baseUrl}/images/stock/${producto.imagen}`" 
-            class="card-img-top product-image" 
-            :alt="producto.producto"
-          >
-          <div class="card-body">
-            <h5 class="card-title">{{ producto.producto }}</h5>
-            <p class="card-text">S/. {{ producto.precio }}</p>
+      <!-- Products Grid Section -->
+      <div class="col-md-9">
+        <!-- Loading State -->
+        <div v-if="loading" class="text-center">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Cargando...</span>
           </div>
         </div>
+
+        <!-- No Results -->
+        <div v-else-if="!productos.length" class="text-center">
+          <p>No se encontraron productos.</p>
+        </div>
+
+        <!-- Products Grid -->
+        <div v-else class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+          <div v-for="producto in productos" :key="producto.id" class="col">
+            <div class="card h-100 product-card">
+              <img 
+                :src="`${baseUrl}/images/stock/${producto.imagen}`" 
+                class="card-img-top product-image" 
+                :alt="producto.producto"
+              >
+              <div class="card-body">
+                <h5 class="card-title">{{ producto.producto }}</h5>
+                <p class="card-text">S/. {{ producto.precio }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <nav v-if="pagination.total > pagination.per_page" class="mt-4">
+          <ul class="pagination justify-content-center">
+            <li class="page-item" :class="{ disabled: !pagination.prev_page_url }">
+              <a class="page-link" href="#" @click.prevent="changePage(pagination.prev_page_url)">Anterior</a>
+            </li>
+            <li class="page-item" :class="{ disabled: !pagination.next_page_url }">
+              <a class="page-link" href="#" @click.prevent="changePage(pagination.next_page_url)">Siguiente</a>
+            </li>
+          </ul>
+        </nav>
       </div>
     </div>
-
-    <!-- Pagination -->
-    <nav v-if="pagination.total > pagination.per_page" class="mt-4">
-      <ul class="pagination justify-content-center">
-        <li class="page-item" :class="{ disabled: !pagination.prev_page_url }">
-          <a class="page-link" href="#" @click.prevent="changePage(pagination.prev_page_url)">Anterior</a>
-        </li>
-        <li class="page-item" :class="{ disabled: !pagination.next_page_url }">
-          <a class="page-link" href="#" @click.prevent="changePage(pagination.next_page_url)">Siguiente</a>
-        </li>
-      </ul>
-    </nav>
   </div>
 </template>
 
