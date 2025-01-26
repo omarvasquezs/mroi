@@ -144,7 +144,7 @@ export default {
       alertMessage: '',
       pagination: {
         total: 0,
-        per_page: 10,
+        per_page: 10,  // Changed from default to 10
         current_page: 1,
         last_page: 1,
         next_page_url: null,

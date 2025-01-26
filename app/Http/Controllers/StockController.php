@@ -11,13 +11,14 @@ class StockController extends Controller
     public function index(Request $request)
     {
         $query = Stock::query();
+        $perPage = 10; // Default for CatalogoLentes
 
         // Text search for producto
         if ($request->filled('producto')) {
             $query->where('producto', 'like', '%' . $request->producto . '%');
         }
         
-        // Price range filter
+        // Price filters for CatalogoLentes
         if ($request->filled('precio_min')) {
             $query->where('precio', '>=', floatval($request->precio_min));
         }
@@ -26,7 +27,13 @@ class StockController extends Controller
             $query->where('precio', '<=', floatval($request->precio_max));
         }
 
-        $result = $query->orderBy('created_at', 'desc')->paginate(12);
+        // Single precio filter for ControlStockCrud
+        if ($request->filled('precio') && !$request->filled('precio_min') && !$request->filled('precio_max')) {
+            $query->where('precio', 'like', $request->precio . '%');
+            $perPage = 10; // Set to 10 for ControlStockCrud
+        }
+
+        $result = $query->orderBy('created_at', 'desc')->paginate($perPage);
         return response()->json([
             'current_page' => $result->currentPage(),
             'data' => $result->items(),
