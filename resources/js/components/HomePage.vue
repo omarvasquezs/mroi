@@ -91,12 +91,13 @@ export default {
                     title: 'Servicios Recibidos',
                     items: [
                         { name: 'Proveedores', icon: 'fas fa-truck', url: '' },
-                        { name: 'Logística', icon: 'fas fa-people-carry', url: '' },
                         { name: 'Inventario', icon: 'fas fa-warehouse', url: '' }
                     ]
                 }
             ],
             submenuItems: [
+                { type: 'link', label: 'Catálogo de lentes', icon: 'fas fa-glasses', url: '/catalogo-lentes', condition: 'Atención Hospitalaria|Optica' },
+                { type: 'link', label: 'Control de stock', icon: 'fas fa-boxes', url: '/control-stock', condition: 'Atención Hospitalaria|Optica' },
                 { type: 'link', label: 'Gestionar Pacientes', icon: 'fas fa-users', url: '/pacientes', condition: 'Entidades|Pacientes' },
                 { type: 'link', label: 'Gestionar Médicos', icon: 'fas fa-user-md', url: '/medicos', condition: 'Entidades|Médicos' },
                 { type: 'link', label: 'Administrar Usuarios del Sistema', icon: 'fas fa-user-cog', url: '/usuarios', condition: 'Entidades|Utilitarios' },
@@ -104,15 +105,6 @@ export default {
                 { type: 'link', label: 'Provisiones', icon: 'fas fa-box', url: '/provisiones', condition: 'Servicios Recibidos|Proveedores' },
                 { type: 'link', label: 'Canjes', icon: 'fas fa-exchange-alt', url: '/canjes', condition: 'Servicios Recibidos|Proveedores' },
                 { type: 'link', label: 'Caja Pagos Proveedor', icon: 'fas fa-cash-register', url: '/caja-pagos-proveedor', condition: 'Servicios Recibidos|Proveedores' },
-                { type: 'link', label: 'Registro Productos', icon: 'fas fa-box-open', url: '/registro-productos', condition: 'Servicios Recibidos|Logística' },
-                { type: 'link', label: 'Movimientos', icon: 'fas fa-exchange-alt', url: '/movimientos', condition: 'Servicios Recibidos|Logística' },
-                { type: 'link', label: 'Control Kardex', icon: 'fas fa-clipboard-list', url: '/control-kardex', condition: 'Servicios Recibidos|Logística' },
-                { type: 'link', label: 'Actualización Precios', icon: 'fas fa-tags', url: '/actualizacion-precios', condition: 'Servicios Recibidos|Logística' },
-                { type: 'link', label: 'Orden Compra', icon: 'fas fa-shopping-cart', url: '/orden-compra', condition: 'Servicios Recibidos|Logística' },
-                { type: 'link', label: 'Lentes', icon: 'fas fa-glasses', url: '/lentes', condition: 'Servicios Recibidos|Inventario' },
-                { type: 'link', label: 'Montura', icon: 'fas fa-glasses', url: '/montura', condition: 'Servicios Recibidos|Inventario' },
-                { type: 'link', label: 'Lentes de Contacto', icon: 'fas fa-eye', url: '/lentes-de-contacto', condition: 'Servicios Recibidos|Inventario' },
-                { type: 'link', label: 'Lunas', icon: 'fas fa-circle', url: '/lunas', condition: 'Servicios Recibidos|Inventario' },
                 { type: 'link', label: 'Equipos de optometría', icon: 'fas fa-tools', url: '/equipos-de-optometria', condition: 'Servicios Recibidos|Inventario' },
                 { type: 'link', label: 'Registro de Citas', icon: 'fas fa-stethoscope', url: '/registro-citas', condition: 'Atención Hospitalaria|Registro de Citas' },
                 { type: 'link', label: 'Programación de Turnos', icon: 'fas fa-calendar-alt', url: '/programacion-turnos', condition: 'Atención Hospitalaria|Registro de Citas' },
@@ -128,9 +120,7 @@ export default {
                 { type: 'link', label: 'Turnos de Enfermería', icon: 'fas fa-calendar-alt', url: '/turnos-enfermeria', condition: 'Atención Médica|Enfermería' },
                 { type: 'link', label: 'HC Enfermería', icon: 'fas fa-notes-medical', url: '/hc-enfermeria', condition: 'Atención Médica|Enfermería' },
                 { type: 'link', label: 'Monitor Enfermería', icon: 'fas fa-desktop', url: '/monitor-enfermeria', condition: 'Atención Médica|Enfermería' },
-                { type: 'link', label: 'Registro de Examenes', icon: 'fas fa-vials', url: '/registro-examenes', condition: 'Examenes|Laboratorio' },
-                { type: 'link', label: 'Catálogo de lentes', icon: 'fas fa-glasses', url: '/catalogo-lentes', condition: 'Atención Hospitalaria|Optica' },
-                { type: 'link', label: 'Control de stock', icon: 'fas fa-boxes', url: '/control-stock', condition: 'Atención Hospitalaria|Optica' }
+                { type: 'link', label: 'Registro de Examenes', icon: 'fas fa-vials', url: '/registro-examenes', condition: 'Examenes|Laboratorio' }
             ]
         };
     },
