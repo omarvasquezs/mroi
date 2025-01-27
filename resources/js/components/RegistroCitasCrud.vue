@@ -133,18 +133,23 @@ export default {
     goBack() {
       this.$router.go(-1);
     },
+    formatLocalDate(date) {
+      const d = new Date(date);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    },
     async openModal(hora) {
       if (!this.selectedMedico) {
         alert('Por favor seleccione un médico');
         return;
       }
       this.selectedTime = hora;
-      console.log('Selected time:', this.selectedTime); // Debug line
 
-      // Adjust date to UTC-5
-      const adjustedDate = new Date(this.selectedFecha.getTime() - (5 * 60 * 60 * 1000));
-      const date = adjustedDate.toISOString().split('T')[0];
-      const time = this.selectedTime.padStart(5, '0'); // Ensure HH:mm format
+      // Use local date without UTC adjustment
+      const date = this.formatLocalDate(this.selectedFecha);
+      const time = this.selectedTime.padStart(5, '0');
 
       // Encode parameters
       const params = new URLSearchParams({
@@ -181,10 +186,11 @@ export default {
     },
     generateTimeSlots() {
       const slots = [];
-      const startTime = new Date();
-      startTime.setHours(8, 0, 0); // 8:00 AM
-      const endTime = new Date();
-      endTime.setHours(19, 0, 0); // 7:00 PM
+      // Use the selected date for time slots instead of current date
+      const startTime = new Date(this.selectedFecha);
+      startTime.setHours(8, 0, 0);
+      const endTime = new Date(this.selectedFecha);
+      endTime.setHours(19, 0, 0);
 
       while (startTime < endTime) {
         slots.push({
@@ -206,7 +212,8 @@ export default {
         return;
       }
 
-      const formattedDate = this.selectedFecha.toISOString().split('T')[0];
+      // Use local date format
+      const formattedDate = this.formatLocalDate(this.selectedFecha);
       const url = `/api/citas?medico=${this.selectedMedico}&fecha=${formattedDate}`;
 
       try {
