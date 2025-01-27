@@ -23,8 +23,13 @@
       <div class="mb-3">
         <div class="calendar-section">
           <label class="form-label mb-2">Seleccionar Fecha:</label>
-          <DatePicker v-model="selectedFecha" :min-date="new Date()" :attributes="attributes" locale="es" expanded
-            class="calendar-container" />
+          <DatePicker 
+            v-model="selectedFecha" 
+            :attributes="attributes" 
+            locale="es" 
+            expanded
+            class="calendar-container" 
+          />
         </div>
       </div>
     </div>
