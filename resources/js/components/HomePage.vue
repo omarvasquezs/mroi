@@ -6,10 +6,12 @@
                 <div class="container-fluid">
                     <div class="d-flex flex-wrap">
                         <div v-for="item in submenuItems" :key="item.name" class="text-center submenu-item">
-                            <router-link v-if="item.type === 'link'" :to="item.url" class="btn custom-btn mx-1 my-1 text-wrap">
+                            <router-link v-if="item.type === 'link'" :to="item.url"
+                                class="btn custom-btn mx-1 my-1 text-wrap">
                                 <i :class="item.icon" class="d-block"></i> {{ item.label }}
                             </router-link>
-                            <a v-else-if="item.type === 'a'" :href="item.url" class="btn custom-btn mx-1 my-1 text-wrap">
+                            <a v-else-if="item.type === 'a'" :href="item.url"
+                                class="btn custom-btn mx-1 my-1 text-wrap">
                                 <i :class="item.icon" class="d-block"></i> {{ item.label }}
                             </a>
                             <button v-else class="btn custom-btn mx-1 my-1 text-wrap">
@@ -47,17 +49,19 @@ export default {
             selectedSubMenu: null,
             menus: [
                 {
-                    title: 'Entidades',
+                    title: 'Atención Hospitalaria',
                     items: [
-                        { name: 'Pacientes', icon: 'fas fa-user', url: '' },
-                        { name: 'Médicos', icon: 'fas fa-user-md', url: '' },
-                        { name: 'Utilitarios', icon: 'fas fa-tools', url: '' }
+                        { name: 'Registro de Citas', icon: 'fas fa-stethoscope', url: '' },
+                        { name: 'Pacientes', icon: 'fas fa-user', url: '' } // Moved from Entidades
                     ]
                 },
                 {
-                    title: 'Atención Hospitalaria',
+                    title: 'Servicios Contables',
                     items: [
-                        { name: 'Registro de Citas', icon: 'fas fa-stethoscope', url: '' }
+                        { name: 'Caja', icon: 'fas fa-cash-register', url: '' },
+                        { name: 'Facturación', icon: 'fas fa-file-invoice-dollar', url: '' },
+                        { name: 'Presupuesto', icon: 'fas fa-calculator', url: '' },
+                        { name: 'Contabilidad', icon: 'fas fa-book', url: '' }
                     ]
                 },
                 {
@@ -84,28 +88,27 @@ export default {
                     ]
                 },
                 {
-                    title: 'Servicios Contables',
-                    items: [
-                        { name: 'Caja', icon: 'fas fa-cash-register', url: '' },
-                        { name: 'Facturación', icon: 'fas fa-file-invoice-dollar', url: '' },
-                        { name: 'Presupuesto', icon: 'fas fa-calculator', url: '' },
-                        { name: 'Contabilidad', icon: 'fas fa-book', url: '' }
-                    ]
-                },
-                {
                     title: 'Servicios Recibidos',
                     items: [
                         { name: 'Proveedores', icon: 'fas fa-truck', url: '' },
                         { name: 'Inventario', icon: 'fas fa-warehouse', url: '' }
+                    ]
+                },
+                {
+                    title: 'Entidades',
+                    items: [
+                        { name: 'Médicos', icon: 'fas fa-user-md', url: '' },
+                        { name: 'Utilitarios', icon: 'fas fa-tools', url: '' }
                     ]
                 }
             ],
             submenuItems: [
                 { type: 'link', label: 'Catálogo de lentes', icon: 'fas fa-glasses', url: '/catalogo-lentes', condition: 'Optica|Optica' },
                 { type: 'link', label: 'Control de stock', icon: 'fas fa-boxes', url: '/control-stock', condition: 'Optica|Optica' },
-                { type: 'link', label: 'Gestionar Pacientes', icon: 'fas fa-users', url: '/pacientes', condition: 'Entidades|Pacientes' },
+                { type: 'link', label: 'Gestionar Pacientes', icon: 'fas fa-users', url: '/pacientes', condition: 'Atención Hospitalaria|Pacientes' },
                 { type: 'link', label: 'Gestionar Médicos', icon: 'fas fa-user-md', url: '/medicos', condition: 'Entidades|Médicos' },
                 { type: 'link', label: 'Administrar Usuarios del Sistema', icon: 'fas fa-user-cog', url: '/usuarios', condition: 'Entidades|Utilitarios' },
+                { type: 'link', label: 'Administrar tipos de cita', icon: 'fas fa-calendar-alt', url: '/tipos-cita', condition: 'Entidades|Utilitarios' }, // New submenu item
                 { type: 'link', label: 'Registro Proveedores', icon: 'fas fa-truck', url: '/registro-proveedores', condition: 'Servicios Recibidos|Proveedores' },
                 { type: 'link', label: 'Equipos de optometría', icon: 'fas fa-tools', url: '/equipos-de-optometria', condition: 'Servicios Recibidos|Inventario' },
                 { type: 'link', label: 'HC Ambulatoria', icon: 'fas fa-notes-medical', url: '/hc-ambulatoria', condition: 'Atención Médica|Historia Clínica' },
@@ -149,8 +152,10 @@ export default {
     transition: background-color 0.3s, color 0.3s;
     white-space: normal;
     word-break: break-word;
-    width: 150px; /* Standardized width */
-    height: 100%; /* Added to match the height of nav-item */
+    width: 150px;
+    /* Standardized width */
+    height: 100%;
+    /* Added to match the height of nav-item */
     display: flex;
     flex-direction: column;
     justify-content: center;
