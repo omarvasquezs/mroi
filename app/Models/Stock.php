@@ -12,7 +12,9 @@ class Stock extends Model
     protected $fillable = [
         'producto',
         'imagen',
-        'precio'
+        'precio',
+        'tipo_producto',
+        'num_stock'
     ];
 
     protected $table = 'stock';

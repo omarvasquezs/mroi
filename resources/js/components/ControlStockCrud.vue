@@ -18,6 +18,8 @@
           <th>Imagen</th>
           <th>Producto</th>
           <th>Precio</th>
+          <th>Tipo Producto</th>
+          <th>Num Stock</th>
           <th>Acciones</th>
         </tr>
         <tr>
@@ -38,20 +40,41 @@
               </button>
             </div>
           </th>
+          <th>
+            <div class="position-relative">
+              <select v-model="filters.tipo_producto" @change="applyFilters" class="form-control">
+                <option value="">Todos</option>
+                <option value="l">Lentes</option>
+                <option value="m">Montura</option>
+                <option value="c">Lentes de Contacto</option>
+                <option value="u">Lunas</option>
+              </select>
+            </div>
+          </th>
+          <th>
+            <div class="position-relative">
+              <input type="number" v-model="filters.num_stock" @input="applyFilters" class="form-control" placeholder="Filtrar por Stock">
+              <button v-if="filters.num_stock" @click="clearFilter('num_stock')" class="btn-clear">
+                <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
+              </button>
+            </div>
+          </th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         <tr v-if="loading">
-          <td colspan="4" class="text-center">Cargando...</td>
+          <td colspan="6" class="text-center">Cargando...</td>
         </tr>
         <tr v-else-if="!items || items.length === 0">
-          <td colspan="4" class="text-center">No hay productos en el stock.</td>
+          <td colspan="6" class="text-center">No hay productos en el stock.</td>
         </tr>
         <tr v-else v-for="item in items" :key="item.id">
           <td><img :src="`${baseUrl}/images/stock/${item.imagen}`" alt="Producto" style="height: 50px;"></td>
           <td>{{ item.producto }}</td>
           <td>S/. {{ item.precio }}</td>
+          <td>{{ item.tipo_producto }}</td>
+          <td>{{ item.num_stock }}</td>
           <td>
             <button @click="editItem(item)" class="btn btn-warning btn-sm me-2">
               <i class="fas fa-pencil-alt"></i>
@@ -97,6 +120,19 @@
                 </div>
               </div>
               <div class="mb-3">
+                <label for="tipo_producto" class="form-label">Tipo Producto*:</label>
+                <select v-model="form.tipo_producto" id="tipo_producto" class="form-control" required>
+                  <option value="l">Lentes</option>
+                  <option value="m">Montura</option>
+                  <option value="c">Lentes de Contacto</option>
+                  <option value="u">Lunas</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="num_stock" class="form-label">Num Stock*:</label>
+                <input type="number" v-model="form.num_stock" id="num_stock" class="form-control" required>
+              </div>
+              <div class="mb-3">
                 <label for="imagen" class="form-label">Imagen{{ isEditing ? ' (dejar en blanco para mantener la actual)' : '*' }}:</label>
                 <input 
                   type="file" 
@@ -135,6 +171,8 @@ export default {
       form: {
         producto: '',
         precio: '',
+        tipo_producto: '',
+        num_stock: '',
         imagen: null
       },
       imagePreview: null,
@@ -152,7 +190,9 @@ export default {
       },
       filters: {
         producto: '',
-        precio: ''
+        precio: '',
+        tipo_producto: '',
+        num_stock: ''
       }
     };
   },
@@ -162,6 +202,8 @@ export default {
       const params = {
         producto: this.filters.producto || null,
         precio: this.filters.precio || null,
+        tipo_producto: this.filters.tipo_producto || null,
+        num_stock: this.filters.num_stock || null,
         page: this.pagination.current_page
       };
       
@@ -198,7 +240,13 @@ export default {
       new Modal(document.getElementById('stockModal')).show();
     },
     editItem(item) {
-      this.form = { ...item };
+      this.form = {
+        producto: item.producto,
+        precio: item.precio,
+        tipo_producto: item.tipo_producto,
+        num_stock: item.num_stock,
+        imagen: null // Reset image to null to avoid overwriting
+      };
       this.imagePreview = `${this.baseUrl}/images/stock/${item.imagen}`;
       this.showForm = true;
       this.isEditing = true;
@@ -209,6 +257,8 @@ export default {
       const formData = new FormData();
       formData.append('producto', this.form.producto);
       formData.append('precio', this.form.precio);
+      formData.append('tipo_producto', this.form.tipo_producto);
+      formData.append('num_stock', this.form.num_stock);
       
       if (this.form.imagen instanceof File) {
         formData.append('imagen', this.form.imagen);
@@ -255,6 +305,8 @@ export default {
       this.form = {
         producto: '',
         precio: '',
+        tipo_producto: '',
+        num_stock: '',
         imagen: null
       };
       this.imagePreview = null;
@@ -286,7 +338,9 @@ export default {
     resetFilters() {
       this.filters = {
         producto: '',
-        precio: ''
+        precio: '',
+        tipo_producto: '',
+        num_stock: ''
       };
       this.applyFilters();
     },
