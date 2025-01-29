@@ -57,7 +57,12 @@ export default {
                 {
                     title: 'Atención Hospitalaria',
                     items: [
-                        { name: 'Registro de Citas', icon: 'fas fa-stethoscope', url: '' },
+                        { name: 'Registro de Citas', icon: 'fas fa-stethoscope', url: '' }
+                    ]
+                },
+                {
+                    title: 'Optica',
+                    items: [
                         { name: 'Optica', icon: 'fas fa-glasses', url: '' }
                     ]
                 },
@@ -96,8 +101,8 @@ export default {
                 }
             ],
             submenuItems: [
-                { type: 'link', label: 'Catálogo de lentes', icon: 'fas fa-glasses', url: '/catalogo-lentes', condition: 'Atención Hospitalaria|Optica' },
-                { type: 'link', label: 'Control de stock', icon: 'fas fa-boxes', url: '/control-stock', condition: 'Atención Hospitalaria|Optica' },
+                { type: 'link', label: 'Catálogo de lentes', icon: 'fas fa-glasses', url: '/catalogo-lentes', condition: 'Optica|Optica' },
+                { type: 'link', label: 'Control de stock', icon: 'fas fa-boxes', url: '/control-stock', condition: 'Optica|Optica' },
                 { type: 'link', label: 'Gestionar Pacientes', icon: 'fas fa-users', url: '/pacientes', condition: 'Entidades|Pacientes' },
                 { type: 'link', label: 'Gestionar Médicos', icon: 'fas fa-user-md', url: '/medicos', condition: 'Entidades|Médicos' },
                 { type: 'link', label: 'Administrar Usuarios del Sistema', icon: 'fas fa-user-cog', url: '/usuarios', condition: 'Entidades|Utilitarios' },
