@@ -6,7 +6,8 @@ use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\PacienteController;
 use App\Http\Controllers\MedicoController;
 use App\Http\Controllers\CitaController;
-use App\Http\Controllers\StockController;  // Add this line
+use App\Http\Controllers\StockController;
+use App\Http\Controllers\TipoCitaController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -24,9 +25,10 @@ Route::get('/pacientes-list', [PacienteController::class, 'getAllPacientes']);
 
 Route::post('/citas', [CitaController::class, 'store']);
 Route::get('/citas', [CitaController::class, 'getCitasByMedicoAndFecha']);
-Route::get('/citas/check', [CitaController::class, 'checkCita']); // Add this line
+Route::get('/citas/check', [CitaController::class, 'checkCita']);
 
 Route::apiResource('usuarios', UsuarioController::class);
 Route::apiResource('pacientes', PacienteController::class);
 Route::apiResource('medicos', MedicoController::class);
 Route::apiResource('stock', StockController::class);
+Route::apiResource('tipos-citas', TipoCitaController::class);

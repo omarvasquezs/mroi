@@ -43,6 +43,11 @@ const routes = [
         component: () => import("../components/CatalogoLentes.vue"),
     },
     {
+        path: "/tipos-citas",
+        name: "TiposCitas",
+        component: () => import("../components/TiposCitasCrud.vue"), // Add this line
+    },
+    {
         path: "/:pathMatch(.*)*",
         component: () => import("../components/NotfoundPage.vue"),
     }
