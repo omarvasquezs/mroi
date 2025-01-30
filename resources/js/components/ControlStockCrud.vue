@@ -18,8 +18,8 @@
           <th>Imagen</th>
           <th>Producto</th>
           <th>Precio</th>
-          <th>Tipo Producto</th>
-          <th>Num Stock</th>
+          <th>Tipo de Producto</th>
+          <th>Cantidad en Stock</th>
           <th>Acciones</th>
         </tr>
         <tr>
@@ -73,7 +73,7 @@
           <td><img :src="`${baseUrl}/images/stock/${item.imagen}`" alt="Producto" style="height: 50px;"></td>
           <td>{{ item.producto }}</td>
           <td>S/. {{ item.precio }}</td>
-          <td>{{ item.tipo_producto }}</td>
+          <td>{{ getTipoProductoLabel(item.tipo_producto) }}</td>
           <td>{{ item.num_stock }}</td>
           <td>
             <button @click="editItem(item)" class="btn btn-warning btn-sm me-2">
@@ -120,7 +120,7 @@
                 </div>
               </div>
               <div class="mb-3">
-                <label for="tipo_producto" class="form-label">Tipo Producto*:</label>
+                <label for="tipo_producto" class="form-label">Tipo de Producto*:</label>
                 <select v-model="form.tipo_producto" id="tipo_producto" class="form-control" required>
                   <option value="l">Lentes</option>
                   <option value="m">Montura</option>
@@ -129,7 +129,7 @@
                 </select>
               </div>
               <div class="mb-3">
-                <label for="num_stock" class="form-label">Num Stock*:</label>
+                <label for="num_stock" class="form-label">Cantidad en Stock*:</label>
                 <input type="number" v-model="form.num_stock" id="num_stock" class="form-control" required>
               </div>
               <div class="mb-3">
@@ -353,6 +353,20 @@ export default {
     },
     goBack() {
       window.history.back();
+    },
+    getTipoProductoLabel(tipo) {
+      switch (tipo) {
+        case 'l':
+          return 'Lentes';
+        case 'm':
+          return 'Montura';
+        case 'c':
+          return 'Lentes de Contacto';
+        case 'u':
+          return 'Lunas';
+        default:
+          return tipo;
+      }
     }
   },
   mounted() {
