@@ -51,8 +51,13 @@
               </div>
             </div>
             <div class="mb-3">
-              <label class="form-label">Tipo de Producto</label>
-              <div>
+              <label class="form-label d-flex justify-content-between align-items-center" 
+                     role="button" 
+                     @click="toggleTipoProducto">
+                Tipo de Producto
+                <i class="fas fa-chevron-down" :class="{ 'rotate-icon': showTipoProducto }"></i>
+              </label>
+              <div v-show="showTipoProducto">
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" value="l" id="lentes" v-model="filters.tipo_producto">
                   <label class="form-check-label no-select" for="lentes">
@@ -165,7 +170,8 @@ export default {
       hasMorePages: true,
       observer: null,
       loadingMore: false,
-      showBackToTop: false
+      showBackToTop: false,
+      showTipoProducto: true, // Add this line
     }
   },
   watch: {
@@ -276,6 +282,9 @@ export default {
     },
     handleScroll() {
       this.showBackToTop = window.scrollY > 200;
+    },
+    toggleTipoProducto() {
+      this.showTipoProducto = !this.showTipoProducto;
     }
   },
   mounted() {
@@ -359,5 +368,19 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 8px;
+}
+
+.rotate-icon {
+  transform: rotate(180deg);
+  transition: transform 0.2s ease;
+}
+
+.fas.fa-chevron-down {
+  transition: transform 0.2s ease;
+}
+
+[role="button"] {
+  cursor: pointer;
+  user-select: none;
 }
 </style>
