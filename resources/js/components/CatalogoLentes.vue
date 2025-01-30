@@ -132,8 +132,8 @@
         <div ref="infiniteScrollTrigger" class="my-4"></div>
       </div>
     </div>
-    <button @click="scrollToTop" class="btn btn-primary back-to-top">
-      <i class="fas fa-arrow-up"></i>
+    <button @click="scrollToTop" class="btn btn-primary back-to-top" v-show="showBackToTop">
+      <i class="fas fa-arrow-up"></i> SUBIR
     </button>
   </div>
 </template>
@@ -164,7 +164,8 @@ export default {
       debounceTimeout: null,
       hasMorePages: true,
       observer: null,
-      loadingMore: false
+      loadingMore: false,
+      showBackToTop: false
     }
   },
   watch: {
@@ -272,17 +273,22 @@ export default {
     },
     scrollToTop() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    handleScroll() {
+      this.showBackToTop = window.scrollY > 200;
     }
   },
   mounted() {
     this.filters.tipo_producto = ['l', 'm', 'c', 'u']; // Set default to all options
     this.fetchProductos();
     this.setupInfiniteScroll();
+    window.addEventListener('scroll', this.handleScroll);
   },
   beforeUnmount() {
     if (this.observer) {
       this.observer.disconnect();
     }
+    window.removeEventListener('scroll', this.handleScroll);
   }
 }
 </script>
@@ -344,10 +350,14 @@ export default {
   bottom: 20px;
   right: 20px;
   z-index: 1000;
-  display: none;
-}
-
-.back-to-top.show {
-  display: block;
+  width: auto;
+  height: 50px;
+  border-radius: 25px;
+  font-size: 1rem;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 </style>
