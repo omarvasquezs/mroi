@@ -41,7 +41,7 @@
             </div>
           </th>
           <th>
-            <div class="position-relative">
+            <div class="position-relative select-wrapper">
               <select v-model="filters.tipo_producto" @change="applyFilters" class="form-control">
                 <option value="">Todos</option>
                 <option value="l">Lentes</option>
@@ -49,6 +49,7 @@
                 <option value="c">Lentes de Contacto</option>
                 <option value="u">Lunas</option>
               </select>
+              <i class="fas fa-chevron-down select-arrow"></i>
             </div>
           </th>
           <th>
@@ -121,12 +122,16 @@
               </div>
               <div class="mb-3">
                 <label for="tipo_producto" class="form-label">Tipo de Producto*:</label>
-                <select v-model="form.tipo_producto" id="tipo_producto" class="form-control" required>
-                  <option value="l">Lentes</option>
-                  <option value="m">Montura</option>
-                  <option value="c">Lentes de Contacto</option>
-                  <option value="u">Lunas</option>
-                </select>
+                <div class="position-relative select-wrapper">
+                  <select v-model="form.tipo_producto" id="tipo_producto" class="form-control" required>
+                    <option value="" disabled selected>Seleccione un tipo de producto</option>
+                    <option value="l">Lentes</option>
+                    <option value="m">Montura</option>
+                    <option value="c">Lentes de Contacto</option>
+                    <option value="u">Lunas</option>
+                  </select>
+                  <i class="fas fa-chevron-down select-arrow"></i>
+                </div>
               </div>
               <div class="mb-3">
                 <label for="num_stock" class="form-label">Cantidad en Stock*:</label>
@@ -400,5 +405,29 @@ export default {
 .preview-image {
   max-width: 100%;
   object-fit: contain;
+}
+
+/* Update select-wrapper styles to apply to all select inputs */
+.select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.select-wrapper select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 30px;
+  background-color: #fff;  /* Ensure background is white */
+}
+
+.select-arrow {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #6c757d;
 }
 </style>
