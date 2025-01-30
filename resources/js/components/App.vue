@@ -5,5 +5,5 @@
 </template>
 
 <style scoped>
-/* Add any styles for the App component here */
+
 </style>
