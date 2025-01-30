@@ -58,27 +58,27 @@
                 <i class="fas fa-chevron-down" :class="{ 'rotate-icon': showTipoProducto }"></i>
               </label>
               <div v-show="showTipoProducto">
-                <div class="form-check">
+                <div class="form-check custom-form-check" @click.prevent="toggleCheckbox('l')">
                   <input class="form-check-input" type="checkbox" value="l" id="lentes" v-model="filters.tipo_producto">
-                  <label class="form-check-label no-select" for="lentes">
+                  <label class="form-check-label no-select w-100" for="lentes">
                     Lentes
                   </label>
                 </div>
-                <div class="form-check">
+                <div class="form-check custom-form-check" @click.prevent="toggleCheckbox('m')">
                   <input class="form-check-input" type="checkbox" value="m" id="montura" v-model="filters.tipo_producto">
-                  <label class="form-check-label no-select" for="montura">
+                  <label class="form-check-label no-select w-100" for="montura">
                     Montura
                   </label>
                 </div>
-                <div class="form-check">
+                <div class="form-check custom-form-check" @click.prevent="toggleCheckbox('c')">
                   <input class="form-check-input" type="checkbox" value="c" id="contacto" v-model="filters.tipo_producto">
-                  <label class="form-check-label no-select" for="contacto">
+                  <label class="form-check-label no-select w-100" for="contacto">
                     Lentes de Contacto
                   </label>
                 </div>
-                <div class="form-check">
+                <div class="form-check custom-form-check" @click.prevent="toggleCheckbox('u')">
                   <input class="form-check-input" type="checkbox" value="u" id="lunas" v-model="filters.tipo_producto">
-                  <label class="form-check-label no-select" for="lunas">
+                  <label class="form-check-label no-select w-100" for="lunas">
                     Lunas
                   </label>
                 </div>
@@ -285,6 +285,14 @@ export default {
     },
     toggleTipoProducto() {
       this.showTipoProducto = !this.showTipoProducto;
+    },
+    toggleCheckbox(value) {
+      const index = this.filters.tipo_producto.indexOf(value);
+      if (index === -1) {
+        this.filters.tipo_producto.push(value);
+      } else {
+        this.filters.tipo_producto.splice(index, 1);
+      }
     }
   },
   mounted() {
@@ -318,9 +326,6 @@ export default {
   height: 200px;
   object-fit: cover;
   padding: 1rem;
-}
-
-.card-body {
 }
 
 .product-card-body {
@@ -382,5 +387,38 @@ export default {
 [role="button"] {
   cursor: pointer;
   user-select: none;
+}
+
+.custom-form-check {
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+  position: relative;
+}
+
+.custom-form-check:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 0.25rem;
+}
+
+.custom-form-check .form-check-input {
+  cursor: pointer;
+  margin: 0;
+  position: relative;
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+}
+
+.custom-form-check .form-check-label {
+  cursor: pointer;
+  margin: 0;
+  padding-left: 0.75rem;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  flex: 1;
 }
 </style>
