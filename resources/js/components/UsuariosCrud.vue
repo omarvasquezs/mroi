@@ -44,6 +44,7 @@
                 <option value="o">Óptica</option>
                 <option value="m">Médico</option>
                 <option value="s">Sistemas</option>
+                <option value="c">Caja</option>
               </select>
               <button v-if="filters.role" @click="clearFilter('role')" class="btn-clear">
                 <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
@@ -151,6 +152,10 @@
                   <div class="form-check">
                     <input class="form-check-input" type="radio" v-model="form.role" id="roleS" value="s" required>
                     <label class="form-check-label" for="roleS">Sistemas</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" v-model="form.role" id="roleC" value="c" required>
+                    <label class="form-check-label" for="roleC">Caja</label>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -367,6 +372,8 @@ export default {
           return 'Médico';
         case 's':
           return 'Sistemas';
+        case 'c':
+          return 'Caja';
         default:
           return '';
       }
