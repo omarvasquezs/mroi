@@ -132,6 +132,9 @@
         <div ref="infiniteScrollTrigger" class="my-4"></div>
       </div>
     </div>
+    <button @click="scrollToTop" class="btn btn-primary back-to-top">
+      <i class="fas fa-arrow-up"></i>
+    </button>
   </div>
 </template>
 
@@ -266,6 +269,9 @@ export default {
     },
     goBack() {
       window.history.back();
+    },
+    scrollToTop() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   },
   mounted() {
@@ -324,5 +330,17 @@ export default {
 
 .no-select {
   user-select: none;
+}
+
+.back-to-top {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: none;
+}
+
+.back-to-top.show {
+  display: block;
 }
 </style>

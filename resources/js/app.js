@@ -21,3 +21,12 @@ app.component('HomePage', HomePage);
 app.component('Layout', Layout);
 
 app.use(router).mount('#app');
+
+document.addEventListener('scroll', () => {
+  const backToTopButton = document.querySelector('.back-to-top');
+  if (window.scrollY > 200) {
+    backToTopButton.classList.add('show');
+  } else {
+    backToTopButton.classList.remove('show');
+  }
+});
