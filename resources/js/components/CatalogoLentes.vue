@@ -9,7 +9,7 @@
       <!-- Filters Section -->
       <div class="col-md-3">
         <div class="card sticky-top" style="top: 4rem;">
-          <div class="card-body">
+          <div class="card-body filter-card-body">
             <h5 class="card-title mb-3"></h5>
             <div class="mb-3">
               <label class="form-label">Búsqueda</label>
@@ -108,7 +108,7 @@
                   class="card-img-top product-image" 
                   :alt="producto.producto"
                 >
-                <div class="card-body">
+                <div class="card-body product-card-body">
                   <h5 class="card-title">{{ producto.producto }}</h5>
                   <p class="card-text">S/. {{ producto.precio }}</p>
                   <p class="card-text">En stock: {{ producto.num_stock }}</p>
@@ -306,7 +306,14 @@ export default {
 }
 
 .card-body {
+}
+
+.product-card-body {
   text-align: center;
+}
+
+.filter-card-body {
+  text-align: left;
 }
 
 .btn-link-custom {
