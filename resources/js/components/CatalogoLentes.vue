@@ -8,9 +8,9 @@
     <div class="row">
       <!-- Filters Section -->
       <div class="col-md-3">
-        <div class="card sticky-top" style="top: 1rem;">
+        <div class="card sticky-top" style="top: 4rem;">
           <div class="card-body">
-            <h5 class="card-title mb-3">Filtros</h5>
+            <h5 class="card-title mb-3"></h5>
             <div class="mb-3">
               <label class="form-label">Búsqueda</label>
               <input 
@@ -20,32 +20,63 @@
                 placeholder="Buscar productos..."
               >
             </div>
-            <div class="mb-3">
-              <label class="form-label">Precio mínimo</label>
-              <div class="input-group">
-                <span class="input-group-text">S/.</span>
-                <input 
-                  type="number" 
-                  v-model.number="filters.precio_min" 
-                  class="form-control" 
-                  placeholder="Mín"
-                  min="0"
-                  step="0.01"
-                >
+            <div class="row mb-3">
+              <div class="col">
+                <label class="form-label">Precio mínimo</label>
+                <div class="input-group">
+                  <span class="input-group-text">S/.</span>
+                  <input 
+                    type="number" 
+                    v-model.number="filters.precio_min" 
+                    class="form-control" 
+                    placeholder="Mín"
+                    min="0"
+                    step="0.01"
+                  >
+                </div>
+              </div>
+              <div class="col">
+                <label class="form-label">Precio máximo</label>
+                <div class="input-group">
+                  <span class="input-group-text">S/.</span>
+                  <input 
+                    type="number" 
+                    v-model.number="filters.precio_max" 
+                    class="form-control" 
+                    placeholder="Máx"
+                    min="0"
+                    step="0.01"
+                  >
+                </div>
               </div>
             </div>
             <div class="mb-3">
-              <label class="form-label">Precio máximo</label>
-              <div class="input-group">
-                <span class="input-group-text">S/.</span>
-                <input 
-                  type="number" 
-                  v-model.number="filters.precio_max" 
-                  class="form-control" 
-                  placeholder="Máx"
-                  min="0"
-                  step="0.01"
-                >
+              <label class="form-label">Tipo de Producto</label>
+              <div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" value="l" id="lentes" v-model="filters.tipo_producto">
+                  <label class="form-check-label no-select" for="lentes">
+                    Lentes
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" value="m" id="montura" v-model="filters.tipo_producto">
+                  <label class="form-check-label no-select" for="montura">
+                    Montura
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" value="c" id="contacto" v-model="filters.tipo_producto">
+                  <label class="form-check-label no-select" for="contacto">
+                    Lentes de Contacto
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" value="u" id="lunas" v-model="filters.tipo_producto">
+                  <label class="form-check-label no-select" for="lunas">
+                    Lunas
+                  </label>
+                </div>
               </div>
             </div>
             <button @click="resetFilters" class="btn btn-secondary btn-sm w-100">
@@ -120,7 +151,8 @@ export default {
       filters: {
         producto: '',
         precio_min: null,
-        precio_max: null
+        precio_max: null,
+        tipo_producto: []
       },
       debounceTimeout: null,
       hasMorePages: true,
@@ -163,12 +195,13 @@ export default {
 
       const params = {
         ...this.filters,
+        tipo_producto: this.filters.tipo_producto.join(','),
         page: this.pagination.current_page
       };
 
       // Remove null or empty string values
       Object.keys(params).forEach(key => {
-        if (params[key] === null || params[key] === '') {
+        if (params[key] === null || params[key] === '' || (Array.isArray(params[key]) && params[key].length === 0)) {
           delete params[key];
         }
       });
@@ -203,7 +236,8 @@ export default {
       this.filters = {
         producto: '',
         precio_min: null,
-        precio_max: null
+        precio_max: null,
+        tipo_producto: []
       };
       this.productos = []; // Clear existing products
       this.pagination.current_page = 1; // Reset to first page
@@ -231,6 +265,7 @@ export default {
     }
   },
   mounted() {
+    this.filters.tipo_producto = ['l', 'm', 'c', 'u']; // Set default to all options
     this.fetchProductos();
     this.setupInfiniteScroll();
   },
@@ -281,5 +316,9 @@ export default {
 .card-title {
   color: #495057;
   font-size: 1.1rem;
+}
+
+.no-select {
+  user-select: none;
 }
 </style>

@@ -33,6 +33,12 @@ class StockController extends Controller
             $perPage = 10; // Set to 10 for ControlStockCrud
         }
 
+        // Filter by tipo_producto
+        if ($request->filled('tipo_producto')) {
+            $tipoProductos = explode(',', $request->tipo_producto);
+            $query->whereIn('tipo_producto', $tipoProductos);
+        }
+
         $result = $query->orderBy('created_at', 'desc')->paginate($perPage);
         return response()->json([
             'current_page' => $result->currentPage(),
