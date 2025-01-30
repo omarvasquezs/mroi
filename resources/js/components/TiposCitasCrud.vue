@@ -3,7 +3,7 @@
     <div class="mb-4">
       <button @click="goBack" class="btn btn-link">← Regresar</button>
     </div>
-    <h1>Gestión de Tipos de Citas</h1>
+    <h2>Gestión de Tipos de Citas</h2>
     <button @click="showCreateForm" class="btn btn-primary mb-3">Crear Tipo de Cita</button>
     <button @click="resetFilters" class="btn btn-secondary mb-3 ms-2">Resetear Filtros</button>
     <div v-if="alertMessage" class="alert alert-success alert-dismissible fade show" role="alert">

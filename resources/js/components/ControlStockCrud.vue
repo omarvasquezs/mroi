@@ -3,7 +3,7 @@
     <div class="mb-4">
       <button @click="goBack" class="btn btn-link">← Regresar</button>
     </div>
-    <h1>Gestión de Stock</h1>
+    <h2>Gestión de Stock</h2>
     <button @click="showCreateForm" class="btn btn-primary mb-3">Crear Producto</button>
     <button @click="resetFilters" class="btn btn-secondary mb-3 ms-2">Resetear Filtros</button>
 

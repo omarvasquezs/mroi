@@ -3,7 +3,7 @@
     <div class="mb-4">
       <button @click="goBack" class="btn btn-link">← Regresar</button>
     </div>
-    <h1 class="text-center mb-4">Catálogo de Productos</h1>
+    <h2 class="mb-4">Catálogo de Productos</h2>
 
     <div class="row">
       <!-- Filters Section -->

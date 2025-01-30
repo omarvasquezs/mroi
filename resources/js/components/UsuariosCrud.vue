@@ -3,7 +3,7 @@
     <div class="mb-4">
       <button @click="goBack" class="btn btn-link btn-link-custom">← Regresar</button>
     </div>
-    <h1>Gestión de Usuarios</h1>
+    <h2>Gestión de Usuarios</h2>
     <button @click="showCreateForm" class="btn btn-primary mb-3">Crear Usuario</button>
     <button @click="resetFilters" class="btn btn-secondary mb-3 ms-2">Resetear Filtros</button>
     <div v-if="alertMessage" class="alert alert-success alert-dismissible fade show" role="alert">
