@@ -80,7 +80,7 @@
               </div>
             </div>
             <button @click="resetFilters" class="btn btn-secondary btn-sm w-100">
-              Limpiar filtros
+              <i class="fas fa-trash-alt"></i> Limpiar filtros
             </button>
           </div>
         </div>
@@ -111,6 +111,7 @@
                 <div class="card-body">
                   <h5 class="card-title">{{ producto.producto }}</h5>
                   <p class="card-text">S/. {{ producto.precio }}</p>
+                  <p class="card-text">En stock: {{ producto.num_stock }}</p> <!-- New line added -->
                 </div>
               </div>
             </div>
