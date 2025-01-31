@@ -13,7 +13,8 @@ class Cita extends Model
         'num_historia',
         'id_medico',
         'fecha',
-        'observaciones'
+        'observaciones',
+        'id_tipo_cita'
     ];
 
     protected $casts = [
@@ -30,5 +31,10 @@ class Cita extends Model
     public function medico(): BelongsTo
     {
         return $this->belongsTo(Medico::class, 'id_medico', 'id');
+    }
+
+    public function tipoCita(): BelongsTo
+    {
+        return $this->belongsTo(TipoCita::class, 'id_tipo_cita', 'id');
     }
 }

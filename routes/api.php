@@ -27,6 +27,8 @@ Route::post('/citas', [CitaController::class, 'store']);
 Route::get('/citas', [CitaController::class, 'getCitasByMedicoAndFecha']);
 Route::get('/citas/check', [CitaController::class, 'checkCita']);
 
+Route::get('/tipos-citas-list', [TipoCitaController::class, 'getAllTipoCitas']);
+
 Route::apiResource('usuarios', UsuarioController::class);
 Route::apiResource('pacientes', PacienteController::class);
 Route::apiResource('medicos', MedicoController::class);

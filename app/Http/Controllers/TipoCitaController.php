@@ -51,4 +51,9 @@ class TipoCitaController extends Controller
         TipoCita::destroy($id);
         return response()->json(null, 204);
     }
+
+    public function getAllTipoCitas()
+    {
+        return response()->json(TipoCita::all());
+    }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cita;
+use App\Models\TipoCita;
 use Illuminate\Http\Request;
 
 class CitaController extends Controller
@@ -14,7 +15,8 @@ class CitaController extends Controller
             'id_medico' => 'required|exists:medicos,id',
             'fecha' => 'required|date',
             'hora' => 'required',
-            'observaciones' => 'nullable|string'
+            'observaciones' => 'nullable|string',
+            'id_tipo_cita' => 'required|exists:tipos_citas,id'
         ]);
 
         // Combine date and time
@@ -24,7 +26,8 @@ class CitaController extends Controller
             'num_historia' => $validated['num_historia'],
             'id_medico' => $validated['id_medico'],
             'fecha' => $fechaHora,
-            'observaciones' => $validated['observaciones']
+            'observaciones' => $validated['observaciones'],
+            'id_tipo_cita' => $validated['id_tipo_cita']
         ]);
 
         return response()->json($cita, 201);
@@ -67,6 +70,11 @@ class CitaController extends Controller
         return response()->json($citas);
     }
 
+    public function getTiposCitas()
+    {
+        return response()->json(TipoCita::all());
+    }
+
     public function checkCita(Request $request)
     {
         $medicoId = $request->query('medico');
@@ -80,7 +88,7 @@ class CitaController extends Controller
         $cita = Cita::where('id_medico', $medicoId)
             ->whereDate('fecha', $fecha)
             ->whereTime('fecha', $hora)
-            ->with('paciente') // Ensure paciente information is included
+            ->with(['paciente', 'tipoCita']) // Include tipoCita relation
             ->first();
 
         return response()->json($cita);
