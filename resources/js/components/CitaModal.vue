@@ -62,7 +62,7 @@
                 <select v-model="formData.num_historia" class="form-select">
                   <option value="" disabled>Seleccione un paciente</option>
                   <option v-for="paciente in pacientes" :key="paciente.num_historia" :value="paciente.num_historia">
-                    {{ formatPatientName(paciente) }}
+                    {{ paciente.nombre.toUpperCase() }}
                   </option>
                 </select>
               </div>
