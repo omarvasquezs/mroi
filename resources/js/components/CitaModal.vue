@@ -83,8 +83,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-          <button type="button" class="btn btn-primary" v-if="!showCitaInfo" @click="saveCita">Guardar</button>
+          <button type="button" class="btn btn-primary" v-if="!showCitaInfo" @click="saveCita">GENERAR PRE-FACTURA</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CERRAR</button>
         </div>
       </div>
     </div>
