@@ -31,11 +31,11 @@ class Cita extends Model
 
     public function medico(): BelongsTo
     {
-        return $this->belongsTo(Medico::class, 'id_medico', 'id');
+        return $this->belongsTo(Medico::class, 'id_medico');
     }
 
     public function tipoCita(): BelongsTo
     {
-        return $this->belongsTo(TipoCita::class, 'id_tipo_cita', 'id');
+        return $this->belongsTo(TipoCita::class, 'id_tipo_cita');
     }
 }

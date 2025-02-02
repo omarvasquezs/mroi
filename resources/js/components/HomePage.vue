@@ -122,7 +122,8 @@ export default {
                 { type: 'link', label: 'HC Enfermería', icon: 'fas fa-notes-medical', url: '/hc-enfermeria', condition: 'Atención Médica|Enfermería' },
                 { type: 'link', label: 'Monitor Enfermería', icon: 'fas fa-desktop', url: '/monitor-enfermeria', condition: 'Atención Médica|Enfermería' },
                 { type: 'link', label: 'Registro de Examenes', icon: 'fas fa-vials', url: '/registro-examenes', condition: 'Examenes|Laboratorio' },
-                { type: 'link', label: 'Registro de Citas', icon: 'fas fa-stethoscope', url: '/registro-citas', condition: 'Atención Hospitalaria|Registro de Citas' }
+                { type: 'link', label: 'Registro de Citas', icon: 'fas fa-stethoscope', url: '/registro-citas', condition: 'Atención Hospitalaria|Registro de Citas' },
+                { type: 'link', label: 'Gestionar Caja', icon: 'fas fa-cash-register', url: '/caja', condition: 'Servicios Contables|Caja' }
             ]
         };
     },

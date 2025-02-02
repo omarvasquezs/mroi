@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
+import Caja from '../components/Caja.vue';
 
 const routes = [
     {
@@ -46,6 +47,12 @@ const routes = [
         path: "/tipos-citas",
         name: "TiposCitas",
         component: () => import("../components/TiposCitasCrud.vue"),
+    },
+    {
+        path: '/caja',
+        name: 'caja',
+        component: Caja,
+        meta: { requiresAuth: true }
     },
     {
         path: "/:pathMatch(.*)*",
