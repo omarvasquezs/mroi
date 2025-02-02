@@ -13,6 +13,7 @@ class Cita extends Model
         'num_historia',
         'id_medico',
         'fecha',
+        'estado',
         'observaciones',
         'id_tipo_cita'
     ];
