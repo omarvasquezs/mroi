@@ -60,7 +60,6 @@ export default {
                     items: [
                         { name: 'Caja', icon: 'fas fa-cash-register', url: '' },
                         { name: 'Facturación', icon: 'fas fa-file-invoice-dollar', url: '' },
-                        { name: 'Presupuesto', icon: 'fas fa-calculator', url: '' },
                         { name: 'Contabilidad', icon: 'fas fa-book', url: '' }
                     ]
                 },

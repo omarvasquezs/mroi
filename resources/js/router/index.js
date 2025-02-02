@@ -45,7 +45,7 @@ const routes = [
     {
         path: "/tipos-citas",
         name: "TiposCitas",
-        component: () => import("../components/TiposCitasCrud.vue"), // Add this line
+        component: () => import("../components/TiposCitasCrud.vue"),
     },
     {
         path: "/:pathMatch(.*)*",
