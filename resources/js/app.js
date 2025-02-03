@@ -24,9 +24,34 @@ app.use(router).mount('#app');
 
 document.addEventListener('scroll', () => {
   const backToTopButton = document.querySelector('.back-to-top');
-  if (window.scrollY > 200) {
+  if (backToTopButton && window.scrollY > 200) {
     backToTopButton.classList.add('show');
-  } else {
+  } else if (backToTopButton) {
     backToTopButton.classList.remove('show');
   }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const menuToggle = document.querySelector('[data-toggle="sb-sidenav-toggle"]');
+    const sidebarWrapper = document.getElementById('sb-sidenav-wrapper');
+
+    if (menuToggle && sidebarWrapper) {
+        menuToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            sidebarWrapper.classList.toggle('toggled');
+        });
+    }
+
+    // Handle window resize
+    let windowWidth = window.innerWidth;
+    window.addEventListener('resize', function() {
+        if (sidebarWrapper && windowWidth !== window.innerWidth) {
+            windowWidth = window.innerWidth;
+            if (window.innerWidth < 768) {
+                sidebarWrapper.classList.add('toggled');
+            } else {
+                sidebarWrapper.classList.remove('toggled');
+            }
+        }
+    });
 });
