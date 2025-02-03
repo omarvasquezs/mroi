@@ -43,6 +43,14 @@
                   {{ localCita?.tipo_cita ? `${localCita.tipo_cita.tipo_cita} - S/. ${localCita.tipo_cita.precio}` : 'No especificado' }}
                 </div>
               </div>
+              <div class="row mb-3">
+                <div class="col-md-3"><strong>Estado de Pago:</strong></div>
+                <div class="col-md-9">
+                  <span :class="['badge', localCita.estado === 'p' ? 'bg-success' : 'bg-warning']">
+                    {{ localCita.estado === 'p' ? 'PAGADO' : 'PENDIENTE' }}
+                  </span>
+                </div>
+              </div>
             </div>
             <div v-else>
               <div class="row mb-3">
@@ -236,6 +244,8 @@ export default {
         if (response.ok && contentType && contentType.includes('application/json')) {
           const cita = await response.json();
           console.log('Cita found:', cita);
+          // Add estado to the debug information
+          console.log('Estado de pago:', cita.estado);
           // Only show cita info if cita.id is valid
           if (cita && cita.id && cita.id !== 0) {
             this.showCitaInfoMethod(cita);
@@ -290,3 +300,10 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.badge {
+  font-size: 0.9em;
+  padding: 0.5em 1em;
+}
+</style>
