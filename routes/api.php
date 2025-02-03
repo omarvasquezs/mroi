@@ -9,6 +9,7 @@ use App\Http\Controllers\CitaController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\TipoCitaController;
 use App\Http\Controllers\ComprobanteController;
+use App\Http\Controllers\MetodoPagoController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -38,6 +39,7 @@ Route::apiResource('pacientes', PacienteController::class);
 Route::apiResource('medicos', MedicoController::class);
 Route::apiResource('stock', StockController::class);
 Route::apiResource('tipos-citas', TipoCitaController::class);
+Route::apiResource('metodos-pago', MetodoPagoController::class);
 
 Route::get('/pacientes', [PacienteController::class, 'index']);
 Route::get('/pacientes/{id}/appointments', [PacienteController::class, 'show']);

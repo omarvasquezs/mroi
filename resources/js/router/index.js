@@ -55,6 +55,12 @@ const routes = [
         meta: { requiresAuth: true }
     },
     {
+        path: '/metodos-pago',
+        name: 'metodos-pago',
+        component: () => import('../components/MetodosPago.vue'),
+        meta: { requiresAuth: true }
+    },
+    {
         path: "/:pathMatch(.*)*",
         component: () => import("../components/NotfoundPage.vue"),
     }

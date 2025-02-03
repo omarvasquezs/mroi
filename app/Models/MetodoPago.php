@@ -13,6 +13,10 @@ class MetodoPago extends Model
         'activo'
     ];
 
+    protected $casts = [
+        'activo' => 'boolean'
+    ];
+
     public function comprobantes()
     {
         return $this->hasMany(Comprobante::class, 'id_metodo_pago');
