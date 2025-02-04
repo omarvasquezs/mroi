@@ -101,7 +101,7 @@ export default {
                     ]
                 }
             ],
-            submenuItems: [
+            availableMenuItems: [  // Renamed from submenuItems
                 { type: 'link', label: 'Catálogo de lentes', icon: 'fas fa-glasses', url: '/catalogo-lentes', condition: 'Optica|Optica' },
                 { type: 'link', label: 'Control de stock', icon: 'fas fa-boxes', url: '/control-stock', condition: 'Optica|Optica' },
                 { type: 'link', label: 'Gestionar Pacientes', icon: 'fas fa-users', url: '/pacientes', condition: 'Atención Hospitalaria|Pacientes' },
@@ -141,10 +141,12 @@ export default {
         }
     },
     computed: {
-        submenuItems() {
-            return this.submenuItems.filter(item => {
+        submenuItems() {  // This stays as computed property
+            return this.availableMenuItems.filter(item => {
                 const [menuTitle, subMenuTitle] = item.condition.split('|');
-                return this.selectedMenu && this.selectedMenu.title === menuTitle && this.selectedSubMenu === subMenuTitle;
+                return this.selectedMenu && 
+                       this.selectedMenu.title === menuTitle && 
+                       this.selectedSubMenu === subMenuTitle;
             });
         }
     }
