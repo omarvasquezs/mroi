@@ -5,4 +5,6 @@ import router from './router';
 
 const app = createApp(App);
 
-app.use(router).mount('#login');
+if (document.getElementById('login')) {
+    app.use(router).mount('#login');
+}

@@ -20,7 +20,9 @@ app.component('Navbar', Navbar);
 app.component('HomePage', HomePage);
 app.component('Layout', Layout);
 
-app.use(router).mount('#app');
+if (document.getElementById('app')) {
+  app.use(router).mount('#app');
+}
 
 document.addEventListener('scroll', () => {
   const backToTopButton = document.querySelector('.back-to-top');
