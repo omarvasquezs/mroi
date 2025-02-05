@@ -1,5 +1,8 @@
 <template>
     <div class="container">
+        <div class="mb-4">
+            <button @click="goBack" class="btn btn-link">← Regresar</button>
+        </div>
         <!-- Search Patient Section -->
         <div class="card mb-4">
             <div class="card-header">Búsqueda de Paciente</div>
@@ -127,6 +130,9 @@ export default {
         this.fetchMetodosPago(); // Add this line
     },
     methods: {
+        goBack() {
+            window.history.back();
+        },
         async fetchPacientes() {
             try {
                 const response = await axios.get('/api/pacientes-list');
