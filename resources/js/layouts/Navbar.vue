@@ -13,8 +13,7 @@
                             <i class="fas fa-user me-1"></i> {{ username }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><router-link class="dropdown-item" to="/profile">Perfil</router-link></li>
-                            <li><router-link class="dropdown-item" to="/settings">Configuración</router-link></li>
+                            <li><router-link class="dropdown-item" to="/change-password">Cambiar Clave</router-link></li>
                             <li>
                                 <hr class="dropdown-divider">
                             </li>

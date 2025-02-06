@@ -17,6 +17,7 @@ Route::get('/user', function (Request $request) {
 
 Route::post('/login', [UsuarioController::class, 'login']);
 Route::post('/logout', [UsuarioController::class, 'logout'])->middleware('auth:sanctum');
+Route::post('/change-password', [UsuarioController::class, 'changePassword']);
 
 Route::get('/usuarios/check-username', [UsuarioController::class, 'checkUsername']);
 Route::get('/pacientes/check-doc-identidad', [PacienteController::class, 'checkDocIdentidad']);

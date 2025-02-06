@@ -89,4 +89,26 @@ class UsuarioController extends Controller
         $request->user()->tokens()->delete();
         return response()->json(['message' => 'Logged out']);
     }
+
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'new_password' => 'required|min:6',
+            'password_confirmation' => 'required|same:new_password',
+            'username' => 'required'
+        ]);
+
+        $user = Usuario::where('username', $request->username)->first();
+        if (!$user) {
+            return response()->json(['error' => 'Usuario no encontrado'], 404);
+        }
+
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return response()->json([
+            'message' => 'Clave actualizada exitosamente',
+            'success' => true
+        ]);
+    }
 }
