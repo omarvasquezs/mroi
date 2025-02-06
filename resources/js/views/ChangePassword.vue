@@ -1,9 +1,12 @@
 <template>
     <div class="container mt-5 pt-5">
+        <div class="mb-4">
+            <button @click="goBack" class="btn btn-link">← Regresar</button>
+        </div>
         <div class="row justify-content-center">
             <div class="col-md-6">
                 <div class="card">
-                    <div class="card-header">Cambiar Clave de <span class="fw-bold">{{ username }}</span></div>
+                    <div class="card-header">Cambiar Clave</div>
                     <div class="card-body">
                         <form @submit.prevent="changePassword">
                             <div class="mb-3">
@@ -32,11 +35,13 @@ export default {
             form: {
                 new_password: '',
                 confirm_password: ''
-            }
+            },
+            id: null
         }
     },
     created() {
-        this.username = JSON.parse(localStorage.getItem('user')).username;
+        // Extract id from localStorage user
+        this.id = JSON.parse(localStorage.getItem('user')).id;
     },
     methods: {
         async changePassword() {
@@ -48,9 +53,9 @@ export default {
             try {
                 const response = await axios.post('/api/change-password', 
                     { 
+                        id: this.id,
                         new_password: this.form.new_password,
-                        password_confirmation: this.form.confirm_password,
-                        username: JSON.parse(localStorage.getItem('user')).username
+                        password_confirmation: this.form.confirm_password
                     }
                 );
 
@@ -62,6 +67,9 @@ export default {
             } catch (error) {
                 alert(error.response?.data?.message || 'Error al cambiar la clave');
             }
+        },
+        goBack() {
+            this.$router.go(-1);
         }
     }
 }

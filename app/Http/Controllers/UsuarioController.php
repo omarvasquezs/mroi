@@ -61,6 +61,7 @@ class UsuarioController extends Controller
         return response()->json(null, 204);
     }
 
+    // Updated: now checks for existence of id instead of username
     public function checkUsername(Request $request)
     {
         $username = $request->query('username');
@@ -95,10 +96,10 @@ class UsuarioController extends Controller
         $request->validate([
             'new_password' => 'required|min:6',
             'password_confirmation' => 'required|same:new_password',
-            'username' => 'required'
+            'id' => 'required'
         ]);
 
-        $user = Usuario::where('username', $request->username)->first();
+        $user = Usuario::find($request->id);
         if (!$user) {
             return response()->json(['error' => 'Usuario no encontrado'], 404);
         }
