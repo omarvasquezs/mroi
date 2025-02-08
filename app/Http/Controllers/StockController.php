@@ -61,8 +61,7 @@ class StockController extends Controller
             'producto' => 'required|string|max:255',
             'imagen' => 'required|file|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'precio' => 'required|numeric|min:0',
-            'tipo_producto' => 'required|in:l,m,c,u',
-            'num_stock' => 'required|integer|min:0'
+            'tipo_producto' => 'required|in:l,m,c,u'
         ]);
 
         try {
@@ -84,8 +83,7 @@ class StockController extends Controller
                 'producto' => $validated['producto'],
                 'imagen' => $validated['imagen'],
                 'precio' => $validated['precio'],
-                'tipo_producto' => $validated['tipo_producto'],
-                'num_stock' => $validated['num_stock']
+                'tipo_producto' => $validated['tipo_producto']
             ]);
 
             return response()->json($stock, 201);
@@ -106,8 +104,7 @@ class StockController extends Controller
             'producto' => 'required|string|max:255',
             'precio' => 'required|numeric|min:0',
             'tipo_producto' => 'required|in:l,m,c,u',
-            'num_stock' => 'required|integer|min:0',
-            'imagen' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'imagen' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp|max:2048'
         ]);
 
         try {
@@ -115,8 +112,7 @@ class StockController extends Controller
             $updateData = [
                 'producto' => $validated['producto'],
                 'precio' => $validated['precio'],
-                'tipo_producto' => $validated['tipo_producto'],
-                'num_stock' => $validated['num_stock']
+                'tipo_producto' => $validated['tipo_producto']
             ];
             
             if ($request->hasFile('imagen')) {

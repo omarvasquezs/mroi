@@ -19,7 +19,6 @@
           <th>Producto</th>
           <th>Precio</th>
           <th>Tipo de Producto</th>
-          <th>Cantidad en Stock</th>
           <th>Acciones</th>
         </tr>
         <tr>
@@ -52,30 +51,21 @@
               <i class="fas fa-chevron-down select-arrow"></i>
             </div>
           </th>
-          <th>
-            <div class="position-relative">
-              <input type="number" v-model="filters.num_stock" @input="applyFilters" class="form-control" placeholder="Filtrar por Stock">
-              <button v-if="filters.num_stock" @click="clearFilter('num_stock')" class="btn-clear">
-                <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
-              </button>
-            </div>
-          </th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         <tr v-if="loading">
-          <td colspan="6" class="text-center">Cargando...</td>
+          <td colspan="5" class="text-center">Cargando...</td>
         </tr>
         <tr v-else-if="!items || items.length === 0">
-          <td colspan="6" class="text-center">No hay productos en el stock.</td>
+          <td colspan="5" class="text-center">No hay productos en el stock.</td>
         </tr>
         <tr v-else v-for="item in items" :key="item.id">
           <td><img :src="`${baseUrl}/images/stock/${item.imagen}`" alt="Producto" style="height: 50px;"></td>
           <td>{{ item.producto }}</td>
           <td>S/. {{ item.precio }}</td>
           <td>{{ getTipoProductoLabel(item.tipo_producto) }}</td>
-          <td>{{ item.num_stock }}</td>
           <td>
             <button @click="editItem(item)" class="btn btn-warning btn-sm me-2">
               <i class="fas fa-pencil-alt"></i>
@@ -134,10 +124,6 @@
                 </div>
               </div>
               <div class="mb-3">
-                <label for="num_stock" class="form-label">Cantidad en Stock*:</label>
-                <input type="number" v-model="form.num_stock" id="num_stock" class="form-control" required>
-              </div>
-              <div class="mb-3">
                 <label for="imagen" class="form-label">Imagen{{ isEditing ? ' (dejar en blanco para mantener la actual)' : '*' }}:</label>
                 <input 
                   type="file" 
@@ -171,13 +157,12 @@ export default {
   data() {
     return {
       baseUrl: window.location.origin,
-      items: [],  // Initialize as empty array
-      loading: true,  // Add loading state
+      items: [],
+      loading: true,
       form: {
         producto: '',
         precio: '',
         tipo_producto: '',
-        num_stock: '',
         imagen: null
       },
       imagePreview: null,
@@ -187,7 +172,7 @@ export default {
       alertMessage: '',
       pagination: {
         total: 0,
-        per_page: 10,  // Changed from default to 10
+        per_page: 10,
         current_page: 1,
         last_page: 1,
         next_page_url: null,
@@ -196,8 +181,7 @@ export default {
       filters: {
         producto: '',
         precio: '',
-        tipo_producto: '',
-        num_stock: ''
+        tipo_producto: ''
       }
     };
   },
@@ -208,13 +192,12 @@ export default {
         producto: this.filters.producto || null,
         precio: this.filters.precio || null,
         tipo_producto: this.filters.tipo_producto || null,
-        num_stock: this.filters.num_stock || null,
         page: this.pagination.current_page
       };
       
       axios.get(url, { params })
         .then(response => {
-          console.log('Response:', response.data); // Add this for debugging
+          console.log('Response:', response.data);
           this.items = response.data.data;
           this.pagination = {
             current_page: response.data.current_page,
@@ -249,8 +232,7 @@ export default {
         producto: item.producto,
         precio: item.precio,
         tipo_producto: item.tipo_producto,
-        num_stock: item.num_stock,
-        imagen: null // Reset image to null to avoid overwriting
+        imagen: null
       };
       this.imagePreview = `${this.baseUrl}/images/stock/${item.imagen}`;
       this.showForm = true;
@@ -263,7 +245,6 @@ export default {
       formData.append('producto', this.form.producto);
       formData.append('precio', this.form.precio);
       formData.append('tipo_producto', this.form.tipo_producto);
-      formData.append('num_stock', this.form.num_stock);
       
       if (this.form.imagen instanceof File) {
         formData.append('imagen', this.form.imagen);
@@ -272,7 +253,7 @@ export default {
       try {
         let response;
         if (this.isEditing) {
-          formData.append('_method', 'PUT'); // Add this for Laravel to handle PUT
+          formData.append('_method', 'PUT');
           response = await axios.post(`/api/stock/${this.editingId}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
@@ -311,13 +292,11 @@ export default {
         producto: '',
         precio: '',
         tipo_producto: '',
-        num_stock: '',
         imagen: null
       };
       this.imagePreview = null;
       this.isEditing = false;
       this.editingId = null;
-      // Reset file input
       if (this.$refs.fileInput) {
         this.$refs.fileInput.value = '';
       }
@@ -326,7 +305,7 @@ export default {
       const modal = Modal.getInstance(document.getElementById('stockModal'));
       if (modal) {
         modal.hide();
-        this.resetForm(); // Add this line to ensure form is reset when modal is closed
+        this.resetForm();
       }
     },
     changePage(url) {
@@ -344,8 +323,7 @@ export default {
       this.filters = {
         producto: '',
         precio: '',
-        tipo_producto: '',
-        num_stock: ''
+        tipo_producto: ''
       };
       this.applyFilters();
     },

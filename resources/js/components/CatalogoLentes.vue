@@ -116,7 +116,6 @@
                 <div class="card-body product-card-body">
                   <h5 class="card-title">{{ producto.producto }}</h5>
                   <p class="card-text">S/. {{ producto.precio }}</p>
-                  <p class="card-text">En stock: {{ producto.num_stock }}</p>
                   <button class="btn btn-success w-100 mt-2">
                     <i class="fas fa-plus-circle"></i> AGREGAR PRODUCTO
                   </button>
