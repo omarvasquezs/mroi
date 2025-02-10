@@ -91,7 +91,7 @@
           </div>
           <div v-else class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             <div v-for="producto in productos" :key="producto.id" class="col">
-              <div class="card h-100 product-card">
+              <div :class="['card h-100 product-card', { 'animate-add': producto.id === recentlyAddedProductId }]">
                 <img :src="`${baseUrl}/images/stock/${producto.imagen}`" class="card-img-top product-image"
                   :alt="producto.producto">
                 <div class="card-body product-card-body">
@@ -100,6 +100,10 @@
                   <button @click="agregarProducto(producto)" class="btn btn-success w-100 mt-2">
                     <i class="fas fa-plus-circle"></i> AGREGAR PRODUCTO
                   </button>
+                </div>
+                <div v-if="producto.id === recentlyAddedProductId" class="checkmark-overlay">
+                  <i class="fas fa-check-circle"></i>
+                  <span class="added-text">Agregado</span>
                 </div>
               </div>
             </div>
@@ -210,7 +214,8 @@ export default {
       showTipoProducto: true,
       cart: [],
       showCart: false,  // Added showCart property
-      selectedItems: [] // Added selectedItems property
+      selectedItems: [], // Added selectedItems property
+      recentlyAddedProductId: null // Added recentlyAddedProductId property
     }
   },
   watch: {
@@ -352,6 +357,12 @@ export default {
         // If the product doesn't exist, add it to the cart with quantity 1
         this.cart.push({ ...producto, quantity: 1 });
       }
+
+      // Set recently added product ID for animation
+      this.recentlyAddedProductId = producto.id;
+      setTimeout(() => {
+        this.recentlyAddedProductId = null;
+      }, 1500); // Remove the animation class after 1.5 seconds
     },
     removerProducto(index) {
       this.cart.splice(index, 1);
@@ -582,5 +593,51 @@ export default {
   border-radius: 50%;
   padding: 0.2rem 0.5rem;
   font-size: 0.8rem;
+}
+
+.animate-add {
+  animation: addItem 0.5s ease-in-out;
+}
+
+@keyframes addItem {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.checkmark-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 128, 0, 0.7); /* Green background */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 3rem;
+  animation: fadeOut 1.5s forwards; /* Adjusted animation duration */
+}
+
+.added-text {
+  font-size: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 </style>
