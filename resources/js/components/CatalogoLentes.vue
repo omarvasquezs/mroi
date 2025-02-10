@@ -13,47 +13,29 @@
             <h5 class="card-title mb-3"></h5>
             <div class="mb-3">
               <label class="form-label">Búsqueda</label>
-              <input 
-                type="text" 
-                v-model="filters.producto" 
-                class="form-control" 
-                placeholder="Buscar productos..."
-              >
+              <input type="text" v-model="filters.producto" class="form-control" placeholder="Buscar productos...">
             </div>
             <div class="row mb-3">
               <div class="col">
                 <label class="form-label">Precio mínimo</label>
                 <div class="input-group">
                   <span class="input-group-text">S/.</span>
-                  <input 
-                    type="number" 
-                    v-model.number="filters.precio_min" 
-                    class="form-control" 
-                    placeholder="Mín"
-                    min="0"
-                    step="0.01"
-                  >
+                  <input type="number" v-model.number="filters.precio_min" class="form-control" placeholder="Mín"
+                    min="0" step="0.01">
                 </div>
               </div>
               <div class="col">
                 <label class="form-label">Precio máximo</label>
                 <div class="input-group">
                   <span class="input-group-text">S/.</span>
-                  <input 
-                    type="number" 
-                    v-model.number="filters.precio_max" 
-                    class="form-control" 
-                    placeholder="Máx"
-                    min="0"
-                    step="0.01"
-                  >
+                  <input type="number" v-model.number="filters.precio_max" class="form-control" placeholder="Máx"
+                    min="0" step="0.01">
                 </div>
               </div>
             </div>
             <div class="mb-3">
-              <label class="form-label d-flex justify-content-between align-items-center" 
-                     role="button" 
-                     @click="toggleTipoProducto">
+              <label class="form-label d-flex justify-content-between align-items-center" role="button"
+                @click="toggleTipoProducto">
                 Tipo de Producto
                 <i class="fas fa-chevron-down" :class="{ 'rotate-icon': showTipoProducto }"></i>
               </label>
@@ -65,13 +47,15 @@
                   </label>
                 </div>
                 <div class="form-check custom-form-check" @click.prevent="toggleCheckbox('m')">
-                  <input class="form-check-input" type="checkbox" value="m" id="montura" v-model="filters.tipo_producto">
+                  <input class="form-check-input" type="checkbox" value="m" id="montura"
+                    v-model="filters.tipo_producto">
                   <label class="form-check-label no-select w-100" for="montura">
                     Montura
                   </label>
                 </div>
                 <div class="form-check custom-form-check" @click.prevent="toggleCheckbox('c')">
-                  <input class="form-check-input" type="checkbox" value="c" id="contacto" v-model="filters.tipo_producto">
+                  <input class="form-check-input" type="checkbox" value="c" id="contacto"
+                    v-model="filters.tipo_producto">
                   <label class="form-check-label no-select w-100" for="contacto">
                     Lentes de Contacto
                   </label>
@@ -108,15 +92,12 @@
           <div v-else class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             <div v-for="producto in productos" :key="producto.id" class="col">
               <div class="card h-100 product-card">
-                <img 
-                  :src="`${baseUrl}/images/stock/${producto.imagen}`" 
-                  class="card-img-top product-image" 
-                  :alt="producto.producto"
-                >
+                <img :src="`${baseUrl}/images/stock/${producto.imagen}`" class="card-img-top product-image"
+                  :alt="producto.producto">
                 <div class="card-body product-card-body">
                   <h5 class="card-title">{{ producto.producto }}</h5>
                   <p class="card-text">S/. {{ producto.precio }}</p>
-                  <button class="btn btn-success w-100 mt-2">
+                  <button @click="agregarProducto(producto)" class="btn btn-success w-100 mt-2">
                     <i class="fas fa-plus-circle"></i> AGREGAR PRODUCTO
                   </button>
                 </div>
@@ -136,10 +117,62 @@
         <div ref="infiniteScrollTrigger" class="my-4"></div>
       </div>
     </div>
+    <!-- Shopping Cart Icon Button -->
+    <button @click="openCart" class="btn-cart-icon">
+      <i class="fas fa-shopping-cart"></i>
+    </button>
     <button @click="scrollToTop" class="btn btn-primary back-to-top" v-show="showBackToTop">
       <i class="fas fa-arrow-up"></i> SUBIR
     </button>
   </div>
+
+  <!-- Cart Modal with Transition -->
+  <transition name="fade">
+    <div v-if="showCart" class="modal d-block" tabindex="-1" role="dialog" style="background: rgba(0,0,0,0.5);">
+      <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Carrito</h5>
+            <button type="button" class="btn-close" aria-label="Close" @click="closeCart"></button>
+          </div>
+          <div class="modal-body">
+            <table v-if="cart.length" class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Precio</th>
+                  <th>Cantidad</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, index) in cart" :key="item.id">
+                  <td>{{ item.producto }}</td>
+                  <td>S/. {{ item.precio }}</td>
+                  <td>
+                    <input type="number" v-model.number="item.quantity" min="1" class="form-control"
+                      style="width:100px;" @change="updateQuantity(index, $event)">
+                  </td>
+                  <td>
+                    <div class="text-center">
+                        <button @click="removerProducto(index)" class="btn btn-danger btn-sm" title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <p v-else class="mb-0">No hay productos</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" @click="procesarCart">Procesar</button>
+            <button type="button" class="btn btn-secondary" @click="closeCart">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </transition>
 </template>
 
 <script>
@@ -170,7 +203,9 @@ export default {
       observer: null,
       loadingMore: false,
       showBackToTop: false,
-      showTipoProducto: true, // Add this line
+      showTipoProducto: true,
+      cart: [],
+      showCart: false  // Added showCart property
     }
   },
   watch: {
@@ -199,7 +234,7 @@ export default {
     },
     fetchProductos(url = '/api/stock') {
       if (!this.hasMorePages || (this.loading && this.productos.length > 0)) return;
-      
+
       if (this.productos.length === 0) {
         this.loading = true;
       } else {
@@ -226,7 +261,7 @@ export default {
           } else {
             this.productos = [...this.productos, ...response.data.data];
           }
-          
+
           this.pagination = {
             current_page: response.data.current_page,
             per_page: response.data.per_page,
@@ -292,6 +327,37 @@ export default {
       } else {
         this.filters.tipo_producto.splice(index, 1);
       }
+    },
+    agregarProducto(producto) {
+      // Check if the product is already in the cart
+      const existingProduct = this.cart.find(item => item.id === producto.id);
+
+      if (existingProduct) {
+        // If the product exists, update the quantity
+        existingProduct.quantity += 1;
+      } else {
+        // If the product doesn't exist, add it to the cart with quantity 1
+        this.cart.push({ ...producto, quantity: 1 });
+      }
+      this.showCart = true; // Show cart modal when product is added
+    },
+    removerProducto(index) {
+      this.cart.splice(index, 1);
+    },
+    updateQuantity(index, event) {
+      const newQuantity = parseInt(event.target.value, 10);
+      if (newQuantity > 0) {
+        this.cart[index].quantity = newQuantity;
+      } else {
+        // Remove the item if the quantity is set to 0 or less
+        this.cart.splice(index, 1);
+      }
+    },
+    closeCart() {
+      this.showCart = false;
+    },
+    openCart() {
+      this.showCart = true;
     }
   },
   mounted() {
@@ -313,12 +379,12 @@ export default {
 .product-card {
   transition: transform 0.2s;
   border: none;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .product-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 .product-image {
@@ -345,7 +411,7 @@ export default {
 }
 
 .card {
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   border: none;
 }
 
@@ -419,5 +485,68 @@ export default {
   display: flex;
   align-items: center;
   flex: 1;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s;
+}
+
+.fade-enter,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.btn-cart-icon {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  z-index: 1001;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.btn-cart-icon i {
+  font-size: 1.8rem;
+}
+
+.cart-modal {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  border: 2px solid #007bff;
+  background: linear-gradient(180deg, #fff, #f7f7f7);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.btn-close {
+  cursor: pointer;
+}
+
+.cart-modal .btn-close {
+  cursor: pointer;
+}
+
+.cart-modal .btn-close i {
+  cursor: pointer;
 }
 </style>
