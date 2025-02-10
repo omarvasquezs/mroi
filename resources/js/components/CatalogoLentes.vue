@@ -174,7 +174,7 @@
           </div>
           <div class="modal-footer">
             <button v-if="selectedItems.length" type="button" class="btn btn-danger" @click="removerSeleccionados">Eliminar seleccionados</button>
-            <button type="button" class="btn btn-primary" @click="procesarCart">Procesar</button>
+            <button type="button" class="btn btn-primary" @click="procesarCart" v-if="selectedItems.length">Procesar</button>
             <button type="button" class="btn btn-secondary" @click="closeCart">Cerrar</button>
           </div>
         </div>
