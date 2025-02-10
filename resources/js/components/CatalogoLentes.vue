@@ -120,6 +120,7 @@
     <!-- Shopping Cart Icon Button -->
     <button @click="openCart" class="btn-cart-icon">
       <i class="fas fa-shopping-cart"></i>
+      <span v-if="cartItemCount > 0" class="cart-item-count">{{ cartItemCount }}</span>
     </button>
     <button @click="scrollToTop" class="btn btn-primary back-to-top" v-show="showBackToTop">
       <i class="fas fa-arrow-up"></i> SUBIR
@@ -214,6 +215,11 @@ export default {
         this.debouncedSearch();
       },
       deep: true
+    }
+  },
+  computed: {
+    cartItemCount() {
+      return this.cart.reduce((total, item) => total + item.quantity, 0);
     }
   },
   methods: {
@@ -548,5 +554,16 @@ export default {
 
 .cart-modal .btn-close i {
   cursor: pointer;
+}
+
+.cart-item-count {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.8rem;
 }
 </style>
