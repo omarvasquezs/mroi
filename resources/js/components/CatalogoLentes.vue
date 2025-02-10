@@ -327,6 +327,14 @@ export default {
       }
     },
     goBack() {
+      if (this.cart.length > 0) {
+        if (!window.confirm('Hay items en el carrito de compras, estas seguro de irse?, se borraran si se va.')) {
+          return;
+        }
+        // Clear cart if confirmed
+        this.cart = [];
+        this.selectedItems = [];
+      }
       window.history.back();
     },
     scrollToTop() {
