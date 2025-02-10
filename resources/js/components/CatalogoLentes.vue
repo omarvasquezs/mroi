@@ -130,7 +130,7 @@
   <!-- Cart Modal with Transition -->
   <transition name="fade">
     <div v-if="showCart" class="modal d-block" tabindex="-1" role="dialog" style="background: rgba(0,0,0,0.5);">
-      <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Carrito</h5>
@@ -140,6 +140,7 @@
             <table v-if="cart.length" class="table table-bordered">
               <thead>
                 <tr>
+                  <th><input type="checkbox" @change="toggleSelectAll" :checked="isAllSelected"></th>
                   <th>Producto</th>
                   <th>Precio</th>
                   <th>Cantidad</th>
@@ -148,6 +149,7 @@
               </thead>
               <tbody>
                 <tr v-for="(item, index) in cart" :key="item.id">
+                  <td><input type="checkbox" v-model="selectedItems" :value="item.id"></td>
                   <td>{{ item.producto }}</td>
                   <td>S/. {{ item.precio }}</td>
                   <td>
@@ -167,6 +169,7 @@
             <p v-else class="mb-0">No hay productos</p>
           </div>
           <div class="modal-footer">
+            <button v-if="selectedItems.length" type="button" class="btn btn-danger" @click="removerSeleccionados">Eliminar seleccionados</button>
             <button type="button" class="btn btn-primary" @click="procesarCart">Procesar</button>
             <button type="button" class="btn btn-secondary" @click="closeCart">Cerrar</button>
           </div>
@@ -206,7 +209,8 @@ export default {
       showBackToTop: false,
       showTipoProducto: true,
       cart: [],
-      showCart: false  // Added showCart property
+      showCart: false,  // Added showCart property
+      selectedItems: [] // Added selectedItems property
     }
   },
   watch: {
@@ -220,6 +224,9 @@ export default {
   computed: {
     cartItemCount() {
       return this.cart.reduce((total, item) => total + item.quantity, 0);
+    },
+    isAllSelected() {
+      return this.cart.length && this.selectedItems.length === this.cart.length;
     }
   },
   methods: {
@@ -345,7 +352,6 @@ export default {
         // If the product doesn't exist, add it to the cart with quantity 1
         this.cart.push({ ...producto, quantity: 1 });
       }
-      this.showCart = true; // Show cart modal when product is added
     },
     removerProducto(index) {
       this.cart.splice(index, 1);
@@ -364,6 +370,17 @@ export default {
     },
     openCart() {
       this.showCart = true;
+    },
+    toggleSelectAll(event) {
+      if (event.target.checked) {
+        this.selectedItems = this.cart.map(item => item.id);
+      } else {
+        this.selectedItems = [];
+      }
+    },
+    removerSeleccionados() {
+      this.cart = this.cart.filter(item => !this.selectedItems.includes(item.id));
+      this.selectedItems = [];
     }
   },
   mounted() {
