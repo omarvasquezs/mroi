@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Comprobante;
 use App\Models\Cita;
+use App\Models\ProductoComprobante;
 use Illuminate\Http\Request;
-use DB;
 
 class ComprobanteController extends Controller
 {
@@ -13,31 +13,42 @@ class ComprobanteController extends Controller
     {
         try {
             $monto_total = 0;
-            $citas = Cita::whereIn('id', $request->citas)
-                ->with('tipoCita')  // Eager load tipoCita
-                ->get();
-            
-            // Calculate total amount from tipos_citas prices
-            foreach ($citas as $cita) {
-                $monto_total += $cita->tipoCita->precio;
+
+            if ($request->has('citas')) {
+                $citas = Cita::whereIn('id', $request->citas)
+                    ->with('tipoCita')
+                    ->get();
+
+                foreach ($citas as $cita) {
+                    $monto_total += $cita->tipoCita->precio;
+                }
+            } elseif ($request->has('productos_comprobante_id')) {
+                $productoComprobante = ProductoComprobante::findOrFail($request->productos_comprobante_id);
+                $monto_total = $productoComprobante->monto_total;
             }
 
-            // Create comprobante
             $comprobante = Comprobante::create([
                 'tipo' => $request->tipo,
                 'serie' => $request->tipo === 'b' ? 'B001' : 'F001',
                 'correlativo' => $this->getNextCorrelativo($request->tipo),
-                'id_metodo_pago' => $request->id_metodo_pago, // Ensure this is passed in the request
-                'paciente_id' => $request->paciente_id,
-                'monto_total' => $monto_total
+                'id_metodo_pago' => $request->id_metodo_pago,
+                'paciente_id' => $request->paciente_id ?? null,
+                'monto_total' => $monto_total,
+                'pagado' => true
             ]);
 
-            // Update citas estado and attach to comprobante
-            foreach ($citas as $cita) {
-                $cita->estado = 'p';
-                $cita->save();
-                $comprobante->citas()->attach($cita->id, ['monto' => $cita->tipoCita->precio]);
+            if ($request->has('citas')) {
+                foreach ($citas as $cita) {
+                    $cita->estado = 'p';
+                    $cita->save();
+                    $comprobante->citas()->attach($cita->id, ['monto' => $cita->tipoCita->precio]);
+                }
+            } elseif ($request->has('productos_comprobante_id')) {
+                $productoComprobante = ProductoComprobante::findOrFail($request->productos_comprobante_id);
+                $productoComprobante->comprobante_id = $comprobante->id;
+                $productoComprobante->save();
             }
+
             return response()->json(['comprobante' => $comprobante->load('citas')]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -50,7 +61,7 @@ class ComprobanteController extends Controller
             ->where('serie', $tipo === 'b' ? 'B001' : 'F001')
             ->orderBy('correlativo', 'desc')
             ->first();
-            
+
         return $lastComprobante ? $lastComprobante->correlativo + 1 : 1;
     }
 }

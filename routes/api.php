@@ -10,6 +10,7 @@ use App\Http\Controllers\StockController;
 use App\Http\Controllers\TipoCitaController;
 use App\Http\Controllers\ComprobanteController;
 use App\Http\Controllers\MetodoPagoController;
+use App\Http\Controllers\ProductoComprobanteController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -34,6 +35,7 @@ Route::get('/tipos-citas-list', [TipoCitaController::class, 'getAllTipoCitas']);
 
 Route::get('/pacientes/search/{term}', [PacienteController::class, 'search']);
 Route::post('/comprobantes', [ComprobanteController::class, 'store']);
+Route::post('/productos-comprobante', [ProductoComprobanteController::class, 'store']);
 
 Route::apiResource('usuarios', UsuarioController::class);
 Route::apiResource('pacientes', PacienteController::class);
@@ -41,6 +43,10 @@ Route::apiResource('medicos', MedicoController::class);
 Route::apiResource('stock', StockController::class);
 Route::apiResource('tipos-citas', TipoCitaController::class);
 Route::apiResource('metodos-pago', MetodoPagoController::class);
+Route::apiResource('productos-comprobante', ProductoComprobanteController::class);
+
+Route::get('/productos-comprobante', [ProductoComprobanteController::class, 'index']);
+Route::get('/productos-comprobante/{id}', [ProductoComprobanteController::class, 'show']);
 
 Route::get('/pacientes', [PacienteController::class, 'index']);
 Route::get('/pacientes/{id}/appointments', [PacienteController::class, 'show']);

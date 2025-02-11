@@ -3,70 +3,152 @@
         <div class="mb-4">
             <button @click="goBack" class="btn btn-link">← Regresar</button>
         </div>
-        <!-- Search Patient Section -->
+        <!-- Selection Section -->
         <div class="card mb-4">
-            <div class="card-header">Búsqueda de Paciente</div>
+            <div class="card-header">Servicio</div>
             <div class="card-body">
                 <div class="form-group">
-                    <label for="paciente-select">Seleccionar Paciente</label>
-                    <select 
-                        v-model="selectedPatientId" 
-                        class="form-control" 
-                        id="paciente-select"
-                        @change="fetchPatientAppointments"
-                    >
-                        <option value="" disabled selected>Seleccione un paciente</option>
-                        <option v-for="paciente in pacientes" :key="paciente.id" :value="paciente.id">
-                            {{ paciente.num_historia }} - {{ paciente.nombre }}
-                        </option>
+                    <label for="tipo-servicio-select">Tipo de Servicio</label>
+                    <select v-model="comprobanteType" class="form-control" id="tipo-servicio-select">
+                        <option value="" disabled selected>Seleccione tipo de servicio</option>
+                        <option value="citas">Citas</option>
+                        <option value="productos">Productos</option>
                     </select>
                 </div>
             </div>
         </div>
 
-        <!-- Patient Pending Appointments Section -->
-        <div v-if="selectedPatient" class="card mb-4">
-            <div class="card-header">
-                Citas Pendientes - {{ selectedPatient.nombre }}
+        <!-- Citas Section -->
+        <div v-if="comprobanteType === 'citas'">
+            <!-- Search Patient Section -->
+            <div class="card mb-4">
+                <div class="card-header">Búsqueda de Paciente</div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="paciente-select">Seleccionar Paciente</label>
+                        <select 
+                            v-model="selectedPatientId" 
+                            class="form-control" 
+                            id="paciente-select"
+                            @change="fetchPatientAppointments"
+                        >
+                            <option value="" disabled selected>Seleccione un paciente</option>
+                            <option v-for="paciente in pacientes" :key="paciente.id" :value="paciente.id">
+                                {{ paciente.num_historia }} - {{ paciente.nombre }}
+                            </option>
+                        </select>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>
-                                <input 
-                                    type="checkbox" 
-                                    v-model="selectAll"
-                                    @change="toggleAll"
-                                >
-                            </th>
-                            <th>Fecha</th>
-                            <th>Tipo de Cita</th>
-                            <th>Médico</th>
-                            <th>Monto</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="cita in pendingAppointments" :key="cita.id">
-                            <td>
-                                <input 
-                                    type="checkbox" 
-                                    v-model="selectedAppointments" 
-                                    :value="cita.id"
-                                >
-                            </td>
-                            <td>{{ formatDate(cita.fecha) }}</td>
-                            <td>{{ cita.tipo_cita }}</td>
-                            <td>{{ cita.medico }}</td>
-                            <td>{{ formatCurrency(cita.monto) }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+
+            <!-- Patient Pending Appointments Section -->
+            <div v-if="selectedPatient" class="card mb-4">
+                <div class="card-header">
+                    Citas Pendientes - {{ selectedPatient.nombre }}
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <input 
+                                        type="checkbox" 
+                                        v-model="selectAll"
+                                        @change="toggleAll"
+                                    >
+                                </th>
+                                <th>Fecha</th>
+                                <th>Tipo de Cita</th>
+                                <th>Médico</th>
+                                <th>Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="cita in pendingAppointments" :key="cita.id">
+                                <td>
+                                    <input 
+                                        type="checkbox" 
+                                        v-model="selectedAppointments" 
+                                        :value="cita.id"
+                                    >
+                                </td>
+                                <td>{{ formatDate(cita.fecha) }}</td>
+                                <td>{{ cita.tipo_cita }}</td>
+                                <td>{{ cita.medico }}</td>
+                                <td>{{ formatCurrency(cita.monto) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Productos Section -->
+        <div v-if="comprobanteType === 'productos'">
+            <!-- List Producto Comprobante Section -->
+            <div class="card mb-4">
+                <div class="card-header">Lista de solicitudes de compra</div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Seleccionar</th>
+                                <th>Nombres</th>
+                                <th>Teléfono</th>
+                                <th>Correo</th>
+                                <th>Monto Total</th>
+                                <th>Registrado en</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="productoComprobante in productoComprobantes" :key="productoComprobante.id">
+                                <td>
+                                    <input 
+                                        type="radio" 
+                                        v-model="selectedProductoComprobanteId" 
+                                        :value="productoComprobante.id"
+                                        @change="fetchProductoComprobanteItems"
+                                    >
+                                </td>
+                                <td>{{ productoComprobante.nombres }}</td>
+                                <td>{{ productoComprobante.telefono }}</td>
+                                <td>{{ productoComprobante.correo }}</td>
+                                <td>{{ formatCurrency(productoComprobante.monto_total) }}</td>
+                                <td>{{ formatDate(productoComprobante.created_at) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Producto Comprobante Items Section -->
+            <div v-if="selectedProductoComprobante" class="card mb-4">
+                <div class="card-header">
+                    Detallado de productos de la solicitud seleccionada
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Precio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="item in productoComprobanteItems" :key="item.id">
+                                <td>{{ item.stock ? item.stock.producto : 'N/A' }}</td>
+                                <td>{{ item.cantidad }}</td>
+                                <td>{{ formatCurrency(item.precio) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <!-- Payment Section -->
-        <div v-if="selectedAppointments.length" class="card mb-4">
+        <div v-if="(comprobanteType === 'citas' && selectedAppointments.length) || (comprobanteType === 'productos' && selectedProductoComprobante)" class="card mb-4">
             <div class="card-header">Generar Comprobante</div>
             <div class="card-body">
                 <div class="row">
@@ -111,23 +193,29 @@
 export default {
     data() {
         return {
+            comprobanteType: '',
             searchTerm: '',
-            pacientes: [], // Initialize as empty array
+            pacientes: [],
             selectedPatientId: '',
             selectedPatient: null,
             pendingAppointments: [],
             selectedAppointments: [],
             selectAll: false,
-            metodosPago: [], // Add this line
+            metodosPago: [],
             comprobante: {
                 tipo: 'b',
-                id_metodo_pago: ''  // Changed to empty string for proper initialization
-            }
+                id_metodo_pago: ''
+            },
+            productoComprobantes: [],
+            selectedProductoComprobanteId: '',
+            selectedProductoComprobante: null,
+            productoComprobanteItems: []
         }
     },
     mounted() {
         this.fetchPacientes();
-        this.fetchMetodosPago(); // Add this line
+        this.fetchMetodosPago();
+        this.fetchProductoComprobantes();
     },
     methods: {
         goBack() {
@@ -137,7 +225,6 @@ export default {
             try {
                 const response = await axios.get('/api/pacientes-list');
                 this.pacientes = response.data;
-                console.log('Pacientes loaded:', this.pacientes); // Debug line
             } catch (error) {
                 console.error('Error fetching pacientes:', error);
                 this.pacientes = [];
@@ -145,7 +232,6 @@ export default {
         },
         async fetchPatientAppointments() {
             try {
-                // Use the patient's num_historia instead of id
                 const selectedPatient = this.pacientes.find(p => p.id === this.selectedPatientId);
                 if (!selectedPatient) {
                     console.error('No patient found with selected ID');
@@ -161,7 +247,6 @@ export default {
         },
         async fetchMetodosPago() {
             try {
-                // Using a static array since we have the data
                 this.metodosPago = [
                     { id: 1, nombre: 'Efectivo' },
                     { id: 2, nombre: 'Tarjeta' },
@@ -170,6 +255,26 @@ export default {
                 ];
             } catch (error) {
                 console.error('Error fetching metodos de pago:', error);
+            }
+        },
+        async fetchProductoComprobantes() {
+            try {
+                const response = await axios.get('/api/productos-comprobante');
+                const data = Array.isArray(response.data.data) ? response.data.data : 
+                            Array.isArray(response.data) ? response.data : [];
+                this.productoComprobantes = data;
+            } catch (error) {
+                console.error('Error fetching producto comprobantes:', error);
+                this.productoComprobantes = [];
+            }
+        },
+        async fetchProductoComprobanteItems() {
+            try {
+                const response = await axios.get(`/api/productos-comprobante/${this.selectedProductoComprobanteId}`);
+                this.selectedProductoComprobante = response.data;
+                this.productoComprobanteItems = response.data.items;
+            } catch (error) {
+                console.error('Error fetching producto comprobante items:', error);
             }
         },
         formatDate(date) {
@@ -196,34 +301,46 @@ export default {
             }
         },
         async generateComprobante() {
-            if (!this.selectedPatient) {
+            if (this.comprobanteType === 'citas' && !this.selectedPatient) {
                 alert('Seleccione un paciente antes de generar el comprobante.');
                 return;
             }
 
             try {
-                const response = await axios.post('/api/comprobantes', {
-                    tipo: this.comprobante.tipo,
-                    id_metodo_pago: this.comprobante.id_metodo_pago,  // Changed from metodo_pago
-                    citas: this.selectedAppointments,
-                    paciente_id: this.selectedPatient.id
-                });
-                
+                let response;
+                if (this.comprobanteType === 'citas') {
+                    response = await axios.post('/api/comprobantes', {
+                        tipo: this.comprobante.tipo,
+                        id_metodo_pago: this.comprobante.id_metodo_pago,
+                        citas: this.selectedAppointments,
+                        paciente_id: this.selectedPatient.id
+                    });
+                } else if (this.comprobanteType === 'productos') {
+                    response = await axios.post('/api/comprobantes', {
+                        tipo: this.comprobante.tipo,
+                        id_metodo_pago: this.comprobante.id_metodo_pago,
+                        productos_comprobante_id: this.selectedProductoComprobante.id
+                    });
+                }
+
                 if (response.data.error) {
                     alert('Error: ' + response.data.error);
                     return;
                 }
-                
-                this.printComprobante(response.data.comprobante);
+
+                const comprobante = response.data.comprobante;
+                this.printComprobante(comprobante);
+
                 this.selectedAppointments = [];
+                this.selectedProductoComprobante = null;
                 await this.fetchPatientAppointments();
+                await this.fetchProductoComprobanteItems();
             } catch (error) {
                 console.error('Error generating comprobante:', error);
                 alert('Error al generar el comprobante: ' + (error.response?.data?.error || error.message));
             }
         },
         printComprobante(comprobante) {
-            // Open new window with print template
             const printWindow = window.open('', '_blank');
             printWindow.document.write(this.getPrintTemplate(comprobante));
             printWindow.document.close();
@@ -234,6 +351,29 @@ export default {
             const tipoComprobante = this.comprobante.tipo === 'b' ? 'BOLETA' : 'FACTURA';
             const fecha = new Date().toLocaleString('es-PE');
             
+            let itemsHtml = '';
+            if (this.comprobanteType === 'citas') {
+                itemsHtml = this.pendingAppointments
+                    .filter(cita => this.selectedAppointments.includes(cita.id))
+                    .map(cita => `
+                        <div class="item">
+                            <p>${cita.tipo_cita}</p>
+                            <p>Médico: ${cita.medico}</p>
+                            <p>Fecha: ${this.formatDate(cita.fecha)}</p>
+                            <p>Monto: ${this.formatCurrency(cita.monto)}</p>
+                        </div>
+                    `).join('<hr style="border-top: 1px dashed #ccc">');
+            } else if (this.comprobanteType === 'productos') {
+                itemsHtml = this.productoComprobanteItems
+                    .map(item => `
+                        <div class="item">
+                            <p>Producto: ${item.stock ? item.stock.producto : 'N/A'}</p>
+                            <p>Cantidad: ${item.cantidad}</p>
+                            <p>Precio: ${this.formatCurrency(item.precio)}</p>
+                        </div>
+                    `).join('<hr style="border-top: 1px dashed #ccc">');
+            }
+
             return `
                 <html>
                 <head>
@@ -291,16 +431,7 @@ export default {
                         <div style="border-bottom: 1px dashed #000; margin: 10px 0;">
                             <p>DETALLE DE SERVICIOS</p>
                         </div>
-                        ${this.pendingAppointments
-                            .filter(cita => this.selectedAppointments.includes(cita.id))
-                            .map(cita => `
-                                <div class="item">
-                                    <p>${cita.tipo_cita}</p>
-                                    <p>Médico: ${cita.medico}</p>
-                                    <p>Fecha: ${this.formatDate(cita.fecha)}</p>
-                                    <p>Monto: ${this.formatCurrency(cita.monto)}</p>
-                                </div>
-                            `).join('<hr style="border-top: 1px dashed #ccc">')}
+                        ${itemsHtml}
                     </div>
 
                     <div class="total">

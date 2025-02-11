@@ -141,6 +141,18 @@
             <button type="button" class="btn-close" aria-label="Close" @click="closeCart"></button>
           </div>
           <div class="modal-body">
+            <div class="mb-3">
+              <label for="nombres" class="form-label">Nombres</label>
+              <input type="text" v-model="nombres" class="form-control" id="nombres" placeholder="Ingrese nombres">
+            </div>
+            <div class="mb-3">
+              <label for="telefono" class="form-label">Teléfono</label>
+              <input type="text" v-model="telefono" class="form-control" id="telefono" placeholder="Ingrese teléfono">
+            </div>
+            <div class="mb-3">
+              <label for="correo" class="form-label">Correo</label>
+              <input type="email" v-model="correo" class="form-control" id="correo" placeholder="Ingrese correo">
+            </div>
             <table v-if="cart.length" class="table table-bordered">
               <thead>
                 <tr>
@@ -215,7 +227,10 @@ export default {
       cart: [],
       showCart: false,  // Added showCart property
       selectedItems: [], // Added selectedItems property
-      recentlyAddedProductId: null // Added recentlyAddedProductId property
+      recentlyAddedProductId: null, // Added recentlyAddedProductId property
+      nombres: '', // Added nombres property
+      telefono: '', // Added telefono property
+      correo: '' // Added correo property
     }
   },
   watch: {
@@ -400,6 +415,33 @@ export default {
     removerSeleccionados() {
       this.cart = this.cart.filter(item => !this.selectedItems.includes(item.id));
       this.selectedItems = [];
+    },
+    procesarCart() {
+      if (!this.cart.length) return;
+      // Calculate total amount
+      const montoTotal = this.cart.reduce((total, item) => total + (item.quantity * item.precio), 0);
+      const productoComprobantePayload = {
+        nombres: this.nombres,
+        telefono: this.telefono,
+        correo: this.correo,
+        monto_total: parseFloat(montoTotal.toFixed(2)),
+        items: this.cart.map(item => ({
+          stock_id: item.id,
+          cantidad: item.quantity,
+          precio: item.precio
+        }))
+      };
+      axios.post('/api/productos-comprobante', productoComprobantePayload)
+        .then(response => {
+          alert('Producto comprobante y items creados correctamente');
+          this.cart = [];
+          this.selectedItems = [];
+          this.closeCart();
+        })
+        .catch(error => {
+          console.error('Error al crear producto comprobante/items:', error);
+          alert('Error al crear producto comprobante/items');
+        });
     }
   },
   mounted() {
