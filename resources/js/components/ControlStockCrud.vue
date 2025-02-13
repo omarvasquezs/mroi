@@ -110,17 +110,6 @@
           <div class="modal-body">
             <form @submit.prevent="submitForm" enctype="multipart/form-data">
               <div class="mb-3">
-                <label for="producto" class="form-label">Producto*:</label>
-                <input type="text" v-model="form.producto" id="producto" class="form-control" required>
-              </div>
-              <div class="mb-3">
-                <label for="precio" class="form-label">Precio*:</label>
-                <div class="input-group">
-                  <span class="input-group-text">S/.</span>
-                  <input type="number" v-model="form.precio" id="precio" class="form-control" step="0.01" required>
-                </div>
-              </div>
-              <div class="mb-3">
                 <label for="tipo_producto" class="form-label">Tipo de Producto*:</label>
                 <div class="position-relative select-wrapper">
                   <select v-model="form.tipo_producto" id="tipo_producto" class="form-control" required>
@@ -131,6 +120,17 @@
                     <option value="u">Lunas</option>
                   </select>
                   <i class="fas fa-chevron-down select-arrow"></i>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="producto" class="form-label">Producto*:</label>
+                <input type="text" v-model="form.producto" id="producto" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label for="precio" class="form-label">Precio*:</label>
+                <div class="input-group">
+                  <span class="input-group-text">S/.</span>
+                  <input type="number" v-model="form.precio" id="precio" class="form-control" step="0.01" required>
                 </div>
               </div>
               <div class="mb-3">
@@ -183,9 +183,9 @@ export default {
       proveedores: [],
       loading: true,
       form: {
+        tipo_producto: '',
         producto: '',
         precio: '',
-        tipo_producto: '',
         id_proveedor: '',
         imagen: null
       },
@@ -326,9 +326,9 @@ export default {
     },
     resetForm() {
       this.form = {
+        tipo_producto: '',
         producto: '',
         precio: '',
-        tipo_producto: '',
         id_proveedor: '',
         imagen: null
       };
