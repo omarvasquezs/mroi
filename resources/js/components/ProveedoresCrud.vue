@@ -55,6 +55,9 @@
           <td>{{ proveedor.ruc }}</td>
           <td>{{ proveedor.nombre_representante }}</td>
           <td>
+            <button @click="viewProveedor(proveedor)" class="btn btn-info btn-sm me-2">
+              <i class="fas fa-eye"></i>
+            </button>
             <button @click="editProveedor(proveedor)" class="btn btn-warning btn-sm me-2">
               <i class="fas fa-pencil-alt"></i>
             </button>
@@ -75,6 +78,53 @@
         </li>
       </ul>
     </nav>
+
+    <!-- Modal for Viewing Proveedor -->
+    <div class="modal fade" id="viewProveedorModal" tabindex="-1" aria-labelledby="viewProveedorModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="viewProveedorModalLabel">
+              Información del Proveedor con RUC {{ selectedProveedor.ruc }}
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row mb-3">
+              <div class="col-sm-3"><strong>Razón Social:</strong></div>
+              <div class="col-sm-9">{{ selectedProveedor.razon_social }}</div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-sm-3"><strong>RUC:</strong></div>
+              <div class="col-sm-9">{{ selectedProveedor.ruc }}</div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-sm-3"><strong>Dirección:</strong></div>
+              <div class="col-sm-9">{{ selectedProveedor.direccion }}</div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-sm-3"><strong>Teléfonos de Contacto:</strong></div>
+              <div class="col-sm-9">{{ selectedProveedor.telefono }}</div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-sm-3"><strong>Correo Electrónico:</strong></div>
+              <div class="col-sm-9">{{ selectedProveedor.correo_electronico }}</div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-sm-3"><strong>Página Web:</strong></div>
+              <div class="col-sm-9">{{ selectedProveedor.pagina_web }}</div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-sm-3"><strong>Nombre del Representante:</strong></div>
+              <div class="col-sm-9">{{ selectedProveedor.nombre_representante }}</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Modal -->
     <div class="modal fade" id="proveedorModal" tabindex="-1" aria-labelledby="proveedorModalLabel" aria-hidden="true">
@@ -152,6 +202,7 @@ export default {
         pagina_web: '',
         nombre_representante: ''
       },
+      selectedProveedor: {}, // Add this field
       rucExists: false,
       correoExists: false,
       formErrors: [],
@@ -204,6 +255,11 @@ export default {
       this.isEditing = true;
       this.editingId = proveedor.id;
       const modal = new Modal(document.getElementById('proveedorModal'));
+      modal.show();
+    },
+    viewProveedor(proveedor) {
+      this.selectedProveedor = proveedor;
+      const modal = new Modal(document.getElementById('viewProveedorModal'));
       modal.show();
     },
     async submitForm() {
