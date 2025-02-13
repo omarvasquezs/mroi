@@ -30,6 +30,4 @@ class Paciente extends Model
         'estado_historia',
         'observaciones',
     ];
-
-    // ...existing code...
 }

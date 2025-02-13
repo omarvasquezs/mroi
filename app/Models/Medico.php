@@ -21,6 +21,4 @@ class Medico extends Model
         'email',
         'direccion',
     ];
-
-    // ...existing code...
 }

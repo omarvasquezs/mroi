@@ -108,7 +108,7 @@ export default {
                 { type: 'link', label: 'Gestionar Médicos', icon: 'fas fa-user-md', url: '/medicos', condition: 'Entidades|Médicos' },
                 { type: 'link', label: 'Administrar Usuarios del Sistema', icon: 'fas fa-user-cog', url: '/usuarios', condition: 'Entidades|Utilitarios' },
                 { type: 'link', label: 'Administrar tipos de cita', icon: 'fas fa-calendar-alt', url: '/tipos-citas', condition: 'Entidades|Utilitarios' },
-                { type: 'link', label: 'Registro Proveedores', icon: 'fas fa-truck', url: '/registro-proveedores', condition: 'Servicios Recibidos|Proveedores' },
+                { type: 'link', label: 'Registro Proveedores', icon: 'fas fa-truck', url: '/proveedores', condition: 'Servicios Recibidos|Proveedores' },
                 { type: 'link', label: 'Equipos de optometría', icon: 'fas fa-tools', url: '/equipos-de-optometria', condition: 'Servicios Recibidos|Inventario' },
                 { type: 'link', label: 'HC Ambulatoria', icon: 'fas fa-notes-medical', url: '/hc-ambulatoria', condition: 'Atención Médica|Historia Clínica' },
                 { type: 'link', label: 'Registro de Intervenciones', icon: 'fas fa-syringe', url: '/registro-intervenciones', condition: 'Atención Médica|Intervenciones Quirúrgicas' },
