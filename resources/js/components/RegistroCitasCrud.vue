@@ -202,7 +202,7 @@ export default {
           historia: '',
           paciente: ''
         });
-        startTime.setMinutes(startTime.getMinutes() + 5);
+        startTime.setMinutes(startTime.getMinutes() + 30); // Change to 30 minutes
       }
       return slots;
     },
