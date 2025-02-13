@@ -10,7 +10,7 @@ class StockController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Stock::query();
+        $query = Stock::with('proveedor');
         $perPage = 10; // Default for CatalogoLentes
 
         // Text search for producto
@@ -39,6 +39,13 @@ class StockController extends Controller
             $query->whereIn('tipo_producto', $tipoProductos);
         }
 
+        // Filter by proveedor
+        if ($request->filled('proveedor')) {
+            $query->whereHas('proveedor', function ($q) use ($request) {
+                $q->where('razon_social', 'like', '%' . $request->proveedor . '%');
+            });
+        }
+
         $result = $query->orderBy('created_at', 'desc')->paginate($perPage);
         return response()->json([
             'current_page' => $result->currentPage(),
@@ -61,7 +68,8 @@ class StockController extends Controller
             'producto' => 'required|string|max:255',
             'imagen' => 'required|file|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'precio' => 'required|numeric|min:0',
-            'tipo_producto' => 'required|in:l,m,c,u'
+            'tipo_producto' => 'required|in:l,m,c,u',
+            'id_proveedor' => 'required|exists:proveedores,id'
         ]);
 
         try {
@@ -83,7 +91,8 @@ class StockController extends Controller
                 'producto' => $validated['producto'],
                 'imagen' => $validated['imagen'],
                 'precio' => $validated['precio'],
-                'tipo_producto' => $validated['tipo_producto']
+                'tipo_producto' => $validated['tipo_producto'],
+                'id_proveedor' => $validated['id_proveedor']
             ]);
 
             return response()->json($stock, 201);
@@ -94,7 +103,7 @@ class StockController extends Controller
 
     public function show($id)
     {
-        $stock = Stock::findOrFail($id);
+        $stock = Stock::with('proveedor')->findOrFail($id);
         return response()->json($stock);
     }
 
@@ -104,6 +113,7 @@ class StockController extends Controller
             'producto' => 'required|string|max:255',
             'precio' => 'required|numeric|min:0',
             'tipo_producto' => 'required|in:l,m,c,u',
+            'id_proveedor' => 'required|exists:proveedores,id',
             'imagen' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp|max:2048'
         ]);
 
@@ -112,7 +122,8 @@ class StockController extends Controller
             $updateData = [
                 'producto' => $validated['producto'],
                 'precio' => $validated['precio'],
-                'tipo_producto' => $validated['tipo_producto']
+                'tipo_producto' => $validated['tipo_producto'],
+                'id_proveedor' => $validated['id_proveedor']
             ];
             
             if ($request->hasFile('imagen')) {

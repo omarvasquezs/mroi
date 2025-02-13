@@ -19,6 +19,7 @@
           <th>Producto</th>
           <th>Precio</th>
           <th>Tipo de Producto</th>
+          <th>Proveedor</th>
           <th>Acciones</th>
         </tr>
         <tr>
@@ -43,7 +44,7 @@
             <div class="position-relative select-wrapper">
               <select v-model="filters.tipo_producto" @change="applyFilters" class="form-control">
                 <option value="">Todos</option>
-                <option value="l">Lentes</option>
+                <option value="l">Lentes de Sol</option>
                 <option value="m">Montura</option>
                 <option value="c">Lentes de Contacto</option>
                 <option value="u">Lunas</option>
@@ -51,21 +52,30 @@
               <i class="fas fa-chevron-down select-arrow"></i>
             </div>
           </th>
+          <th>
+            <div class="position-relative">
+              <input type="text" v-model="filters.proveedor" @input="applyFilters" class="form-control" placeholder="Filtrar por Proveedor">
+              <button v-if="filters.proveedor" @click="clearFilter('proveedor')" class="btn-clear">
+                <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
+              </button>
+            </div>
+          </th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         <tr v-if="loading">
-          <td colspan="5" class="text-center">Cargando...</td>
+          <td colspan="6" class="text-center">Cargando...</td>
         </tr>
         <tr v-else-if="!items || items.length === 0">
-          <td colspan="5" class="text-center">No hay productos en el stock.</td>
+          <td colspan="6" class="text-center">No hay productos en el stock.</td>
         </tr>
         <tr v-else v-for="item in items" :key="item.id">
           <td><img :src="`${baseUrl}/images/stock/${item.imagen}`" alt="Producto" style="height: 50px;"></td>
           <td>{{ item.producto }}</td>
           <td>S/. {{ item.precio }}</td>
           <td>{{ getTipoProductoLabel(item.tipo_producto) }}</td>
+          <td>{{ item.proveedor ? item.proveedor.razon_social : 'N/A' }}</td>
           <td>
             <button @click="editItem(item)" class="btn btn-warning btn-sm me-2">
               <i class="fas fa-pencil-alt"></i>
@@ -115,10 +125,22 @@
                 <div class="position-relative select-wrapper">
                   <select v-model="form.tipo_producto" id="tipo_producto" class="form-control" required>
                     <option value="" disabled selected>Seleccione un tipo de producto</option>
-                    <option value="l">Lentes</option>
+                    <option value="l">Lentes de Sol</option>
                     <option value="m">Montura</option>
                     <option value="c">Lentes de Contacto</option>
                     <option value="u">Lunas</option>
+                  </select>
+                  <i class="fas fa-chevron-down select-arrow"></i>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="proveedor" class="form-label">Proveedor*:</label>
+                <div class="position-relative select-wrapper">
+                  <select v-model="form.id_proveedor" id="proveedor" class="form-control" required>
+                    <option value="" disabled selected>Seleccione un proveedor</option>
+                    <option v-for="proveedor in proveedores" :key="proveedor.id" :value="proveedor.id">
+                      {{ proveedor.razon_social }}
+                    </option>
                   </select>
                   <i class="fas fa-chevron-down select-arrow"></i>
                 </div>
@@ -158,11 +180,13 @@ export default {
     return {
       baseUrl: window.location.origin,
       items: [],
+      proveedores: [],
       loading: true,
       form: {
         producto: '',
         precio: '',
         tipo_producto: '',
+        id_proveedor: '',
         imagen: null
       },
       imagePreview: null,
@@ -181,7 +205,8 @@ export default {
       filters: {
         producto: '',
         precio: '',
-        tipo_producto: ''
+        tipo_producto: '',
+        proveedor: ''
       }
     };
   },
@@ -192,6 +217,7 @@ export default {
         producto: this.filters.producto || null,
         precio: this.filters.precio || null,
         tipo_producto: this.filters.tipo_producto || null,
+        proveedor: this.filters.proveedor || null,
         page: this.pagination.current_page
       };
       
@@ -216,6 +242,15 @@ export default {
           this.loading = false;
         });
     },
+    fetchProveedores() {
+      axios.get('/api/proveedores')
+        .then(response => {
+          this.proveedores = response.data.data;
+        })
+        .catch(error => {
+          console.error('Error fetching proveedores:', error);
+        });
+    },
     handleImageUpload(event) {
       const file = event.target.files[0];
       this.form.imagen = file;
@@ -232,6 +267,7 @@ export default {
         producto: item.producto,
         precio: item.precio,
         tipo_producto: item.tipo_producto,
+        id_proveedor: item.id_proveedor,
         imagen: null
       };
       this.imagePreview = `${this.baseUrl}/images/stock/${item.imagen}`;
@@ -245,6 +281,7 @@ export default {
       formData.append('producto', this.form.producto);
       formData.append('precio', this.form.precio);
       formData.append('tipo_producto', this.form.tipo_producto);
+      formData.append('id_proveedor', this.form.id_proveedor);
       
       if (this.form.imagen instanceof File) {
         formData.append('imagen', this.form.imagen);
@@ -292,6 +329,7 @@ export default {
         producto: '',
         precio: '',
         tipo_producto: '',
+        id_proveedor: '',
         imagen: null
       };
       this.imagePreview = null;
@@ -323,7 +361,8 @@ export default {
       this.filters = {
         producto: '',
         precio: '',
-        tipo_producto: ''
+        tipo_producto: '',
+        proveedor: ''
       };
       this.applyFilters();
     },
@@ -340,7 +379,7 @@ export default {
     getTipoProductoLabel(tipo) {
       switch (tipo) {
         case 'l':
-          return 'Lentes';
+          return 'Lentes de Sol';
         case 'm':
           return 'Montura';
         case 'c':
@@ -354,6 +393,7 @@ export default {
   },
   mounted() {
     this.fetchItems();
+    this.fetchProveedores();
   }
 };
 </script>
