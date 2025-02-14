@@ -94,7 +94,7 @@
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>Seleccionar</th>
+                                <th class="text-center">Seleccionar</th>
                                 <th>Nombres</th>
                                 <th>Teléfono</th>
                                 <th>Correo</th>
@@ -104,7 +104,7 @@
                         </thead>
                         <tbody>
                             <tr v-for="productoComprobante in productoComprobantes" :key="productoComprobante.id">
-                                <td>
+                                <td class="text-center">
                                     <input 
                                         type="radio" 
                                         v-model="selectedProductoComprobanteId" 
@@ -493,5 +493,9 @@ export default {
   transform: translateY(-50%);
   pointer-events: none;
   color: #6c757d;
+}
+
+.table th, .table td {
+  vertical-align: middle; /* Center align the content vertically */
 }
 </style>
