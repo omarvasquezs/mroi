@@ -132,16 +132,24 @@
                             <tr>
                                 <th>Producto</th>
                                 <th>Cantidad</th>
-                                <th>Precio</th>
+                                <th>Precio Unitario</th>
+                                <th>Precio Total</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="item in productoComprobanteItems" :key="item.id">
                                 <td>{{ item.stock ? item.stock.producto : 'N/A' }}</td>
                                 <td>{{ item.cantidad }}</td>
-                                <td>{{ formatCurrency(item.precio) }}</td>
+                                <td>{{ formatCurrency(item.precio_unitario) }}</td>
+                                <td>{{ formatCurrency(item.precio_total) }}</td>
                             </tr>
                         </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                <td><strong>{{ formatCurrency(totalPrecio) }}</strong></td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>
@@ -212,6 +220,11 @@ export default {
             productoComprobanteItems: []
         }
     },
+    computed: {
+        totalPrecio() {
+            return this.productoComprobanteItems.reduce((total, item) => total + item.precio_total, 0);
+        }
+    },
     mounted() {
         this.fetchPacientes();
         this.fetchMetodosPago();
@@ -272,7 +285,11 @@ export default {
             try {
                 const response = await axios.get(`/api/productos-comprobante/${this.selectedProductoComprobanteId}`);
                 this.selectedProductoComprobante = response.data;
-                this.productoComprobanteItems = response.data.items;
+                this.productoComprobanteItems = response.data.items.map(item => ({
+                    ...item,
+                    precio_unitario: item.precio,
+                    precio_total: item.precio * item.cantidad
+                }));
             } catch (error) {
                 console.error('Error fetching producto comprobante items:', error);
             }
