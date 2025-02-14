@@ -7,13 +7,14 @@
         <div class="card mb-4">
             <div class="card-header">Servicio</div>
             <div class="card-body">
-                <div class="form-group">
+                <div class="form-group position-relative select-wrapper">
                     <label for="tipo-servicio-select">Tipo de Servicio</label>
                     <select v-model="comprobanteType" class="form-control" id="tipo-servicio-select">
                         <option value="" disabled selected>Seleccione tipo de servicio</option>
                         <option value="citas">Citas</option>
                         <option value="productos">Productos</option>
                     </select>
+                    <i class="fas fa-chevron-down select-arrow"></i>
                 </div>
             </div>
         </div>
@@ -24,7 +25,7 @@
             <div class="card mb-4">
                 <div class="card-header">Búsqueda de Paciente</div>
                 <div class="card-body">
-                    <div class="form-group">
+                    <div class="form-group position-relative select-wrapper">
                         <label for="paciente-select">Seleccionar Paciente</label>
                         <select 
                             v-model="selectedPatientId" 
@@ -37,6 +38,7 @@
                                 {{ paciente.num_historia }} - {{ paciente.nombre }}
                             </option>
                         </select>
+                        <i class="fas fa-chevron-down select-arrow"></i>
                     </div>
                 </div>
             </div>
@@ -161,16 +163,17 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="form-group">
+                        <div class="form-group position-relative select-wrapper">
                             <label>Tipo de Comprobante</label>
                             <select v-model="comprobante.tipo" class="form-control">
                                 <option value="b">Boleta</option>
                                 <option value="f">Factura</option>
                             </select>
+                            <i class="fas fa-chevron-down select-arrow"></i>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="form-group">
+                        <div class="form-group position-relative select-wrapper">
                             <label>Método de Pago</label>
                             <select v-model="comprobante.id_metodo_pago" class="form-control">
                                 <option value="" disabled selected>Seleccione método de pago</option>
@@ -180,6 +183,7 @@
                                     {{ metodo.nombre }}
                                 </option>
                             </select>
+                            <i class="fas fa-chevron-down select-arrow"></i>
                         </div>
                     </div>
                 </div>
@@ -466,3 +470,28 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+.select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.select-wrapper select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 30px;
+  background-color: #fff;  /* Ensure background is white */
+}
+
+.select-arrow {
+  position: absolute;
+  right: 15px; /* Adjusted to align properly */
+  top: 69%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #6c757d;
+}
+</style>
