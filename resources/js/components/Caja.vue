@@ -133,7 +133,7 @@
                         <thead>
                             <tr>
                                 <th>Producto</th>
-                                <th>Cantidad</th>
+                                <th class="text-center">Cantidad</th>
                                 <th>Precio Unitario</th>
                                 <th>Precio Total</th>
                             </tr>
@@ -141,7 +141,7 @@
                         <tbody>
                             <tr v-for="item in productoComprobanteItems" :key="item.id">
                                 <td>{{ item.stock ? item.stock.producto : 'N/A' }}</td>
-                                <td>{{ item.cantidad }}</td>
+                                <td class="text-center">{{ item.cantidad }}</td>
                                 <td>{{ formatCurrency(item.precio_unitario) }}</td>
                                 <td>{{ formatCurrency(item.precio_total) }}</td>
                             </tr>
