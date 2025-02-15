@@ -54,3 +54,5 @@ Route::get('/productos-comprobante/{id}', [ProductoComprobanteController::class,
 
 Route::get('/pacientes', [PacienteController::class, 'index']);
 Route::get('/pacientes/{id}/appointments', [PacienteController::class, 'show']);
+
+Route::get('/comprobantes', [ComprobanteController::class, 'index']);

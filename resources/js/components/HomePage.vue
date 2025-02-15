@@ -124,6 +124,7 @@ export default {
                 { type: 'link', label: 'Registro de Examenes', icon: 'fas fa-vials', url: '/registro-examenes', condition: 'Examenes|Laboratorio' },
                 { type: 'link', label: 'Registro de Citas', icon: 'fas fa-stethoscope', url: '/registro-citas', condition: 'Atención Hospitalaria|Registro de Citas' },
                 { type: 'link', label: 'Gestionar Caja', icon: 'fas fa-cash-register', url: '/caja', condition: 'Servicios Contables|Caja' },
+                { type: 'link', label: 'Movimientos', icon: 'fas fa-receipt', url: '/facturacion', condition: 'Servicios Contables|Facturación' },
                 { 
                     type: 'link', 
                     label: 'Administrar métodos de pago', 

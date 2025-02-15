@@ -72,6 +72,12 @@ const routes = [
         component: () => import("../components/ProveedoresCrud.vue"),
     },
     {
+        path: "/facturacion",
+        name: "Facturacion",
+        component: () => import("../components/Facturacion.vue"),
+        meta: { requiresAuth: true }
+    },
+    {
         path: "/:pathMatch(.*)*",
         component: () => import("../components/NotfoundPage.vue"),
     }
