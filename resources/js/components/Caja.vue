@@ -264,12 +264,8 @@ export default {
         },
         async fetchMetodosPago() {
             try {
-                this.metodosPago = [
-                    { id: 1, nombre: 'Efectivo' },
-                    { id: 2, nombre: 'Tarjeta' },
-                    { id: 3, nombre: 'Yape' },
-                    { id: 4, nombre: 'Plin' }
-                ];
+                const response = await axios.get('/api/active-metodos-pago');
+                this.metodosPago = Array.isArray(response.data) ? response.data : [];
             } catch (error) {
                 console.error('Error fetching metodos de pago:', error);
             }
@@ -362,122 +358,14 @@ export default {
                 }
 
                 const comprobante = response.data.comprobante;
-                this.printComprobante(comprobante);
-
-                this.selectedAppointments = [];
-                this.selectedProductoComprobante = null;
-                await this.fetchPatientAppointments();
-                await this.fetchProductoComprobanteItems();
+                this.$router.push({
+                    path: '/facturacion',
+                    query: { successMessage: `SE GENERO COMPROBANTE ${comprobante.serie}-${comprobante.correlativo.toString().padStart(8, '0')}` }
+                });
             } catch (error) {
                 console.error('Error generating comprobante:', error);
                 alert('Error al generar el comprobante: ' + (error.response?.data?.error || error.message));
             }
-        },
-        printComprobante(comprobante) {
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(this.getPrintTemplate(comprobante));
-            printWindow.document.close();
-            printWindow.print();
-        },
-        getPrintTemplate(comprobante) {
-            const metodoPago = this.metodosPago.find(m => m.id === this.comprobante.id_metodo_pago)?.nombre || '';
-            const tipoComprobante = this.comprobante.tipo === 'b' ? 'BOLETA' : 'FACTURA';
-            const fecha = new Date().toLocaleString('es-PE');
-            
-            let itemsHtml = '';
-            if (this.comprobanteType === 'citas') {
-                itemsHtml = this.pendingAppointments
-                    .filter(cita => this.selectedAppointments.includes(cita.id))
-                    .map(cita => `
-                        <div class="item">
-                            <p>${cita.tipo_cita}</p>
-                            <p>Médico: ${cita.medico}</p>
-                            <p>Fecha: ${this.formatDate(cita.fecha)}</p>
-                            <p>Monto: ${this.formatCurrency(cita.monto)}</p>
-                        </div>
-                    `).join('<hr style="border-top: 1px dashed #ccc">');
-            } else if (this.comprobanteType === 'productos') {
-                itemsHtml = this.productoComprobanteItems
-                    .map(item => `
-                        <div class="item">
-                            <p>Producto: ${item.stock ? item.stock.producto : 'N/A'}</p>
-                            <p>Cantidad: ${item.cantidad}</p>
-                            <p>Precio: ${this.formatCurrency(item.precio)}</p>
-                        </div>
-                    `).join('<hr style="border-top: 1px dashed #ccc">');
-            }
-
-            return `
-                <html>
-                <head>
-                    <style>
-                        @page {
-                            size: 80mm 297mm;
-                            margin: 0;
-                        }
-                        body {
-                            font-family: 'Courier New', monospace;
-                            width: 80mm;
-                            padding: 5mm;
-                            font-size: 12px;
-                        }
-                        .header {
-                            text-align: center;
-                            margin-bottom: 10px;
-                            border-bottom: 1px dashed #000;
-                            padding-bottom: 5px;
-                        }
-                        .details {
-                            margin-bottom: 10px;
-                        }
-                        .item {
-                            margin-bottom: 5px;
-                        }
-                        .total {
-                            border-top: 1px dashed #000;
-                            margin-top: 10px;
-                            padding-top: 5px;
-                            font-weight: bold;
-                        }
-                        .footer {
-                            margin-top: 20px;
-                            text-align: center;
-                            font-size: 10px;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="header">
-                        <h2 style="margin:0;">CLÍNICA GYF</h2>
-                        <p style="margin:5px 0;">${tipoComprobante} DE VENTA ELECTRÓNICA</p>
-                        <p style="margin:5px 0;">${comprobante.serie}-${comprobante.correlativo.toString().padStart(8, '0')}</p>
-                    </div>
-                    
-                    <div class="details">
-                        <p>Fecha: ${fecha}</p>
-                        <p>Paciente: ${this.selectedPatient.nombre}</p>
-                        <p>Historia: ${this.selectedPatient.num_historia}</p>
-                        <p>Método de pago: ${metodoPago}</p>
-                    </div>
-
-                    <div class="items">
-                        <div style="border-bottom: 1px dashed #000; margin: 10px 0;">
-                            <p>DETALLE DE SERVICIOS</p>
-                        </div>
-                        ${itemsHtml}
-                    </div>
-
-                    <div class="total">
-                        <p>TOTAL: ${this.formatCurrency(comprobante.monto_total)}</p>
-                    </div>
-
-                    <div class="footer">
-                        <p>¡Gracias por su preferencia!</p>
-                        <p>Representación impresa de la ${tipoComprobante} de venta electrónica</p>
-                    </div>
-                </body>
-                </html>
-            `;
         }
     }
 }

@@ -54,4 +54,14 @@ class MetodoPagoController extends Controller
         $metodoPago->delete();
         return response()->json(null, 204);
     }
+
+    public function getActiveMetodosPago()
+    {
+        try {
+            $metodosPago = MetodoPago::where('activo', 1)->get();
+            return response()->json($metodosPago);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }

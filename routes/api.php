@@ -56,3 +56,5 @@ Route::get('/pacientes', [PacienteController::class, 'index']);
 Route::get('/pacientes/{id}/appointments', [PacienteController::class, 'show']);
 
 Route::get('/comprobantes', [ComprobanteController::class, 'index']);
+
+Route::get('/active-metodos-pago', [MetodoPagoController::class, 'getActiveMetodosPago']);

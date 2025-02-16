@@ -25,4 +25,9 @@ class Comprobante extends Model
             ->withPivot('monto')
             ->withTimestamps();
     }
+
+    public function metodoPago()
+    {
+        return $this->belongsTo(MetodoPago::class, 'id_metodo_pago');
+    }
 }

@@ -9,6 +9,16 @@ use Illuminate\Http\Request;
 
 class ComprobanteController extends Controller
 {
+    public function index()
+    {
+        try {
+            $comprobantes = Comprobante::with(['citas', 'metodoPago'])->get();
+            return response()->json($comprobantes);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function store(Request $request)
     {
         try {
