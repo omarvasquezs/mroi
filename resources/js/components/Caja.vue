@@ -103,13 +103,12 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="productoComprobante in productoComprobantes" :key="productoComprobante.id">
+                            <tr v-for="productoComprobante in productoComprobantes" :key="productoComprobante.id" @click="selectProductoComprobante(productoComprobante.id)" class="clickable-row">
                                 <td class="text-center">
                                     <input 
                                         type="radio" 
                                         v-model="selectedProductoComprobanteId" 
                                         :value="productoComprobante.id"
-                                        @change="fetchProductoComprobanteItems"
                                     >
                                 </td>
                                 <td>{{ productoComprobante.nombres }}</td>
@@ -321,6 +320,10 @@ export default {
                 this.selectedAppointments = [];
             }
         },
+        selectProductoComprobante(id) {
+            this.selectedProductoComprobanteId = id;
+            this.fetchProductoComprobanteItems();
+        },
         async generateComprobante() {
             if (this.comprobanteType === 'citas' && !this.selectedPatient) {
                 alert('Seleccione un paciente antes de generar el comprobante.');
@@ -497,5 +500,9 @@ export default {
 
 .table th, .table td {
   vertical-align: middle; /* Center align the content vertically */
+}
+
+.clickable-row {
+  cursor: pointer;
 }
 </style>
