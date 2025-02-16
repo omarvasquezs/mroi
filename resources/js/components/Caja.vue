@@ -9,10 +9,10 @@
             <div class="card-body">
                 <div class="form-group position-relative select-wrapper">
                     <label for="tipo-servicio-select">Tipo de Servicio</label>
-                    <select v-model="comprobanteType" class="form-control" id="tipo-servicio-select">
-                        <option value="" disabled selected>Seleccione tipo de servicio</option>
-                        <option value="citas">Citas</option>
-                        <option value="productos">Productos</option>
+                    <select v-model="comprobanteType" class="form-control pointer" id="tipo-servicio-select">
+                        <option value="" disabled selected class="pointer">Seleccione tipo de servicio</option>
+                        <option value="citas" class="pointer">Citas</option>
+                        <option value="productos" class="pointer">Productos</option>
                     </select>
                     <i class="fas fa-chevron-down select-arrow"></i>
                 </div>
@@ -29,12 +29,12 @@
                         <label for="paciente-select">Seleccionar Paciente</label>
                         <select 
                             v-model="selectedPatientId" 
-                            class="form-control" 
+                            class="form-control pointer" 
                             id="paciente-select"
                             @change="fetchPatientAppointments"
                         >
-                            <option value="" disabled selected>Seleccione un paciente</option>
-                            <option v-for="paciente in pacientes" :key="paciente.id" :value="paciente.id">
+                            <option value="" disabled selected class="pointer">Seleccione un paciente</option>
+                            <option v-for="paciente in pacientes" :key="paciente.id" :value="paciente.id" class="pointer">
                                 {{ paciente.num_historia }} - {{ paciente.nombre }}
                             </option>
                         </select>
@@ -164,9 +164,9 @@
                     <div class="col-md-6">
                         <div class="form-group position-relative select-wrapper">
                             <label>Tipo de Comprobante</label>
-                            <select v-model="comprobante.tipo" class="form-control">
-                                <option value="b">Boleta</option>
-                                <option value="f">Factura</option>
+                            <select v-model="comprobante.tipo" class="form-control pointer">
+                                <option value="b" class="pointer">Boleta</option>
+                                <option value="f" class="pointer">Factura</option>
                             </select>
                             <i class="fas fa-chevron-down select-arrow"></i>
                         </div>
@@ -174,11 +174,12 @@
                     <div class="col-md-6">
                         <div class="form-group position-relative select-wrapper">
                             <label>Método de Pago</label>
-                            <select v-model="comprobante.id_metodo_pago" class="form-control">
-                                <option value="" disabled selected>Seleccione método de pago</option>
+                            <select v-model="comprobante.id_metodo_pago" class="form-control pointer">
+                                <option value="" disabled selected class="pointer">Seleccione método de pago</option>
                                 <option v-for="metodo in metodosPago" 
                                         :key="metodo.id" 
-                                        :value="metodo.id">
+                                        :value="metodo.id"
+                                        class="pointer">
                                     {{ metodo.nombre }}
                                 </option>
                             </select>
@@ -487,6 +488,14 @@ export default {
   -moz-appearance: none;
   padding-right: 30px;
   background-color: #fff;  /* Ensure background is white */
+  cursor: pointer;
+}
+
+.select-wrapper option {
+  cursor: pointer !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
 }
 
 .select-arrow {
@@ -503,6 +512,10 @@ export default {
 }
 
 .clickable-row {
+  cursor: pointer;
+}
+
+.pointer {
   cursor: pointer;
 }
 </style>
