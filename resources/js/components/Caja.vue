@@ -66,7 +66,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="cita in pendingAppointments" :key="cita.id">
+                            <tr v-for="cita in pendingAppointments" :key="cita.id" @click="toggleAppointmentSelection(cita.id)" class="clickable-row">
                                 <td>
                                     <input 
                                         type="checkbox" 
@@ -319,6 +319,14 @@ export default {
                 this.selectedAppointments = this.pendingAppointments.map(cita => cita.id);
             } else {
                 this.selectedAppointments = [];
+            }
+        },
+        toggleAppointmentSelection(id) {
+            const index = this.selectedAppointments.indexOf(id);
+            if (index === -1) {
+                this.selectedAppointments.push(id);
+            } else {
+                this.selectedAppointments.splice(index, 1);
             }
         },
         selectProductoComprobante(id) {
