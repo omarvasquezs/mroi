@@ -1,8 +1,10 @@
 <template>
     <div class="container">
+        <!-- Back Button -->
         <div class="mb-4">
             <button @click="goBack" class="btn btn-link">← Regresar</button>
         </div>
+
         <!-- Selection Section -->
         <div class="card mb-4">
             <div class="card-header">Servicio</div>
@@ -205,39 +207,43 @@
 export default {
     data() {
         return {
-            comprobanteType: '',
-            searchTerm: '',
-            pacientes: [],
-            selectedPatientId: '',
-            selectedPatient: null,
-            pendingAppointments: [],
-            selectedAppointments: [],
-            selectAll: false,
-            metodosPago: [],
+            comprobanteType: '', // Type of service selected (citas or productos)
+            searchTerm: '', // Search term for filtering patients
+            pacientes: [], // List of patients
+            selectedPatientId: '', // ID of the selected patient
+            selectedPatient: null, // Details of the selected patient
+            pendingAppointments: [], // List of pending appointments for the selected patient
+            selectedAppointments: [], // List of selected appointments
+            selectAll: false, // Flag to select/deselect all appointments
+            metodosPago: [], // List of payment methods
             comprobante: {
-                tipo: 'b',
-                id_metodo_pago: ''
+                tipo: 'b', // Type of comprobante (boleta or factura)
+                id_metodo_pago: '' // Selected payment method ID
             },
-            productoComprobantes: [],
-            selectedProductoComprobanteId: '',
-            selectedProductoComprobante: null,
-            productoComprobanteItems: []
+            productoComprobantes: [], // List of product purchase requests
+            selectedProductoComprobanteId: '', // ID of the selected product purchase request
+            selectedProductoComprobante: null, // Details of the selected product purchase request
+            productoComprobanteItems: [] // List of items in the selected product purchase request
         }
     },
     computed: {
+        // Calculate the total price of the selected product purchase request items
         totalPrecio() {
             return this.productoComprobanteItems.reduce((total, item) => total + item.precio_total, 0);
         }
     },
     mounted() {
+        // Fetch initial data when the component is mounted
         this.fetchPacientes();
         this.fetchMetodosPago();
         this.fetchProductoComprobantes();
     },
     methods: {
+        // Navigate back to the previous page
         goBack() {
             window.history.back();
         },
+        // Fetch the list of patients from the API
         async fetchPacientes() {
             try {
                 const response = await axios.get('/api/pacientes-list');
@@ -247,6 +253,7 @@ export default {
                 this.pacientes = [];
             }
         },
+        // Fetch the appointments of the selected patient from the API
         async fetchPatientAppointments() {
             try {
                 const selectedPatient = this.pacientes.find(p => p.id === this.selectedPatientId);
@@ -262,6 +269,7 @@ export default {
                 console.error('Error fetching patient appointments:', error);
             }
         },
+        // Fetch the list of payment methods from the API
         async fetchMetodosPago() {
             try {
                 const response = await axios.get('/api/active-metodos-pago');
@@ -270,6 +278,7 @@ export default {
                 console.error('Error fetching metodos de pago:', error);
             }
         },
+        // Fetch the list of product purchase requests from the API
         async fetchProductoComprobantes() {
             try {
                 const response = await axios.get('/api/productos-comprobante');
@@ -281,6 +290,7 @@ export default {
                 this.productoComprobantes = [];
             }
         },
+        // Fetch the items of the selected product purchase request from the API
         async fetchProductoComprobanteItems() {
             try {
                 const response = await axios.get(`/api/productos-comprobante/${this.selectedProductoComprobanteId}`);
@@ -294,6 +304,7 @@ export default {
                 console.error('Error fetching producto comprobante items:', error);
             }
         },
+        // Format a date to a readable string
         formatDate(date) {
             if (!date) return 'N/A';
             return new Date(date).toLocaleString('es-PE', {
@@ -304,12 +315,14 @@ export default {
                 minute: '2-digit'
             });
         },
+        // Format a number to a currency string
         formatCurrency(amount) {
             return new Intl.NumberFormat('es-PE', {
                 style: 'currency',
                 currency: 'PEN'
             }).format(amount);
         },
+        // Toggle the selection of all appointments
         toggleAll() {
             if (this.selectAll) {
                 this.selectedAppointments = this.pendingAppointments.map(cita => cita.id);
@@ -317,6 +330,7 @@ export default {
                 this.selectedAppointments = [];
             }
         },
+        // Toggle the selection of a specific appointment
         toggleAppointmentSelection(id) {
             const index = this.selectedAppointments.indexOf(id);
             if (index === -1) {
@@ -325,10 +339,12 @@ export default {
                 this.selectedAppointments.splice(index, 1);
             }
         },
+        // Select a product purchase request and fetch its items
         selectProductoComprobante(id) {
             this.selectedProductoComprobanteId = id;
             this.fetchProductoComprobanteItems();
         },
+        // Generate a comprobante based on the selected service type and details
         async generateComprobante() {
             if (this.comprobanteType === 'citas' && !this.selectedPatient) {
                 alert('Seleccione un paciente antes de generar el comprobante.');
