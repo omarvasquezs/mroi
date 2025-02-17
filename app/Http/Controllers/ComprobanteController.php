@@ -13,6 +13,17 @@ class ComprobanteController extends Controller
     {
         try {
             $comprobantes = Comprobante::with(['citas', 'metodoPago'])->get();
+
+            foreach ($comprobantes as $comprobante) {
+                if ($comprobante->citas()->exists()) {
+                    $comprobante->servicio = 'Cita';
+                } elseif (ProductoComprobante::where('comprobante_id', $comprobante->id)->exists()) {
+                    $comprobante->servicio = 'Producto';
+                } else {
+                    $comprobante->servicio = 'Desconocido';
+                }
+            }
+
             return response()->json($comprobantes);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);

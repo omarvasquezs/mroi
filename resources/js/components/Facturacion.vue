@@ -13,21 +13,21 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Número Comprobante</th>
-                            <th>Tipo</th>
-                            <th>Monto Total</th>
+                            <th>Número de Comprobante</th>
+                            <th>Tipo de Comprobante</th>
+                            <th>Servicio</th>
+                            <th>Monto</th>
                             <th>Método de Pago</th>
-                            <th>Pagado</th>
-                            <th>Fecha</th>
+                            <th>Fecha de Registro</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="comprobante in comprobantes" :key="comprobante.id">
                             <td>{{ `${comprobante.serie}-${comprobante.correlativo.toString().padStart(8, '0')}` }}</td>
                             <td>{{ comprobante.tipo === 'b' ? 'Boleta' : 'Factura' }}</td>
+                            <td>{{ comprobante.servicio }}</td>
                             <td>{{ formatCurrency(comprobante.monto_total) }}</td>
                             <td>{{ getMetodoPago(comprobante.id_metodo_pago) }}</td>
-                            <td>{{ comprobante.pagado ? 'Sí' : 'No' }}</td>
                             <td>{{ formatDate(comprobante.created_at) }}</td>
                         </tr>
                     </tbody>
