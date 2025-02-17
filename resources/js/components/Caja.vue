@@ -364,7 +364,7 @@ export default {
                     response = await axios.post('/api/comprobantes', {
                         tipo: this.comprobante.tipo,
                         id_metodo_pago: this.comprobante.id_metodo_pago,
-                        productos_comprobante_id: this.selectedProductoComprobante.id
+                        productos_comprobante_id: this.selectedProductoComprobanteId
                     });
                 }
 
