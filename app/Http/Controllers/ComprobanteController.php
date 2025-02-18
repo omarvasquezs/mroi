@@ -143,6 +143,41 @@ class ComprobanteController extends Controller
         }
     }
 
+    public function generatePdf($id)
+    {
+        try {
+            // Load the comprobante with necessary relationships
+            $comprobante = Comprobante::with([
+                'citas.tipoCita', 
+                'metodoPago', 
+                'paciente',
+                'productoComprobante.items.stock'
+            ])->findOrFail($id);
+
+            // Determine the service type
+            if ($comprobante->citas()->exists()) {
+                $comprobante->servicio = 'Cita';
+            } elseif ($comprobante->productoComprobante) {
+                $comprobante->servicio = 'Producto';
+            } else {
+                $comprobante->servicio = 'Desconocido';
+            }
+
+            // Generate the PDF
+            $pdf = PDF::loadView('comprobantes.pdf', ['comprobante' => $comprobante]);
+
+            return $pdf->stream("Comprobante_{$comprobante->serie}_{$comprobante->correlativo}.pdf");
+        } catch (\Exception $e) {
+            Log::error('Error generating PDF:', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     private function getNextCorrelativo($tipo)
     {
         $lastComprobante = Comprobante::where('tipo', $tipo)

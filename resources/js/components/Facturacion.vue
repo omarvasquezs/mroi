@@ -221,17 +221,12 @@ export default {
                     return;
                 }
 
-                // Create PDF blob and URL
-                const pdfContent = atob(response.data.pdf);
-                const pdfBlob = new Blob([new Uint8Array([...pdfContent].map(char => char.charCodeAt(0)))], { type: 'application/pdf' });
-                const pdfUrl = URL.createObjectURL(pdfBlob);
-
                 // Set PDF URL
-                this.pdfUrl = pdfUrl;
+                this.pdfUrl = `/api/comprobantes/${comprobante.id}/pdf`;
 
-                // Print and show modal
-                this.printComprobante(comprobante);
-                this.openPdfModal(comprobante.id);
+                // Show modal
+                const pdfModal = new bootstrap.Modal(document.getElementById('pdfModal'));
+                pdfModal.show();
             } catch (error) {
                 console.error('Error generating comprobante:', error);
                 const errorMessage = error.response?.data?.error || error.message;
