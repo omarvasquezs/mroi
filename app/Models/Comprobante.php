@@ -30,4 +30,9 @@ class Comprobante extends Model
     {
         return $this->belongsTo(MetodoPago::class, 'id_metodo_pago');
     }
+
+    public function productoComprobante()
+    {
+        return $this->hasOne(ProductoComprobante::class, 'comprobante_id');
+    }
 }

@@ -58,3 +58,6 @@ Route::get('/pacientes/{id}/appointments', [PacienteController::class, 'show']);
 Route::get('/comprobantes', [ComprobanteController::class, 'index']);
 
 Route::get('/active-metodos-pago', [MetodoPagoController::class, 'getActiveMetodosPago']);
+
+Route::post('/comprobantes/{id}/generate', [ComprobanteController::class, 'generate']);
+Route::get('/comprobantes/{id}/pdf', [ComprobanteController::class, 'generatePdf']);
