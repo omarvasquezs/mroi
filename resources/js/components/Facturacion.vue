@@ -64,7 +64,7 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="pdfModalLabel">Comprobante PDF</h5>
+                        <h5 class="modal-title" id="pdfModalLabel">Comprobante {{ modalComprobanteNumero }}</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -94,7 +94,8 @@ export default {
                 fechaHoyDia: false,
                 mesActual: false
             },
-            pdfUrl: '' // URL of the PDF to be displayed in the modal
+            pdfUrl: '', // URL of the PDF to be displayed in the modal
+            modalComprobanteNumero: '' // Número de Comprobante for the modal title
         };
     },
     computed: {
@@ -223,6 +224,7 @@ export default {
 
                 // Set PDF URL
                 this.pdfUrl = `/api/comprobantes/${comprobante.id}/pdf`;
+                this.modalComprobanteNumero = `${comprobante.serie}-${comprobante.correlativo.toString().padStart(8, '0')}`;
 
                 // Show modal
                 const pdfModal = new bootstrap.Modal(document.getElementById('pdfModal'));
