@@ -46,7 +46,7 @@
 
 <body>
     <div class="header">
-        <h2 style="margin:0;">CLÍNICA GYF</h2>
+        <h2 style="margin:0;">G & F oftalmólogas. SAC</h2>
         <p style="margin:5px 0;">{{ $comprobante->tipo === 'b' ? 'BOLETA' : 'FACTURA' }} DE VENTA ELECTRÓNICA</p>
         <p style="margin:5px 0;">
             {{ $comprobante->serie }}-{{ str_pad($comprobante->correlativo, 8, '0', STR_PAD_LEFT) }}</p>
