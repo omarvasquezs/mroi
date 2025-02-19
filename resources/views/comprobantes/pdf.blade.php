@@ -45,8 +45,8 @@
 
     <div class="details">
         <p>Fecha: {{ \Carbon\Carbon::parse($comprobante->created_at)->format('d/m/Y H:i') }}</p>
-        <p>Paciente: {{ optional($comprobante->paciente)->nombre ?? optional($comprobante->citas->first()->paciente)->nombre ?? 'N/A' }}</p>
-        <p>Historia: {{ optional($comprobante->paciente)->num_historia ?? optional($comprobante->citas->first()->paciente)->num_historia ?? 'N/A' }}</p>
+        <p>Paciente: {{ optional($comprobante->citas->first()->paciente)->nombres ?? 'N/A' }}</p>
+        <p>Historia: {{ optional($comprobante->citas->first()->paciente)->num_historia ?? 'N/A' }}</p>
         <p>Método de pago: {{ optional($comprobante->metodoPago)->nombre ?? 'N/A' }}</p>
     </div>
 
