@@ -45,8 +45,8 @@
 
     <div class="details">
         <p>Fecha: {{ \Carbon\Carbon::parse($comprobante->created_at)->format('d/m/Y H:i') }}</p>
-        <p>Paciente: {{ optional($comprobante->paciente)->nombre ?? 'N/A' }}</p>
-        <p>Historia: {{ optional($comprobante->paciente)->num_historia ?? 'N/A' }}</p>
+        <p>Paciente: {{ optional($comprobante->paciente)->nombre ?? optional($comprobante->citas->first()->paciente)->nombre ?? 'N/A' }}</p>
+        <p>Historia: {{ optional($comprobante->paciente)->num_historia ?? optional($comprobante->citas->first()->paciente)->num_historia ?? 'N/A' }}</p>
         <p>Método de pago: {{ optional($comprobante->metodoPago)->nombre ?? 'N/A' }}</p>
     </div>
 
@@ -55,9 +55,9 @@
         @if($comprobante->citas->isNotEmpty())
             @foreach($comprobante->citas as $cita)
                 <div class="item">
-                    <p>{{ $cita->tipo_cita }}</p>
+                    <p>Tipo de Cita: {{ $cita->tipoCita->nombre }}</p>
                     <p>Médico: {{ $cita->medico }}</p>
-                    <p>Fecha: {{ $cita->fecha }}</p>
+                    <p>Fecha: {{ \Carbon\Carbon::parse($cita->fecha)->format('d/m/Y H:i') }}</p>
                     <p>Monto: S/ {{ number_format($cita->pivot->monto, 2) }}</p>
                 </div>
                 @if(!$loop->last)
