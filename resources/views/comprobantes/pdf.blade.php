@@ -45,8 +45,8 @@
 
     <div class="details">
         <p>Fecha: {{ \Carbon\Carbon::parse($comprobante->created_at)->format('d/m/Y H:i') }}</p>
-        <p>Paciente: {{ optional($comprobante->citas->first()->paciente)->nombres ?? 'N/A' }}</p>
-        <p>Historia: {{ optional($comprobante->citas->first()->paciente)->num_historia ?? 'N/A' }}</p>
+        <p>Paciente: {{ optional($comprobante->citas->first()->paciente)->nombres ?? 'N/A' }} {{ optional($comprobante->citas->first()->paciente)->ap_paterno ?? '' }} {{ optional($comprobante->citas->first()->paciente)->ap_materno ?? '' }}</p>
+        <p>Número de Historia: {{ optional($comprobante->citas->first()->paciente)->num_historia ?? 'N/A' }}</p>
         <p>Método de pago: {{ optional($comprobante->metodoPago)->nombre ?? 'N/A' }}</p>
     </div>
 
@@ -55,8 +55,8 @@
         @if($comprobante->citas->isNotEmpty())
             @foreach($comprobante->citas as $cita)
                 <div class="item">
-                    <p>Tipo de Cita: {{ $cita->tipoCita->nombre }}</p>
-                    <p>Médico: {{ $cita->medico }}</p>
+                    <p>Tipo de Cita: {{ optional($cita->tipoCita)->tipo_cita ?? 'N/A' }}</p>
+                    <p>Médico: {{ $cita->medico ?? 'N/A' }}</p>
                     <p>Fecha: {{ \Carbon\Carbon::parse($cita->fecha)->format('d/m/Y H:i') }}</p>
                     <p>Monto: S/ {{ number_format($cita->pivot->monto, 2) }}</p>
                 </div>
