@@ -4,40 +4,43 @@
     <meta charset="utf-8">
     <title>Comprobante {{ $comprobante->serie }}-{{ str_pad($comprobante->correlativo, 8, '0', STR_PAD_LEFT) }}</title>
     <style>
+        @page {
+            margin: 1.1rem;
+        }
         body {
             font-family: 'Courier New', monospace;
-            font-size: 12px;
-            line-height: 1.4;
+            font-size: 10px;
         }
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             border-bottom: 1px dashed #000;
-            padding-bottom: 10px;
+            padding-bottom: 5px;
         }
         .details {
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
-        .items {
-            margin-bottom: 20px;
+        .item {
+            margin-bottom: 5px;
         }
         .total {
             border-top: 1px dashed #000;
-            padding-top: 10px;
-            text-align: right;
+            margin-top: 10px;
+            padding-top: 5px;
+            font-weight: bold;
         }
         .footer {
-            text-align: center;
             margin-top: 20px;
+            text-align: center;
             font-size: 10px;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h2>CLÍNICA GYF</h2>
-        <p>{{ $comprobante->tipo === 'b' ? 'BOLETA' : 'FACTURA' }} DE VENTA ELECTRÓNICA</p>
-        <p>{{ $comprobante->serie }}-{{ str_pad($comprobante->correlativo, 8, '0', STR_PAD_LEFT) }}</p>
+        <h2 style="margin:0;">CLÍNICA GYF</h2>
+        <p style="margin:5px 0;">{{ $comprobante->tipo === 'b' ? 'BOLETA' : 'FACTURA' }} DE VENTA ELECTRÓNICA</p>
+        <p style="margin:5px 0;">{{ $comprobante->serie }}-{{ str_pad($comprobante->correlativo, 8, '0', STR_PAD_LEFT) }}</p>
     </div>
 
     <div class="details">

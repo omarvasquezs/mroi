@@ -163,8 +163,17 @@ class ComprobanteController extends Controller
                 $comprobante->servicio = 'Desconocido';
             }
 
-            // Generate the PDF
+            // Generate the PDF with 58mm width (approximately 164 points)
             $pdf = PDF::loadView('comprobantes.pdf', ['comprobante' => $comprobante]);
+            $pdf->setPaper([0, 0, 164, 800], 'portrait'); // 58mm ≈ 164 points
+
+            // Adjust the margins to ensure content fits properly
+            $pdf->setOptions([
+                'margin-left' => '5mm',
+                'margin-right' => '5mm',
+                'margin-top' => '5mm',
+                'margin-bottom' => '5mm'
+            ]);
 
             return $pdf->stream("Comprobante_{$comprobante->serie}_{$comprobante->correlativo}.pdf");
         } catch (\Exception $e) {
