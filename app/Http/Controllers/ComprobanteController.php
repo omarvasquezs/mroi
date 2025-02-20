@@ -175,6 +175,9 @@ class ComprobanteController extends Controller
                 'margin-bottom' => '5mm'
             ]);
 
+            // Allow loading remote images
+            $pdf->setOptions(['isRemoteEnabled' => true]);
+
             return $pdf->stream("Comprobante_{$comprobante->serie}_{$comprobante->correlativo}.pdf");
         } catch (\Exception $e) {
             Log::error('Error generating PDF:', [

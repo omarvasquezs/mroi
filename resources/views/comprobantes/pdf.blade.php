@@ -11,7 +11,7 @@
 
         body {
             font-family: 'Courier New', monospace;
-            font-size: 10px;
+            font-size: 8px;
         }
 
         .header {
@@ -46,14 +46,20 @@
 
 <body>
     <div class="header">
+        <!-- Logo del comprobante -->
+        <div style="text-align: center; margin-bottom: 10px;">
+            <img src="{{ url('/images/gyf_logo_comprobantes_58.png') }}" style="max-width: 160px; height: auto; display: block; margin: 0 auto;">
+        </div>
         <h2 style="margin:0;">G & F oftalmólogas. SAC</h2>
+        <p>RUC: 20600971115</p>
         <p style="margin:5px 0;">{{ $comprobante->tipo === 'b' ? 'BOLETA' : 'FACTURA' }} DE VENTA ELECTRÓNICA</p>
         <p style="margin:5px 0;">
             {{ $comprobante->serie }}-{{ str_pad($comprobante->correlativo, 8, '0', STR_PAD_LEFT) }}</p>
     </div>
 
     <div class="details">
-        <p>Fecha: {{ \Carbon\Carbon::parse($comprobante->created_at)->format('d/m/Y H:i') }}</p>
+        <p>Impreso el: {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}</p>
+        <p>Generado el: {{ \Carbon\Carbon::parse($comprobante->created_at)->format('d/m/Y H:i') }}</p>
     </div>
 
     <div class="items">
