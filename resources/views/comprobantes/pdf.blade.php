@@ -50,16 +50,17 @@
         <div style="text-align: center; margin-bottom: 10px;">
             <img src="{{ url('/images/gyf_logo_comprobantes_58.png') }}" style="max-width: 160px; height: auto; display: block; margin: 0 auto;">
         </div>
-        <h2 style="margin:0;">G & F oftalmólogas. SAC</h2>
+        <h2 style="margin:0;">G & F oftalmólogas. S.A.C.</h2>
+        <p>Dirección: Av. El Sol esq. Jr. Unión. Villa el Salvador</p>
         <p>RUC: 20613814265</p>
-        <p style="margin:5px 0;">{{ $comprobante->tipo === 'b' ? 'BOLETA' : 'FACTURA' }} DE VENTA ELECTRÓNICA</p>
-        <p style="margin:5px 0;">
-            {{ $comprobante->serie }}-{{ str_pad($comprobante->correlativo, 8, '0', STR_PAD_LEFT) }}</p>
+        <p>Teléfono: 940 213 168</p>
     </div>
 
-    <div class="details">
-        <p>Impreso el: {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}</p>
-        <p>Generado el: {{ \Carbon\Carbon::parse($comprobante->created_at)->format('d/m/Y H:i') }}</p>
+    <div class="details" style="text-align: center; padding-bottom: 5px;border-bottom: 1px dashed #000;">
+        <p style="margin:5px 0;">{{ $comprobante->tipo === 'b' ? 'BOLETA' : 'FACTURA' }} DE VENTA ELECTRÓNICA</p>
+        <p style="margin:5px 0;">
+            {{ $comprobante->serie }}-{{ str_pad($comprobante->correlativo, 8, '0', STR_PAD_LEFT) }}
+        </p>
     </div>
 
     <div class="items">
@@ -67,6 +68,7 @@
         @if($comprobante->citas->isNotEmpty())
             @foreach($comprobante->citas as $cita)
                 <div class="item">
+                    <p>Fecha de Emision: {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}</p>
                     <p>Número de Historia: {{ optional($comprobante->citas->first()->paciente)->num_historia ?? 'N/A' }}</p>
                     <p>Paciente: {{ optional($comprobante->citas->first()->paciente)->nombres ?? 'N/A' }}
                         {{ optional($comprobante->citas->first()->paciente)->ap_paterno ?? '' }}
