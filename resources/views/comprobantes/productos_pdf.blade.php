@@ -68,6 +68,10 @@
             text-align: center;
             font-size: 10px;
         }
+
+        .qr {
+            margin: 20px;
+        }
     </style>
 </head>
 
@@ -104,7 +108,7 @@
     </div>
 
     <div class="items">
-        <h3>PRODUCTOS</h3>
+        <h3>DETALLES DE LOS PRODUCTOS</h3>
         @if($comprobante->productoComprobante && $comprobante->productoComprobante->items->isNotEmpty())
             <table>
                 <thead>
@@ -135,6 +139,21 @@
 
     <div class="footer">
         <p>¡Gracias por su preferencia!</p>
+
+        @php
+            $qrContent = json_encode([
+                'serie' => $comprobante->serie,
+                'correlativo' => $comprobante->correlativo,
+                'monto_total' => $comprobante->monto_total,
+                'fecha_emision' => \Carbon\Carbon::now()->format('d/m/Y H:i'),
+                // additional fields as needed
+            ]);
+        @endphp
+        <div class="qr">
+            <img src="data:image/png;base64,{{ base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(150)->generate($qrContent)) }}"
+                alt="QR Code">
+        </div>
+
         <p>Representación impresa de la {{ $comprobante->tipo === 'b' ? 'BOLETA' : 'FACTURA' }} de venta electrónica</p>
     </div>
 </body>

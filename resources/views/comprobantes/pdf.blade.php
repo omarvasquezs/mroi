@@ -41,6 +41,10 @@
             text-align: center;
             font-size: 10px;
         }
+
+        .qr {
+            margin: 20px;
+        }
     </style>
 </head>
 
@@ -64,21 +68,21 @@
     </div>
 
     <div class="items">
-        <h3>DETALLE DE SERVICIOS</h3>
+        <h3>DETALLE DE SERVICIO</h3>
         @if($comprobante->citas->isNotEmpty())
             @foreach($comprobante->citas as $cita)
                 <div class="item">
-                    <p>Fecha de Emision: {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}</p>
-                    <p>Número de Historia: {{ optional($comprobante->citas->first()->paciente)->num_historia ?? 'N/A' }}</p>
-                    <p>Paciente: {{ optional($comprobante->citas->first()->paciente)->nombres ?? 'N/A' }}
+                    <p><strong>Fecha de Emision:</strong> {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}</p>
+                    <p><strong>Número de Historia:</strong> {{ optional($comprobante->citas->first()->paciente)->num_historia ?? 'N/A' }}</p>
+                    <p><strong>Paciente:</strong> {{ optional($comprobante->citas->first()->paciente)->nombres ?? 'N/A' }}
                         {{ optional($comprobante->citas->first()->paciente)->ap_paterno ?? '' }}
                         {{ optional($comprobante->citas->first()->paciente)->ap_materno ?? '' }}</p>
-                    <p>Tipo de Cita: {{ optional($cita->tipoCita)->tipo_cita ?? 'N/A' }}</p>
-                    <p>Médico: {{ $cita->medico->nombres ?? 'N/A' }} {{ $cita->medico->ap_paterno ?? '' }}
+                    <p><strong>Tipo de Cita:</strong> {{ optional($cita->tipoCita)->tipo_cita ?? 'N/A' }}</p>
+                    <p><strong>Médico:</strong> {{ $cita->medico->nombres ?? 'N/A' }} {{ $cita->medico->ap_paterno ?? '' }}
                         {{ $cita->medico->ap_materno ?? '' }}</p>
-                    <p>Fecha de la Cita: {{ \Carbon\Carbon::parse($cita->fecha)->format('d/m/Y H:i') }}</p>
-                    <p>Método de pago: {{ optional($comprobante->metodoPago)->nombre ?? 'N/A' }}</p>
-                    <p>Monto: S/ {{ number_format($cita->pivot->monto, 2) }}</p>
+                    <p><strong>Fecha de la Cita:</strong> {{ \Carbon\Carbon::parse($cita->fecha)->format('d/m/Y H:i') }}</p>
+                    <p><strong>Método de pago:</strong> {{ optional($comprobante->metodoPago)->nombre ?? 'N/A' }}</p>
+                    <p><strong>Monto:</strong> S/ {{ number_format($cita->pivot->monto, 2) }}</p>
                 </div>
                 @if(!$loop->last)
                     <hr style="border-top: 1px dashed #ccc">
@@ -93,6 +97,18 @@
 
     <div class="footer">
         <p>¡Gracias por su preferencia!</p>
+        @php
+            $qrContent = json_encode([
+                'serie'         => $comprobante->serie,
+                'correlativo'   => $comprobante->correlativo,
+                'monto_total'   => $comprobante->monto_total,
+                'fecha_emision' => \Carbon\Carbon::now()->format('d/m/Y H:i'),
+                // add additional fields as needed
+            ]);
+        @endphp
+        <div class="qr" style="text-align: center; margin-top: 20px;">
+            <img src="data:image/png;base64,{{ base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(150)->generate($qrContent)) }}" alt="QR Code">
+        </div>
         <p>Representación impresa de la {{ $comprobante->tipo === 'b' ? 'BOLETA' : 'FACTURA' }} de venta electrónica</p>
     </div>
 </body>
