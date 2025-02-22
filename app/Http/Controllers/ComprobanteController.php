@@ -90,36 +90,10 @@ class ComprobanteController extends Controller
                 throw new \Exception('DomPDF package not installed. Run: composer require barryvdh/laravel-dompdf');
             }
 
-            // Load all necessary relationships
-            $comprobante = Comprobante::with([
-                'citas.tipoCita', 
-                'metodoPago', 
-                'paciente',
-                'productoComprobante.items.stock'
-            ])->findOrFail($id);
-            
-            Log::info('Comprobante loaded:', ['comprobante' => $comprobante->toArray()]);
-
-            // Add service type
-            if ($comprobante->citas()->exists()) {
-                $comprobante->servicio = 'Cita';
-            } elseif ($comprobante->productoComprobante) {
-                $comprobante->servicio = 'Producto';
-            } else {
-                $comprobante->servicio = 'Desconocido';
-            }
-
-            // Check view existence
-            if (!View::exists('comprobantes.pdf')) {
-                throw new \Exception('PDF view template not found: comprobantes.pdf');
-            }
+            $comprobante = $this->loadComprobante($id);
 
             // Generate PDF
-            $pdf = PDF::loadView('comprobantes.pdf', ['comprobante' => $comprobante]);
-            
-            if ($request->query('format') === 'thermal') {
-                $pdf->setPaper([0, 0, 80, 200], 'portrait');
-            }
+            $pdf = $this->generatePdfDocument($comprobante, $request->query('format') === 'thermal');
 
             return response()->json([
                 'comprobante' => $comprobante,
@@ -146,37 +120,10 @@ class ComprobanteController extends Controller
     public function generatePdf($id)
     {
         try {
-            // Load the comprobante with necessary relationships
-            $comprobante = Comprobante::with([
-                'citas.tipoCita', 
-                'metodoPago', 
-                'paciente',
-                'productoComprobante.items.stock'
-            ])->findOrFail($id);
-
-            // Determine the service type
-            if ($comprobante->citas()->exists()) {
-                $comprobante->servicio = 'Cita';
-            } elseif ($comprobante->productoComprobante) {
-                $comprobante->servicio = 'Producto';
-            } else {
-                $comprobante->servicio = 'Desconocido';
-            }
+            $comprobante = $this->loadComprobante($id);
 
             // Generate the PDF with 58mm width (approximately 164 points)
-            $pdf = PDF::loadView('comprobantes.pdf', ['comprobante' => $comprobante]);
-            $pdf->setPaper([0, 0, 164, 800], 'portrait'); // 58mm ≈ 164 points
-
-            // Adjust the margins to ensure content fits properly
-            $pdf->setOptions([
-                'margin-left' => '5mm',
-                'margin-right' => '5mm',
-                'margin-top' => '5mm',
-                'margin-bottom' => '5mm'
-            ]);
-
-            // Allow loading remote images
-            $pdf->setOptions(['isRemoteEnabled' => true]);
+            $pdf = $this->generatePdfDocument($comprobante);
 
             return $pdf->stream("Comprobante_{$comprobante->serie}_{$comprobante->correlativo}.pdf");
         } catch (\Exception $e) {
@@ -188,6 +135,48 @@ class ComprobanteController extends Controller
             ]);
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    private function loadComprobante($id)
+    {
+        $comprobante = Comprobante::with([
+            'citas.tipoCita', 
+            'metodoPago', 
+            'paciente',
+            'productoComprobante.items.stock'
+        ])->findOrFail($id);
+
+        // Determine the service type
+        if ($comprobante->citas()->exists()) {
+            $comprobante->servicio = 'Cita';
+        } elseif ($comprobante->productoComprobante) {
+            $comprobante->servicio = 'Producto';
+        } else {
+            $comprobante->servicio = 'Desconocido';
+        }
+
+        return $comprobante;
+    }
+
+    private function generatePdfDocument($comprobante, $isThermal = false)
+    {
+        // Generate PDF
+        $pdf = PDF::loadView('comprobantes.pdf', ['comprobante' => $comprobante]);
+
+        if ($isThermal) {
+            $pdf->setPaper([0, 0, 80, 200], 'portrait');
+        } else {
+            $pdf->setPaper([0, 0, 164, 800], 'portrait'); // 58mm ≈ 164 points
+            $pdf->setOptions([
+                'margin-left' => '5mm',
+                'margin-right' => '5mm',
+                'margin-top' => '5mm',
+                'margin-bottom' => '5mm',
+                'isRemoteEnabled' => true
+            ]);
+        }
+
+        return $pdf;
     }
 
     private function getNextCorrelativo($tipo)
