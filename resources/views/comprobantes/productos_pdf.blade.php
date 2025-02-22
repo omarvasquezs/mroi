@@ -110,16 +110,16 @@
                 <thead>
                     <tr>
                         <th>Producto</th>
-                        <th>Cantidad</th>
+                        <th>Cant.</th>
                         <th>Precio</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($comprobante->productoComprobante->items as $item)
                         <tr>
-                            <td>{{ $item->stock->producto ?? 'N/A' }}</td>
+                            <td style="text-align: left;">{{ $item->stock->producto ?? 'N/A' }}</td>
                             <td>{{ $item->cantidad }}</td>
-                            <td>{{ number_format($item->precio * $item->cantidad, 2) }}</td>
+                            <td style="text-align: right;">{{ number_format($item->precio * $item->cantidad, 2) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
