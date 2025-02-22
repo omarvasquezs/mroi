@@ -8,8 +8,6 @@ use App\Models\ProductoComprobante;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\Storage;
 
 class ComprobanteController extends Controller
 {
@@ -137,11 +135,64 @@ class ComprobanteController extends Controller
         }
     }
 
+    private function generatePdfDocument($comprobante, $isThermal = false)
+    {
+        // Generate PDF
+        $pdf = PDF::loadView('comprobantes.pdf', ['comprobante' => $comprobante]);
+
+        if ($isThermal) {
+            $pdf->setPaper([0, 0, 80, 200], 'portrait');
+        } else {
+            $pdf->setPaper([0, 0, 164, 841.89 * 20], 'portrait'); // 58mm ≈ 164 points
+            $pdf->setOptions([
+                'margin-left' => '5mm',
+                'margin-right' => '5mm',
+                'margin-top' => '5mm',
+                'margin-bottom' => '5mm',
+                'isRemoteEnabled' => true,
+                'isHtml5ParserEnabled' => true,
+                'isPhpEnabled' => true
+            ]);
+        }
+
+        $GLOBALS['bodyHeight'] = 0;
+
+        $pdf->setCallbacks([
+            'myCallbacks' => [
+                'event' => 'end_frame',
+                'f' => function ($frame) {
+                    $node = $frame->get_node();
+
+                    if (strtolower($node->nodeName) === "body") {
+                        $padding_box = $frame->get_padding_box();
+                        $GLOBALS['bodyHeight'] += $padding_box['h'];
+                    }
+                }
+            ]
+        ]);
+
+        $pdf->render();
+        
+        $docHeight = $GLOBALS['bodyHeight'] * 1.25 - 50;
+
+        unset($pdf);
+
+        $pdf = PDF::loadView('comprobantes.pdf', ['comprobante' => $comprobante]);
+
+        $pdf->setPaper(array(0, 0, 164, $docHeight));
+
+        $pdf->setOptions([
+            'isRemoteEnabled' => true
+        ]);
+
+        return $pdf;
+    }
+
     private function loadComprobante($id)
     {
         $comprobante = Comprobante::with([
-            'citas.tipoCita', 
-            'metodoPago', 
+            'citas.tipoCita',
+            'metodoPago',
             'paciente',
             'productoComprobante.items.stock'
         ])->findOrFail($id);
@@ -156,27 +207,6 @@ class ComprobanteController extends Controller
         }
 
         return $comprobante;
-    }
-
-    private function generatePdfDocument($comprobante, $isThermal = false)
-    {
-        // Generate PDF
-        $pdf = PDF::loadView('comprobantes.pdf', ['comprobante' => $comprobante]);
-
-        if ($isThermal) {
-            $pdf->setPaper([0, 0, 80, 200], 'portrait');
-        } else {
-            $pdf->setPaper([0, 0, 164, 800], 'portrait'); // 58mm ≈ 164 points
-            $pdf->setOptions([
-                'margin-left' => '5mm',
-                'margin-right' => '5mm',
-                'margin-top' => '5mm',
-                'margin-bottom' => '5mm',
-                'isRemoteEnabled' => true
-            ]);
-        }
-
-        return $pdf;
     }
 
     private function getNextCorrelativo($tipo)
