@@ -137,13 +137,17 @@ class ComprobanteController extends Controller
 
     private function generatePdfDocument($comprobante, $isThermal = false)
     {
-        // Generate PDF
-        $pdf = PDF::loadView('comprobantes.pdf', ['comprobante' => $comprobante]);
+        // Determine the view based on comprobante type
+        $view = $comprobante->servicio === 'Producto'
+            ? 'comprobantes.productos_pdf'
+            : 'comprobantes.pdf';
 
+        // First render to measure body height
+        $pdf = PDF::loadView($view, ['comprobante' => $comprobante]);
         if ($isThermal) {
             $pdf->setPaper([0, 0, 80, 200], 'portrait');
         } else {
-            $pdf->setPaper([0, 0, 164, 841.89 * 20], 'portrait'); // 58mm ≈ 164 points
+            $pdf->setPaper([0, 0, 164, 841.89 * 20], 'portrait');
             $pdf->setOptions([
                 'margin-left' => '5mm',
                 'margin-right' => '5mm',
@@ -156,35 +160,31 @@ class ComprobanteController extends Controller
         }
 
         $GLOBALS['bodyHeight'] = 0;
-
         $pdf->setCallbacks([
             'myCallbacks' => [
                 'event' => 'end_frame',
                 'f' => function ($frame) {
                     $node = $frame->get_node();
-
                     if (strtolower($node->nodeName) === "body") {
-                        $padding_box = $frame->get_padding_box();
-                        $GLOBALS['bodyHeight'] += $padding_box['h'];
+                        $GLOBALS['bodyHeight'] += $frame->get_padding_box()['h'];
                     }
                 }
             ]
         ]);
-
         $pdf->render();
-        
         $docHeight = $GLOBALS['bodyHeight'] * 1.25 - 50;
 
+        // Render PDF again using measured height
         unset($pdf);
-
-        $pdf = PDF::loadView('comprobantes.pdf', ['comprobante' => $comprobante]);
-
-        $pdf->setPaper(array(0, 0, 164, $docHeight));
-
-        $pdf->setOptions([
-            'isRemoteEnabled' => true
-        ]);
-
+        $pdf = PDF::loadView($view, ['comprobante' => $comprobante]);
+        if ($isThermal) {
+            $pdf->setPaper([0, 0, 80, 200], 'portrait');
+        } else {
+            $pdf->setPaper([0, 0, 164, $docHeight]);
+            $pdf->setOptions([
+                'isRemoteEnabled' => true
+            ]);
+        }
         return $pdf;
     }
 
