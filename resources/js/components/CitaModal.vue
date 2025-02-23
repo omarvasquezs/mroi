@@ -74,7 +74,7 @@
                       {{ paciente.nombre.toUpperCase() }}
                     </option>
                   </select>
-                  <button v-if="formData.num_historia" @click="editPaciente" class="btn btn-secondary ms-2">Editar</button>
+                  <button v-if="formData.num_historia" @click="editPaciente(pacientes.find(p => p.num_historia === formData.num_historia))" class="btn btn-secondary ms-2"><i class="fas fa-pencil-alt"></i></button>
                 </div>
               </div>
               <div class="mb-3">
@@ -100,13 +100,13 @@
       </div>
     </div>
   </div>
-  <!-- Modal for Creating/Editing Paciente -->
+  <!-- Modal for Editing Paciente -->
   <div class="modal fade" id="pacienteModal" tabindex="-1" aria-labelledby="pacienteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="pacienteModalLabel">
-            {{ isEditing ? `Editar Paciente con DNI ${form.doc_identidad}` : 'Crear Paciente' }}
+            Editar Paciente con DNI {{ form.doc_identidad }}
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
@@ -284,7 +284,7 @@
             </fieldset>
 
             <div class="d-flex justify-content-end gap-2">
-              <button type="submit" class="btn btn-primary">{{ isEditing ? 'Actualizar' : 'Guardar' }}</button>
+              <button type="submit" class="btn btn-primary">Actualizar</button>
               <button type="button" @click="closeModal" class="btn btn-secondary">Cerrar</button>
             </div>
           </form>
@@ -344,9 +344,19 @@ export default {
         ap_materno: '',
         doc_identidad: '',
         estado_historia: '1', // Default value to 1 (ACTIVO)
-        fecha_filiacion: '' // Add this field
+        fecha_filiacion: '', // Add this field
+        f_nacimiento: '',
+        estado_civil: '',
+        telefono_personal: '',
+        correo_personal: '',
+        direccion_personal: '',
+        ocupacion: '',
+        nom_centro_laboral: '',
+        telefono_trabajo: '',
+        correo_trabajo: '',
+        direccion_trabajo: '',
+        observaciones: ''
       },
-      isEditing: false,
       editingId: null,
       formErrors: []
     }
@@ -513,41 +523,47 @@ export default {
         console.error('Error checking cita:', error);
       }
     },
-    editPaciente() {
-      const paciente = this.pacientes.find(p => p.num_historia === this.formData.num_historia);
-      if (paciente) {
-        // Fetch complete patient data before editing
-        axios.get(`/api/pacientes/${paciente.id}`)
-          .then(response => {
-            const completePatient = response.data;
-            this.isEditing = true;
-            this.editingId = completePatient.id;
-            this.form = {
-              id: completePatient.id,
-              num_historia: completePatient.num_historia,
-              nombres: completePatient.nombres,
-              ap_paterno: completePatient.ap_paterno,
-              ap_materno: completePatient.ap_materno,
-              doc_identidad: completePatient.doc_identidad,
-              estado_civil: completePatient.estado_civil,
-              f_nacimiento: completePatient.f_nacimiento,
-              direccion_personal: completePatient.direccion_personal,
-              correo_personal: completePatient.correo_personal,
-              telefono_personal: completePatient.telefono_personal,
-              estado_historia: completePatient.estado_historia || '1',
-              ocupacion: completePatient.ocupacion,
-              nom_centro_laboral: completePatient.nom_centro_laboral,
-              telefono_trabajo: completePatient.telefono_trabajo,
-              correo_trabajo: completePatient.correo_trabajo,
-              direccion_trabajo: completePatient.direccion_trabajo,
-              observaciones: completePatient.observaciones
-            };
-            const modal = new bootstrap.Modal(document.getElementById('pacienteModal'));
-            modal.show();
-          })
-          .catch(error => {
-            console.error('Error fetching complete patient data:', error);
-          });
+    editPaciente(paciente) {
+      try {
+        console.group('Patient Data Debug');
+        console.log('Original patient data:', paciente);
+        
+        // Store the ID of the patient being edited
+        this.editingId = paciente.id;
+        
+        // Copy all patient data to the form using spread operator
+        this.form = { 
+          ...paciente,
+          // Ensure all required fields are present
+          estado_historia: paciente.estado_historia || '1',
+          f_nacimiento: paciente.f_nacimiento || '',
+          estado_civil: paciente.estado_civil || '',
+          telefono_personal: paciente.telefono_personal || '',
+          correo_personal: paciente.correo_personal || '',
+          direccion_personal: paciente.direccion_personal || '',
+          ocupacion: paciente.ocupacion || '',
+          nom_centro_laboral: paciente.nom_centro_laboral || '',
+          telefono_trabajo: paciente.telefono_trabajo || '',
+          correo_trabajo: paciente.correo_trabajo || '',
+          direccion_trabajo: paciente.direccion_trabajo || '',
+          observaciones: paciente.observaciones || ''
+        };
+        
+        console.log('Processed form data:', this.form);
+        console.groupEnd();
+        
+        // Close cita modal before showing paciente modal
+        const citaModalElement = document.getElementById('citaModal');
+        const citaModal = bootstrap.Modal.getInstance(citaModalElement);
+        citaModal.hide();
+
+        // Show the paciente modal
+        setTimeout(() => {
+          const modal = new bootstrap.Modal(document.getElementById('pacienteModal'));
+          modal.show();
+        }, 500);
+      } catch (error) {
+        console.error('Error editing patient:', error);
       }
     },
     async submitForm() {
@@ -555,7 +571,8 @@ export default {
       const formData = { ...this.form };
 
       const dniExists = await this.checkDocIdentidadExists(formData.doc_identidad);
-      if (dniExists && (!this.isEditing || (this.isEditing && formData.doc_identidad !== this.pacientes.find(p => p.id === this.editingId).doc_identidad))) {
+      // Check if the new DNI exists and is different from current patient's DNI
+      if (dniExists && (formData.doc_identidad !== this.pacientes.find(p => p.id === this.editingId).doc_identidad)) {
         this.formErrors.push('DNI ya existe en la base de datos.');
         this.scrollToTop();
         setTimeout(() => {
@@ -564,40 +581,25 @@ export default {
         return;
       }
 
-      if (this.isEditing) {
-        await this.updatePaciente();
-      } else {
-        await this.createPaciente();
-      }
-    },
-    async createPaciente() {
-      try {
-        const response = await axios.post('/api/pacientes', this.form);
-        const newPaciente = response.data;
-        newPaciente.num_historia = this.formatNumHistoria(newPaciente.id);
-        this.pacientes.push(newPaciente);
-        this.closeModal();
-        this.showAlert('Paciente creado exitosamente.');
-      } catch (error) {
-        if (error.response && error.response.status === 422) {
-          this.formErrors = Object.values(error.response.data.errors).flat();
-          this.scrollToTop();
-        } else {
-          console.error(error);
-        }
-      }
+      await this.updatePaciente();
     },
     async updatePaciente() {
       try {
         const response = await axios.put(`/api/pacientes/${this.form.id}`, this.form);
         const updatedPaciente = response.data;
-        updatedPaciente.num_historia = this.formatNumHistoria(updatedPaciente.id);
-        const index = this.pacientes.findIndex(paciente => paciente.id === this.form.id);
-        if (index !== -1) {
-          this.pacientes[index] = updatedPaciente; // Directly modify the reactive object
-        }
+        
+        // Refresh the patients list after update
+        await this.fetchPacientes();
+        
+        // Close modal and show success message
         this.closeModal();
         this.showAlert('Paciente actualizado exitosamente.');
+        
+        // Reopen the cita modal
+        setTimeout(() => {
+          const citaModal = new bootstrap.Modal(document.getElementById('citaModal'));
+          citaModal.show();
+        }, 500);
       } catch (error) {
         if (error.response && error.response.status === 422) {
           this.formErrors = Object.values(error.response.data.errors).flat();
@@ -607,6 +609,12 @@ export default {
         }
       }
     },
+    
+    showAlert(message) {
+      // Add alert functionality
+      alert(message);
+    },
+    
     closeModal() {
       const modal = bootstrap.Modal.getInstance(document.getElementById('pacienteModal'));
       modal.hide();

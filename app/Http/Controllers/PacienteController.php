@@ -80,6 +80,19 @@ class PacienteController extends Controller
             'nombres',
             'ap_paterno',
             'ap_materno',
+            'doc_identidad',
+            'estado_civil',
+            'f_nacimiento',
+            'direccion_personal',
+            'correo_personal',
+            'telefono_personal',
+            'estado_historia',
+            'ocupacion',
+            'nom_centro_laboral',
+            'telefono_trabajo',
+            'correo_trabajo',
+            'direccion_trabajo',
+            'observaciones',
             DB::raw("CONCAT(nombres, ' ', ap_paterno, ' ', ap_materno) as nombre")
         )->orderBy('nombres')->get();
         
