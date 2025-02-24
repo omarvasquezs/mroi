@@ -68,7 +68,12 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <iframe :src="pdfUrl" width="100%" height="100%"></iframe>
+                        <div v-if="loading" class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <iframe v-else :src="pdfUrl" width="100%" height="100%"></iframe>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -95,7 +100,8 @@ export default {
                 mesActual: false
             },
             pdfUrl: '', // URL of the PDF to be displayed in the modal
-            modalComprobanteNumero: '' // Número de Comprobante for the modal title
+            modalComprobanteNumero: '', // Número de Comprobante for the modal title
+            loading: false // Loading state for PDF generation
         };
     },
     computed: {
@@ -202,6 +208,7 @@ export default {
             }
         },
         async generateComprobante(comprobanteId) {
+            this.loading = true; // Set loading state to true
             try {
                 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 const response = await axios.post(`/api/comprobantes/${comprobanteId}/generate`, {}, {
@@ -237,6 +244,8 @@ export default {
                     console.error('Error details:', errorDetails);
                 }
                 alert('Error al generar el comprobante: ' + errorMessage);
+            } finally {
+                this.loading = false; // Set loading state to false
             }
         }
     }
@@ -252,5 +261,9 @@ export default {
 }
 .pointer {
     cursor: pointer;
+}
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
 }
 </style>
