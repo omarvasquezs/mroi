@@ -356,7 +356,7 @@ export default {
       window.history.back();
     },
     filterDigits(event) {
-      event.target.value = event.target.value.replace(/\D/g, '');
+      event.target.value = event.target.value.replace(/\D/g, '').slice(0, 11);
       this.form.ruc = event.target.value;
     },
     async checkRucExists() {
