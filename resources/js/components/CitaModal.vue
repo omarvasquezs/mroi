@@ -435,7 +435,10 @@ export default {
 
         if (response.ok) {
           this.$emit('citaCreated');
-          this.closeModal();
+          this.formData = { num_historia: '', observaciones: '', id_tipo_cita: '' };
+          const modalx = document.getElementById('citaModal');
+          const bootstrapModalx = bootstrap.Modal.getInstance(modalx);
+          bootstrapModalx.hide();
         }
       } catch (error) {
         console.error('Error saving cita:', error);
