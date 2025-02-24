@@ -284,7 +284,11 @@ export default {
         this.closeModal();
         setTimeout(() => this.alertMessage = '', 5000);
       } catch (error) {
-        console.error(error);
+        if (error.response && error.response.status === 422) {
+          this.formErrors = Object.values(error.response.data.errors).flat();
+        } else {
+          console.error(error);
+        }
       }
     },
     confirmDelete(id) {

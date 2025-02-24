@@ -45,10 +45,8 @@ class ProveedorController extends Controller
             $proveedor = Proveedor::create($request->all());
             return response()->json($proveedor, 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error('Validation error creating proveedor: ' . $e->getMessage());
             return response()->json([
-                'error' => 'Validation errors',
-                'details' => $e->errors()
+                'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
             Log::error('Error creating proveedor: ' . $e->getMessage());
@@ -83,6 +81,10 @@ class ProveedorController extends Controller
         try {
             $proveedor->update($request->all());
             return response()->json($proveedor);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
             Log::error('Error updating proveedor: ' . $e->getMessage());
             return response()->json(['error' => 'Error updating proveedor'], 500);
