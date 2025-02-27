@@ -38,6 +38,25 @@ class PacienteController extends Controller
 
     public function store(Request $request)
     {
+        $request->validate([
+            'nombres' => 'required|string|max:255',
+            'ap_paterno' => 'required|string|max:255',
+            'ap_materno' => 'required|string|max:255',
+            'doc_identidad' => 'required|string|max:255|unique:pacientes',
+            'telefono_personal' => 'required|string|max:255',
+            // Make other fields optional
+            'f_nacimiento' => 'nullable|date',
+            'estado_civil' => 'nullable|string|in:S,C,V,D',
+            'direccion_personal' => 'nullable|string|max:255',
+            'correo_personal' => 'nullable|email|max:255',
+            'ocupacion' => 'nullable|string|max:255',
+            'nom_centro_laboral' => 'nullable|string|max:255',
+            'telefono_trabajo' => 'nullable|string|max:255',
+            'correo_trabajo' => 'nullable|email|max:255',
+            'direccion_trabajo' => 'nullable|string|max:255',
+            'observaciones' => 'nullable|string',
+        ]);
+
         $paciente = new Paciente($request->all());
         $paciente->num_historia = str_pad(Paciente::max('id') + 1, 7, '0', STR_PAD_LEFT);
         $paciente->save();
@@ -55,6 +74,25 @@ class PacienteController extends Controller
 
     public function update(Request $request, $id)
     {
+        $request->validate([
+            'nombres' => 'required|string|max:255',
+            'ap_paterno' => 'required|string|max:255',
+            'ap_materno' => 'required|string|max:255',
+            'doc_identidad' => 'required|string|max:255|unique:pacientes,doc_identidad,' . $id,
+            'telefono_personal' => 'required|string|max:255',
+            // Make other fields optional
+            'f_nacimiento' => 'nullable|date',
+            'estado_civil' => 'nullable|string|in:S,C,V,D',
+            'direccion_personal' => 'nullable|string|max:255',
+            'correo_personal' => 'nullable|email|max:255',
+            'ocupacion' => 'nullable|string|max:255',
+            'nom_centro_laboral' => 'nullable|string|max:255',
+            'telefono_trabajo' => 'nullable|string|max:255',
+            'correo_trabajo' => 'nullable|email|max:255',
+            'direccion_trabajo' => 'nullable|string|max:255',
+            'observaciones' => 'nullable|string',
+        ]);
+
         $paciente = Paciente::findOrFail($id);
         $paciente->update($request->all());
         return response()->json($paciente);

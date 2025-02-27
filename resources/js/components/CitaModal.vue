@@ -157,14 +157,14 @@
                   </div>
                 </div>
                 <div class="col-md-6 mb-3">
-                  <label for="PacientesFNacimiento" class="form-label">Fecha de Nacimiento*:</label>
+                  <label for="PacientesFNacimiento" class="form-label">Fecha de Nacimiento:</label>
                   <input type="date" v-model="form.f_nacimiento" id="PacientesFNacimiento" name="PacientesFNacimiento"
-                    class="form-control" autocomplete="new-f_nacimiento" required>
+                    class="form-control" autocomplete="new-f_nacimiento">
                 </div>
                 <div class="col-md-6 mb-3">
-                  <label for="PacientesEstadoCivil" class="form-label">Estado Civil*:</label>
+                  <label for="PacientesEstadoCivil" class="form-label">Estado Civil:</label>
                   <select v-model="form.estado_civil" id="PacientesEstadoCivil" name="PacientesEstadoCivil"
-                    class="form-select" autocomplete="new-estado_civil" required>
+                    class="form-select" autocomplete="new-estado_civil">
                     <option value="" disabled>Seleccione Estado Civil</option>
                     <option value="S">Soltero</option>
                     <option value="C">Casado</option>
@@ -179,12 +179,12 @@
               <legend>Información de Contacto</legend>
               <div class="row">
                 <div class="col-md-6 mb-3">
-                  <label for="PacientesTelefonoPersonal" class="form-label">Teléfono Personal:</label>
+                  <label for="PacientesTelefonoPersonal" class="form-label">Teléfono Personal*:</label>
                   <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-phone"></i></span>
                     <input type="tel" v-model="form.telefono_personal" id="PacientesTelefonoPersonal"
                       name="PacientesTelefonoPersonal" class="form-control" placeholder="Ej: 987654321"
-                      autocomplete="new-telefono_personal" maxlength="9">
+                      autocomplete="new-telefono_personal" required maxlength="9">
                   </div>
                 </div>
                 <div class="col-md-6 mb-3">
@@ -197,12 +197,12 @@
                   </div>
                 </div>
                 <div class="col-md-12 mb-3">
-                  <label for="PacientesDireccionPersonal" class="form-label">Dirección Personal*:</label>
+                  <label for="PacientesDireccionPersonal" class="form-label">Dirección Personal:</label>
                   <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-address-book"></i></span>
                     <input type="text" v-model="form.direccion_personal" id="PacientesDireccionPersonal"
                       name="PacientesDireccionPersonal" class="form-control" placeholder="Ej: Av. Siempre Viva 123"
-                      autocomplete="new-direccion_personal" required>
+                      autocomplete="new-direccion_personal">
                   </div>
                 </div>
               </div>
