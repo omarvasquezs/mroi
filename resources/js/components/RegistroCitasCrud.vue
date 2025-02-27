@@ -41,7 +41,8 @@
               <th style="width: 5%">No.</th>
               <th style="width: 10%">Hora</th>
               <th style="width: 15%">Historia</th>
-              <th style="width: 30%">Paciente</th>
+              <th style="width: 20%">Paciente</th>
+              <th style="width: 20%">Tipo de Cita</th>
             </tr>
           </thead>
           <tbody>
@@ -51,6 +52,7 @@
               <td>{{ cita.hora }}</td>
               <td>{{ cita.historia }}</td>
               <td>{{ cita.paciente }}</td>
+              <td>{{ cita.tipo_cita }}</td>
             </tr>
           </tbody>
         </table>
@@ -200,7 +202,8 @@ export default {
             hour12: false
           }),
           historia: '',
-          paciente: ''
+          paciente: '',
+          tipo_cita: ''
         });
         startTime.setMinutes(startTime.getMinutes() + 30); // Change to 30 minutes
       }
@@ -234,7 +237,8 @@ export default {
                 fecha: cita.fecha,
                 hora: cita.hora,
                 num_historia: cita.num_historia,
-                paciente: cita.paciente
+                paciente: cita.paciente,
+                tipo_cita: cita.tipoCita
               });
               
               // Extract time from hora field (assuming format "HH:mm:ss")
@@ -263,19 +267,23 @@ export default {
                 return {
                   hora: slot.hora,
                   historia: matchingCita.num_historia || '',
-                  paciente: pacienteNombre
+                  paciente: pacienteNombre,
+                  tipo_cita: matchingCita.tipoCita ? matchingCita.tipoCita.tipo_cita : ''
                 };
               }
-              return slot;
+              return {
+                ...slot,
+                tipo_cita: ''
+              };
             });
           } else {
-            this.citas = slots;
+            this.citas = slots.map(slot => ({ ...slot, tipo_cita: '' }));
           }
           console.log('Final processed citas:', this.citas);
         }
       } catch (error) {
         console.error('Error:', error);
-        this.citas = this.generateTimeSlots();
+        this.citas = this.generateTimeSlots().map(slot => ({ ...slot, tipo_cita: '' }));
       }
     }
   },

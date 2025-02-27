@@ -44,15 +44,21 @@ class CitaController extends Controller
 
         $citas = Cita::where('id_medico', $medicoId)
             ->whereDate('fecha', $fecha)
-            ->with(['paciente' => function($query) {
-                $query->select('num_historia', 'nombres', 'ap_paterno', 'ap_materno');
-            }])
+            ->with([
+                'paciente' => function($query) {
+                    $query->select('num_historia', 'nombres', 'ap_paterno', 'ap_materno');
+                },
+                'tipoCita' => function($query) {
+                    $query->select('id', 'tipo_cita', 'precio');
+                }
+            ])
             ->get([
                 'id',
                 'num_historia',
                 'id_medico',
                 'fecha',
-                'observaciones'
+                'observaciones',
+                'id_tipo_cita'
             ]);
 
         // Transform the data to ensure we have the time in the right format
@@ -63,7 +69,8 @@ class CitaController extends Controller
                 'fecha' => $cita->fecha,
                 'hora' => date('H:i:s', strtotime($cita->fecha)),
                 'observaciones' => $cita->observaciones,
-                'paciente' => $cita->paciente
+                'paciente' => $cita->paciente,
+                'tipoCita' => $cita->tipoCita
             ];
         });
 
