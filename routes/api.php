@@ -12,6 +12,7 @@ use App\Http\Controllers\ComprobanteController;
 use App\Http\Controllers\MetodoPagoController;
 use App\Http\Controllers\ProductoComprobanteController;
 use App\Http\Controllers\ProveedorController;
+use App\Http\Controllers\MaterialController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -48,6 +49,7 @@ Route::apiResource('tipos-citas', TipoCitaController::class);
 Route::apiResource('metodos-pago', MetodoPagoController::class);
 Route::apiResource('productos-comprobante', ProductoComprobanteController::class);
 Route::apiResource('proveedores', ProveedorController::class);
+Route::apiResource('materiales', MaterialController::class);
 
 Route::get('/productos-comprobante', [ProductoComprobanteController::class, 'index']);
 Route::get('/productos-comprobante/{id}', [ProductoComprobanteController::class, 'show']);

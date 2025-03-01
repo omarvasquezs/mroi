@@ -78,6 +78,11 @@ const routes = [
         meta: { requiresAuth: true }
     },
     {
+        path: "/materiales",
+        name: "Materiales",
+        component: () => import("../components/MaterialesCrud.vue"),
+    },
+    {
         path: "/:pathMatch(.*)*",
         component: () => import("../components/NotfoundPage.vue"),
     }
