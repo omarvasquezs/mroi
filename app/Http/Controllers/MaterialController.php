@@ -10,8 +10,14 @@ class MaterialController extends Controller
 {
     public function index(Request $request)
     {
+        $query = Material::query();
+
+        if ($request->has('material') && $request->material) {
+            $query->where('material', 'like', '%' . $request->material . '%');
+        }
+
         $perPage = $request->input('per_page', 10);
-        return Material::paginate($perPage);
+        return $query->paginate($perPage);
     }
 
     public function store(Request $request)

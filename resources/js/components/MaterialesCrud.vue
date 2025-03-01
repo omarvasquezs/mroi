@@ -157,6 +157,7 @@ export default {
         per_page: this.pagination.per_page,
         ...this.filters
       };
+      console.log('Fetching materiales with params:', params); // Add this line
       axios.get(url, { params })
         .then(response => {
           console.log('API response:', response.data); // Add this line
@@ -250,6 +251,7 @@ export default {
       }
     },
     applyFilters() {
+      console.log('Applying filters:', this.filters); // Add this line
       this.pagination.current_page = 1;
       this.fetchMateriales();
     },
