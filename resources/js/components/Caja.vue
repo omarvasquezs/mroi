@@ -175,8 +175,8 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-group position-relative select-wrapper">
-                            <label>Método de Pago</label>
-                            <select v-model="comprobante.id_metodo_pago" class="form-control pointer">
+                            <label>Método de Pago <span class="text-danger">*</span></label>
+                            <select v-model="comprobante.id_metodo_pago" class="form-control pointer" required>
                                 <option value="" disabled selected class="pointer">Seleccione método de pago</option>
                                 <option v-for="metodo in metodosPago" 
                                         :key="metodo.id" 
@@ -348,6 +348,11 @@ export default {
         async generateComprobante() {
             if (this.comprobanteType === 'citas' && !this.selectedPatient) {
                 alert('Seleccione un paciente antes de generar el comprobante.');
+                return;
+            }
+            
+            if (!this.comprobante.id_metodo_pago) {
+                alert('Por favor seleccione un método de pago.');
                 return;
             }
 
