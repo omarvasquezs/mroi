@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Material;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\Paginator;
 
 class MaterialController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return Material::all();
+        $perPage = $request->input('per_page', 10);
+        return Material::paginate($perPage);
     }
 
     public function store(Request $request)

@@ -152,10 +152,22 @@ export default {
   },
   methods: {
     fetchMateriales(url = '/api/materiales') {
-      axios.get(url)
+      const params = {
+        page: this.pagination.current_page,
+        per_page: this.pagination.per_page,
+        ...this.filters
+      };
+      axios.get(url, { params })
         .then(response => {
           console.log('API response:', response.data); // Add this line
-          this.materiales = response.data;
+          this.materiales = response.data.data;
+          this.pagination = {
+            ...this.pagination,
+            total: response.data.total,
+            last_page: response.data.last_page,
+            next_page_url: response.data.next_page_url,
+            prev_page_url: response.data.prev_page_url
+          };
           console.log('Fetched materiales:', this.materiales); // Add this line
         })
         .catch(error => {
