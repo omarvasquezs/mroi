@@ -92,12 +92,16 @@
           <div v-else class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             <div v-for="producto in productos" :key="producto.id" class="col">
               <div :class="['card h-100 product-card', { 'animate-add': producto.id === recentlyAddedProductId }]">
+                <div class="stock-badge" :class="producto.num_stock > 0 ? 'in-stock' : 'out-of-stock'">
+                  {{ producto.num_stock > 0 ? `En stock: ${producto.num_stock}` : 'Agotado' }}
+                </div>
                 <img :src="`${baseUrl}/images/stock/${producto.imagen}`" class="card-img-top product-image"
                   :alt="producto.producto">
                 <div class="card-body product-card-body">
                   <h5 class="card-title">{{ producto.producto }}</h5>
                   <p class="card-text">S/. {{ producto.precio }}</p>
-                  <button @click="agregarProducto(producto)" class="btn btn-success w-100 mt-2">
+                  <button @click="agregarProducto(producto)" class="btn btn-success w-100 mt-2" 
+                          :disabled="producto.num_stock <= 0">
                     <i class="fas fa-plus-circle"></i> AGREGAR PRODUCTO
                   </button>
                 </div>
@@ -689,5 +693,29 @@ export default {
   100% {
     opacity: 0;
   }
+}
+
+.stock-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  z-index: 1;
+  color: white;
+}
+
+.in-stock {
+  background-color: rgba(40, 167, 69, 0.8);
+}
+
+.out-of-stock {
+  background-color: rgba(220, 53, 69, 0.8);
+}
+
+.product-card {
+  position: relative;
 }
 </style>
