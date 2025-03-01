@@ -68,7 +68,7 @@
               <div class="mb-3">
                 <label class="form-label"><strong>Paciente:</strong></label>
                 <div class="input-group">
-                  <select v-model="formData.num_historia" class="form-select">
+                  <select v-model="formData.num_historia" class="form-select" :class="{'is-invalid': formValidationErrors.includes('paciente')}">
                     <option value="" disabled>Seleccione un paciente</option>
                     <option v-for="paciente in pacientes" :key="paciente.num_historia" :value="paciente.num_historia">
                       {{ paciente.nombre.toUpperCase() }}
@@ -78,6 +78,9 @@
                   <button @click="showNewPacienteForm" class="btn btn-primary ms-2" title="Agregar nuevo paciente">
                     <i class="fas fa-user-plus"></i>
                   </button>
+                </div>
+                <div class="invalid-feedback" v-if="formValidationErrors.includes('paciente')">
+                  Por favor seleccione un paciente.
                 </div>
               </div>
               <div class="mb-3">
@@ -436,7 +439,15 @@ export default {
       // Validate form fields
       if (!this.formData.id_tipo_cita) {
         this.formValidationErrors.push('tipo_cita');
-        return; // Stop form submission if there are validation errors
+      }
+      
+      if (!this.formData.num_historia) {
+        this.formValidationErrors.push('paciente');
+      }
+      
+      // Stop form submission if there are validation errors
+      if (this.formValidationErrors.length > 0) {
+        return;
       }
 
       try {
