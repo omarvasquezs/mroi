@@ -9,9 +9,14 @@ class Material extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'material'
+    ];
+
     protected $table = 'materiales';
 
-    protected $fillable = [
-        'material',
-    ];
+    public function stocks()
+    {
+        return $this->hasMany(Stock::class, 'id_material');
+    }
 }

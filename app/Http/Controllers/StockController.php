@@ -10,7 +10,7 @@ class StockController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Stock::with('proveedor');
+        $query = Stock::with(['proveedor', 'material']);
         $perPage = 10; // Default for CatalogoLentes
 
         // Text search for producto
@@ -69,7 +69,11 @@ class StockController extends Controller
             'imagen' => 'required|file|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'precio' => 'required|numeric|min:0',
             'tipo_producto' => 'required|in:l,m,c,u',
-            'id_proveedor' => 'required|exists:proveedores,id'
+            'id_proveedor' => 'required|exists:proveedores,id',
+            'codigo' => 'nullable|string|max:255',
+            'genero' => 'nullable|in:H,M,N,U',
+            'id_material' => 'nullable|exists:materiales,id',
+            'fecha_compra' => 'nullable|date'
         ]);
 
         try {
@@ -92,7 +96,11 @@ class StockController extends Controller
                 'imagen' => $validated['imagen'],
                 'precio' => $validated['precio'],
                 'tipo_producto' => $validated['tipo_producto'],
-                'id_proveedor' => $validated['id_proveedor']
+                'id_proveedor' => $validated['id_proveedor'],
+                'codigo' => $validated['codigo'] ?? null,
+                'genero' => $validated['genero'] ?? null,
+                'id_material' => $validated['id_material'] ?? null,
+                'fecha_compra' => $validated['fecha_compra'] ?? null
             ]);
 
             return response()->json($stock, 201);
@@ -103,7 +111,7 @@ class StockController extends Controller
 
     public function show($id)
     {
-        $stock = Stock::with('proveedor')->findOrFail($id);
+        $stock = Stock::with(['proveedor', 'material'])->findOrFail($id);
         return response()->json($stock);
     }
 
@@ -114,7 +122,11 @@ class StockController extends Controller
             'precio' => 'required|numeric|min:0',
             'tipo_producto' => 'required|in:l,m,c,u',
             'id_proveedor' => 'required|exists:proveedores,id',
-            'imagen' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp|max:2048'
+            'imagen' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'codigo' => 'nullable|string|max:255',
+            'genero' => 'nullable|in:H,M,N,U',
+            'id_material' => 'nullable|exists:materiales,id',
+            'fecha_compra' => 'nullable|date'
         ]);
 
         try {
@@ -123,7 +135,11 @@ class StockController extends Controller
                 'producto' => $validated['producto'],
                 'precio' => $validated['precio'],
                 'tipo_producto' => $validated['tipo_producto'],
-                'id_proveedor' => $validated['id_proveedor']
+                'id_proveedor' => $validated['id_proveedor'],
+                'codigo' => $validated['codigo'] ?? $stock->codigo,
+                'genero' => $validated['genero'] ?? $stock->genero,
+                'id_material' => $validated['id_material'] ?? $stock->id_material,
+                'fecha_compra' => $validated['fecha_compra'] ?? $stock->fecha_compra
             ];
             
             if ($request->hasFile('imagen')) {

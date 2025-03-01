@@ -20,6 +20,7 @@
           <th>Precio</th>
           <th>Tipo de Producto</th>
           <th>Proveedor</th>
+          <th>En Stock</th>
           <th>Acciones</th>
         </tr>
         <tr>
@@ -61,14 +62,15 @@
             </div>
           </th>
           <th></th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
         <tr v-if="loading">
-          <td colspan="6" class="text-center">Cargando...</td>
+          <td colspan="7" class="text-center">Cargando...</td>
         </tr>
         <tr v-else-if="!items || items.length === 0">
-          <td colspan="6" class="text-center">No hay productos en el stock.</td>
+          <td colspan="7" class="text-center">No hay productos en el stock.</td>
         </tr>
         <tr v-else v-for="item in items" :key="item.id">
           <td><img :src="`${baseUrl}/images/stock/${item.imagen}`" alt="Producto" style="height: 50px;"></td>
@@ -76,11 +78,19 @@
           <td>S/. {{ item.precio }}</td>
           <td>{{ getTipoProductoLabel(item.tipo_producto) }}</td>
           <td>{{ item.proveedor ? item.proveedor.razon_social : 'N/A' }}</td>
+          <td class="text-center">
+            <span class="badge rounded-pill" :class="item.num_stock > 0 ? 'bg-success' : 'bg-danger'">
+              {{ item.num_stock }}
+            </span>
+          </td>
           <td>
-            <button @click="editItem(item)" class="btn btn-warning btn-sm me-2">
+            <button @click="viewDetails(item)" class="btn btn-info btn-sm me-2" title="Ver detalles">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button @click="editItem(item)" class="btn btn-warning btn-sm me-2" title="Editar">
               <i class="fas fa-pencil-alt"></i>
             </button>
-            <button @click="confirmDelete(item.id)" class="btn btn-danger btn-sm">
+            <button @click="confirmDelete(item.id)" class="btn btn-danger btn-sm" title="Eliminar">
               <i class="fas fa-trash-alt"></i>
             </button>
           </td>
@@ -101,7 +111,7 @@
 
     <!-- Modal -->
     <div class="modal fade" id="stockModal" tabindex="-1" aria-labelledby="stockModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
+      <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="stockModalLabel">{{ isEditing ? 'Editar Producto' : 'Crear Producto' }}</h5>
@@ -109,42 +119,100 @@
           </div>
           <div class="modal-body">
             <form @submit.prevent="submitForm" enctype="multipart/form-data">
-              <div class="mb-3">
-                <label for="tipo_producto" class="form-label">Tipo de Producto*:</label>
-                <div class="position-relative select-wrapper">
-                  <select v-model="form.tipo_producto" id="tipo_producto" class="form-control" required>
-                    <option value="" disabled selected>Seleccione un tipo de producto</option>
-                    <option value="l">Lentes de Sol</option>
-                    <option value="m">Montura</option>
-                    <option value="c">Lentes de Contacto</option>
-                    <option value="u">Lunas</option>
-                  </select>
-                  <i class="fas fa-chevron-down select-arrow"></i>
+              <!-- Row 1: Tipo de producto only -->
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="tipo_producto" class="form-label">Tipo de Producto*:</label>
+                  <div class="position-relative select-wrapper">
+                    <select v-model="form.tipo_producto" id="tipo_producto" class="form-control" required>
+                      <option value="" disabled selected>Seleccione un tipo de producto</option>
+                      <option value="l">Lentes de Sol</option>
+                      <option value="m">Montura</option>
+                      <option value="c">Lentes de Contacto</option>
+                      <option value="u">Lunas</option>
+                    </select>
+                    <i class="fas fa-chevron-down select-arrow"></i>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label for="num_stock" class="form-label">Cantidad en Stock*:</label>
+                  <input type="number" v-model="form.num_stock" id="num_stock" class="form-control" min="0" required>
                 </div>
               </div>
-              <div class="mb-3">
-                <label for="producto" class="form-label">Producto*:</label>
-                <input type="text" v-model="form.producto" id="producto" class="form-control" required>
-              </div>
-              <div class="mb-3">
-                <label for="precio" class="form-label">Precio*:</label>
-                <div class="input-group">
-                  <span class="input-group-text">S/.</span>
-                  <input type="number" v-model="form.precio" id="precio" class="form-control" step="0.01" required>
+
+              <!-- Row 2: Producto in its own row -->
+              <div class="row mb-3">
+                <div class="col-12">
+                  <label for="producto" class="form-label">Producto*:</label>
+                  <input type="text" v-model="form.producto" id="producto" class="form-control" required>
                 </div>
               </div>
-              <div class="mb-3">
-                <label for="proveedor" class="form-label">Proveedor*:</label>
-                <div class="position-relative select-wrapper">
-                  <select v-model="form.id_proveedor" id="proveedor" class="form-control" required>
-                    <option value="" disabled selected>Seleccione un proveedor</option>
-                    <option v-for="proveedor in proveedores" :key="proveedor.id" :value="proveedor.id">
-                      {{ proveedor.razon_social }}
-                    </option>
-                  </select>
-                  <i class="fas fa-chevron-down select-arrow"></i>
+
+              <!-- Row 3: Código and Precio -->
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="codigo" class="form-label">Código:</label>
+                  <input type="text" v-model="form.codigo" id="codigo" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <label for="precio" class="form-label">Precio*:</label>
+                  <div class="input-group">
+                    <span class="input-group-text">S/.</span>
+                    <input type="number" v-model="form.precio" id="precio" class="form-control" step="0.01" required>
+                  </div>
                 </div>
               </div>
+
+              <!-- Row 4: Género and Material -->
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="genero" class="form-label">Género:</label>
+                  <div class="position-relative select-wrapper">
+                    <select v-model="form.genero" id="genero" class="form-control">
+                      <option value="" selected>Seleccione un género</option>
+                      <option value="H">Hombre</option>
+                      <option value="M">Mujer</option>
+                      <option value="N">Niño</option>
+                      <option value="U">Unisex</option>
+                    </select>
+                    <i class="fas fa-chevron-down select-arrow"></i>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label for="material" class="form-label">Material:</label>
+                  <div class="position-relative select-wrapper">
+                    <select v-model="form.id_material" id="material" class="form-control">
+                      <option value="" selected>Seleccione un material</option>
+                      <option v-for="material in materiales" :key="material.id" :value="material.id">
+                        {{ material.material }}
+                      </option>
+                    </select>
+                    <i class="fas fa-chevron-down select-arrow"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 5: Fecha de compra and Proveedor -->
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="fecha_compra" class="form-label">Fecha de Compra:</label>
+                  <input type="date" v-model="form.fecha_compra" id="fecha_compra" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <label for="proveedor" class="form-label">Proveedor*:</label>
+                  <div class="position-relative select-wrapper">
+                    <select v-model="form.id_proveedor" id="proveedor" class="form-control" required>
+                      <option value="" disabled selected>Seleccione un proveedor</option>
+                      <option v-for="proveedor in proveedores" :key="proveedor.id" :value="proveedor.id">
+                        {{ proveedor.razon_social }}
+                      </option>
+                    </select>
+                    <i class="fas fa-chevron-down select-arrow"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 6: Imagen upload -->
               <div class="mb-3">
                 <label for="imagen" class="form-label">Imagen{{ isEditing ? ' (dejar en blanco para mantener la actual)' : '*' }}:</label>
                 <input 
@@ -156,14 +224,61 @@
                   :required="!isEditing"
                 >
               </div>
+
+              <!-- Row 7: Image preview -->
               <div v-if="imagePreview" class="mb-3">
                 <img :src="imagePreview" alt="Preview" style="max-height: 200px;" class="preview-image">
               </div>
+
+              <!-- Form buttons -->
               <div class="d-flex justify-content-end gap-2">
                 <button type="submit" class="btn btn-primary">{{ isEditing ? 'Actualizar' : 'Guardar' }}</button>
                 <button type="button" @click="closeModal" class="btn btn-secondary">Cerrar</button>
               </div>
             </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="detailsModalLabel">Detalles del Producto</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div v-if="detailItem">
+              <div class="row mb-4">
+                <div class="col-md-6 text-center mb-3">
+                  <img :src="`${baseUrl}/images/stock/${detailItem.imagen}`" alt="Producto" class="img-fluid details-image" style="max-height: 250px;">
+                </div>
+                <div class="col-md-6">
+                  <h4>{{ detailItem.producto }}</h4>
+                  <p class="mb-1"><strong>Código:</strong> {{ detailItem.codigo || 'N/A' }}</p>
+                  <p class="mb-1"><strong>Precio:</strong> S/. {{ detailItem.precio }}</p>
+                  <p class="mb-1"><strong>Stock:</strong> {{ detailItem.num_stock }}</p>
+                  <p class="mb-1"><strong>Tipo de Producto:</strong> {{ getTipoProductoLabel(detailItem.tipo_producto) }}</p>
+                  <p class="mb-1"><strong>Género:</strong> {{ getGeneroLabel(detailItem.genero) }}</p>
+                </div>
+              </div>
+              <hr>
+              <div class="row">
+                <div class="col-md-6">
+                  <p class="mb-1"><strong>Material:</strong> {{ detailItem.material ? detailItem.material.material : 'N/A' }}</p>
+                  <p class="mb-1"><strong>Fecha de Compra:</strong> {{ detailItem.fecha_compra || 'N/A' }}</p>
+                </div>
+                <div class="col-md-6">
+                  <p class="mb-1"><strong>Proveedor:</strong> {{ detailItem.proveedor ? detailItem.proveedor.razon_social : 'N/A' }}</p>
+                  <p class="mb-1"><strong>ID del Producto:</strong> {{ detailItem.id }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
           </div>
         </div>
       </div>
@@ -181,13 +296,19 @@ export default {
       baseUrl: window.location.origin,
       items: [],
       proveedores: [],
+      materiales: [],
       loading: true,
       form: {
         tipo_producto: '',
         producto: '',
         precio: '',
         id_proveedor: '',
-        imagen: null
+        imagen: null,
+        codigo: '',
+        genero: '',
+        id_material: '',
+        fecha_compra: '',
+        num_stock: 0
       },
       imagePreview: null,
       showForm: false,
@@ -207,7 +328,8 @@ export default {
         precio: '',
         tipo_producto: '',
         proveedor: ''
-      }
+      },
+      detailItem: null,
     };
   },
   methods: {
@@ -251,6 +373,15 @@ export default {
           console.error('Error fetching proveedores:', error);
         });
     },
+    fetchMateriales() {
+      axios.get('/api/materiales')
+        .then(response => {
+          this.materiales = response.data.data || response.data;
+        })
+        .catch(error => {
+          console.error('Error fetching materiales:', error);
+        });
+    },
     handleImageUpload(event) {
       const file = event.target.files[0];
       this.form.imagen = file;
@@ -268,7 +399,12 @@ export default {
         precio: item.precio,
         tipo_producto: item.tipo_producto,
         id_proveedor: item.id_proveedor,
-        imagen: null
+        imagen: null,
+        codigo: item.codigo || '',
+        genero: item.genero || '',
+        id_material: item.id_material || '',
+        fecha_compra: item.fecha_compra || '',
+        num_stock: item.num_stock || 0
       };
       this.imagePreview = `${this.baseUrl}/images/stock/${item.imagen}`;
       this.showForm = true;
@@ -282,6 +418,13 @@ export default {
       formData.append('precio', this.form.precio);
       formData.append('tipo_producto', this.form.tipo_producto);
       formData.append('id_proveedor', this.form.id_proveedor);
+      formData.append('num_stock', this.form.num_stock);
+      
+      // Append new fields
+      if (this.form.codigo) formData.append('codigo', this.form.codigo);
+      if (this.form.genero) formData.append('genero', this.form.genero);
+      if (this.form.id_material) formData.append('id_material', this.form.id_material);
+      if (this.form.fecha_compra) formData.append('fecha_compra', this.form.fecha_compra);
       
       if (this.form.imagen instanceof File) {
         formData.append('imagen', this.form.imagen);
@@ -330,7 +473,12 @@ export default {
         producto: '',
         precio: '',
         id_proveedor: '',
-        imagen: null
+        imagen: null,
+        codigo: '',
+        genero: '',
+        id_material: '',
+        fecha_compra: '',
+        num_stock: 0
       };
       this.imagePreview = null;
       this.isEditing = false;
@@ -389,11 +537,38 @@ export default {
         default:
           return tipo;
       }
-    }
+    },
+    viewDetails(item) {
+      // If we need to fetch additional details that might not be in the item
+      axios.get(`/api/stock/${item.id}`)
+        .then(response => {
+          this.detailItem = response.data;
+          new Modal(document.getElementById('detailsModal')).show();
+        })
+        .catch(error => {
+          console.error('Error fetching item details:', error);
+          this.alertMessage = 'Error al cargar los detalles del producto.';
+        });
+    },
+    getGeneroLabel(genero) {
+      switch (genero) {
+        case 'H':
+          return 'Hombre';
+        case 'M':
+          return 'Mujer';
+        case 'N':
+          return 'Niño';
+        case 'U':
+          return 'Unisex';
+        default:
+          return 'N/A';
+      }
+    },
   },
   mounted() {
     this.fetchItems();
     this.fetchProveedores();
+    this.fetchMateriales();
   }
 };
 </script>
@@ -447,5 +622,12 @@ export default {
   transform: translateY(-50%);
   pointer-events: none;
   color: #6c757d;
+}
+
+.details-image {
+  object-fit: contain;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 5px;
 }
 </style>

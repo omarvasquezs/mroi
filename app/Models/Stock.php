@@ -15,7 +15,11 @@ class Stock extends Model
         'precio',
         'tipo_producto',
         'id_proveedor',
-        'num_stock'
+        'num_stock',
+        'codigo',
+        'genero',
+        'id_material',
+        'fecha_compra'
     ];
 
     protected $table = 'stock';
@@ -23,5 +27,10 @@ class Stock extends Model
     public function proveedor()
     {
         return $this->belongsTo(Proveedor::class, 'id_proveedor');
+    }
+    
+    public function material()
+    {
+        return $this->belongsTo(Material::class, 'id_material');
     }
 }
