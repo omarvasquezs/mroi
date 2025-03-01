@@ -82,12 +82,15 @@
               </div>
               <div class="mb-3">
                 <label class="form-label"><strong>Tipo de Cita:</strong></label>
-                <select v-model="formData.id_tipo_cita" class="form-select">
+                <select v-model="formData.id_tipo_cita" class="form-select" :class="{'is-invalid': formValidationErrors.includes('tipo_cita')}">
                   <option value="" disabled>Seleccione tipo de cita</option>
                   <option v-for="tipo in tiposCitas" :key="tipo.id" :value="tipo.id">
                     {{ tipo.tipo_cita }} - S/. {{ tipo.precio }}
                   </option>
                 </select>
+                <div class="invalid-feedback" v-if="formValidationErrors.includes('tipo_cita')">
+                  Por favor seleccione un tipo de cita.
+                </div>
               </div>
               <div class="mb-3">
                 <label class="form-label"><strong>Observaciones:</strong></label>
@@ -365,7 +368,8 @@ export default {
       formErrors: [],
       isEditing: false,
       pacienteModal: null,
-      citaModal: null
+      citaModal: null,
+      formValidationErrors: [] // Add this field to store validation errors
     }
   },
   computed: {
@@ -426,6 +430,15 @@ export default {
       }
     },
     async saveCita() {
+      // Reset validation errors
+      this.formValidationErrors = [];
+      
+      // Validate form fields
+      if (!this.formData.id_tipo_cita) {
+        this.formValidationErrors.push('tipo_cita');
+        return; // Stop form submission if there are validation errors
+      }
+
       try {
         const adjustedDate = new Date(this.selectedDate.getTime() - this.selectedDate.getTimezoneOffset() * 60000);
         const response = await fetch('/api/citas', {
@@ -446,6 +459,7 @@ export default {
         if (response.ok) {
           this.$emit('citaCreated');
           this.formData = { num_historia: '', observaciones: '', id_tipo_cita: '' };
+          this.formValidationErrors = []; // Clear validation errors on successful submission
           const modalx = document.getElementById('citaModal');
           const bootstrapModalx = bootstrap.Modal.getInstance(modalx);
           bootstrapModalx.hide();
