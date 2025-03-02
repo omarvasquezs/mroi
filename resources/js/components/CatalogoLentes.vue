@@ -157,13 +157,23 @@
               <label for="correo" class="form-label">Correo</label>
               <input type="email" v-model="correo" class="form-control" id="correo" placeholder="Ingrese correo">
             </div>
+            
+            <!-- Total Amount Display -->
+            <div class="mb-3">
+              <div class="alert alert-info d-flex justify-content-between align-items-center">
+                <span><strong>Total:</strong> S/. {{ calculateTotal.toFixed(2) }}</span>
+                <span><strong>Items:</strong> {{ cartItemCount }}</span>
+              </div>
+            </div>
+            
             <table v-if="cart.length" class="table table-bordered">
               <thead>
                 <tr>
                   <th><input type="checkbox" @change="toggleSelectAll" :checked="isAllSelected"></th>
                   <th>Producto</th>
-                  <th>Precio</th>
+                  <th>Precio Unitario</th>
                   <th>Cantidad</th>
+                  <th>Precio Total</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -176,6 +186,7 @@
                     <input type="number" v-model.number="item.quantity" min="1" class="form-control"
                       style="width:100px;" @change="updateQuantity(index, $event)">
                   </td>
+                  <td>S/. {{ (item.precio * item.quantity).toFixed(2) }}</td>
                   <td>
                     <div class="text-center">
                         <button @click="removerProducto(index)" class="btn btn-danger btn-sm" title="Eliminar">
@@ -251,6 +262,9 @@ export default {
     },
     isAllSelected() {
       return this.cart.length && this.selectedItems.length === this.cart.length;
+    },
+    calculateTotal() {
+      return this.cart.reduce((total, item) => total + (item.quantity * item.precio), 0);
     }
   },
   methods: {
