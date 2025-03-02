@@ -127,7 +127,8 @@ class StockController extends Controller
             'codigo' => 'nullable|string|max:255',
             'genero' => 'nullable|in:H,M,N,U',
             'id_material' => 'nullable|exists:materiales,id',
-            'fecha_compra' => 'nullable|date'
+            'fecha_compra' => 'nullable|date',
+            'num_stock' => 'required|integer|min:0'
         ]);
 
         try {
@@ -140,7 +141,8 @@ class StockController extends Controller
                 'codigo' => $validated['codigo'] ?? $stock->codigo,
                 'genero' => $validated['genero'] ?? $stock->genero,
                 'id_material' => $validated['id_material'] ?? $stock->id_material,
-                'fecha_compra' => $validated['fecha_compra'] ?? $stock->fecha_compra
+                'fecha_compra' => $validated['fecha_compra'] ?? $stock->fecha_compra,
+                'num_stock' => $validated['num_stock']
             ];
             
             if ($request->hasFile('imagen')) {
