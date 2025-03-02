@@ -146,7 +146,7 @@
           </div>
           <div class="modal-body">
             <div class="mb-3">
-              <label for="nombres" class="form-label">Nombres</label>
+              <label for="nombres" class="form-label">Nombres <span class="text-danger">*</span></label>
               <input type="text" v-model="nombres" class="form-control" id="nombres" placeholder="Ingrese nombres">
             </div>
             <div class="mb-3">
@@ -422,6 +422,21 @@ export default {
     },
     procesarCart() {
       if (!this.cart.length) return;
+      
+      // Validate nombres field (new check)
+      if (!this.nombres.trim()) {
+        alert('El campo Nombres es obligatorio');
+        return;
+      }
+      
+      // Validate product quantities against available stock
+      const stockValidation = this.validateStockQuantities();
+      
+      if (!stockValidation.isValid) {
+        alert(`Error: ${stockValidation.message}`);
+        return;
+      }
+      
       // Calculate total amount
       const montoTotal = this.cart.reduce((total, item) => total + (item.quantity * item.precio), 0);
       const productoComprobantePayload = {
@@ -437,7 +452,15 @@ export default {
       };
       axios.post('/api/productos-comprobante', productoComprobantePayload)
         .then(response => {
+          // Update stock quantities after successful submission
+          this.updateStockQuantities();
           alert('Producto comprobante y items creados correctamente');
+          
+          // Reset form fields
+          this.nombres = '';
+          this.telefono = '';
+          this.correo = '';
+          
           this.cart = [];
           this.selectedItems = [];
           this.closeCart();
@@ -445,6 +468,45 @@ export default {
         .catch(error => {
           console.error('Error al crear producto comprobante/items:', error);
           alert('Error al crear producto comprobante/items');
+        });
+    },
+    validateStockQuantities() {
+      // Check if any product quantity exceeds available stock
+      for (const item of this.cart) {
+        if (item.quantity > item.num_stock) {
+          return {
+            isValid: false,
+            message: `El producto "${item.producto}" excede el stock disponible. Stock actual: ${item.num_stock}, Cantidad solicitada: ${item.quantity}`
+          };
+        }
+      }
+      return { isValid: true };
+    },
+    updateStockQuantities() {
+      // Create an array of products that need stock updates
+      const stockUpdates = this.cart.map(item => ({
+        id: item.id,
+        num_stock: item.num_stock - item.quantity
+      }));
+
+      console.log('Updating stock for items:', this.cart);
+      console.log('Stock updates to be sent:', stockUpdates);
+
+      // Send request to update stock quantities
+      axios.post('/api/update-stock', { updates: stockUpdates })
+        .then(response => {
+          console.log('Stock update response:', response.data);
+
+          // Update local product list with new stock values
+          stockUpdates.forEach(update => {
+            const producto = this.productos.find(p => p.id === update.id);
+            if (producto) {
+              producto.num_stock = update.num_stock;
+            }
+          });
+        })
+        .catch(error => {
+          console.error('Error al actualizar el stock:', error);
         });
     }
   },

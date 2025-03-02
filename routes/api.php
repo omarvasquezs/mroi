@@ -63,3 +63,5 @@ Route::get('/active-metodos-pago', [MetodoPagoController::class, 'getActiveMetod
 
 Route::post('/comprobantes/{id}/generate', [ComprobanteController::class, 'generate']);
 Route::get('/comprobantes/{id}/pdf', [ComprobanteController::class, 'generatePdf']);
+
+Route::post('/update-stock', 'App\Http\Controllers\StockController@updateStock');

@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Stock;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class StockController extends Controller
 {
@@ -179,5 +180,35 @@ class StockController extends Controller
 
         $stock->delete();
         return response()->json(null, 204);
+    }
+
+    public function updateStock(Request $request)
+    {
+        try {
+            $updates = $request->input('updates');
+            Log::info('Stock update request received:', ['updates' => $updates]);
+            
+            DB::beginTransaction();
+            
+            foreach ($updates as $update) {
+                $stock = Stock::findOrFail($update['id']);
+                $stock->num_stock = $update['num_stock'];
+                $stock->save();
+                
+                Log::info('Stock updated:', [
+                    'id' => $stock->id,
+                    'producto' => $stock->producto,
+                    'old_stock' => $stock->getOriginal('num_stock'),
+                    'new_stock' => $stock->num_stock
+                ]);
+            }
+            
+            DB::commit();
+            return response()->json(['message' => 'Stock actualizado correctamente']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error actualizando stock: ' . $e->getMessage());
+            return response()->json(['error' => 'Error al actualizar el stock: ' . $e->getMessage()], 500);
+        }
     }
 }
