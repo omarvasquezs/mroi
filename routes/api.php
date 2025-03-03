@@ -30,6 +30,7 @@ Route::get('/proveedores/check-ruc', [ProveedorController::class, 'checkRuc']);
 Route::get('/proveedores/check-correo', [ProveedorController::class, 'checkCorreo']);
 Route::get('/medicos-list', [MedicoController::class, 'getAllMedicos']);
 Route::get('/pacientes-list', [PacienteController::class, 'getAllPacientes']);
+Route::get('/pacientes-with-citas', [PacienteController::class, 'getPacientesWithCitas']); // New route for patients with appointments
 
 Route::post('/citas', [CitaController::class, 'store']);
 Route::get('/citas', [CitaController::class, 'getCitasByMedicoAndFecha']);

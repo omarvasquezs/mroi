@@ -194,4 +194,21 @@ class PacienteController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get all patients who have appointments in the citas table with estado = 'd'
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function getPacientesWithCitas()
+    {
+        $pacientes = Paciente::select('pacientes.*', DB::raw("CONCAT(nombres, ' ', ap_paterno, ' ', ap_materno) as nombre"))
+            ->join('citas', 'pacientes.num_historia', '=', 'citas.num_historia')
+            ->where('citas.estado', '=', 'd')  // Filter for appointments with estado = 'd'
+            ->distinct()
+            ->orderBy('nombres')
+            ->get();
+
+        return response()->json($pacientes);
+    }
 }

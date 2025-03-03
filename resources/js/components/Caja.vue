@@ -246,7 +246,8 @@ export default {
         // Fetch the list of patients from the API
         async fetchPacientes() {
             try {
-                const response = await axios.get('/api/pacientes-list');
+                // Updated to use the new endpoint that returns only patients with citas
+                const response = await axios.get('/api/pacientes-with-citas');
                 this.pacientes = response.data;
             } catch (error) {
                 console.error('Error fetching pacientes:', error);
