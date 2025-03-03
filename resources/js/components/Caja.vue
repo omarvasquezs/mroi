@@ -55,11 +55,7 @@
                         <thead>
                             <tr>
                                 <th>
-                                    <input 
-                                        type="checkbox" 
-                                        v-model="selectAll"
-                                        @change="toggleAll"
-                                    >
+                                    Seleccionar
                                 </th>
                                 <th>Fecha</th>
                                 <th>Tipo de Cita</th>
@@ -68,11 +64,11 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="cita in pendingAppointments" :key="cita.id" @click="toggleAppointmentSelection(cita.id)" class="clickable-row">
+                            <tr v-for="cita in pendingAppointments" :key="cita.id" @click="selectAppointment(cita.id)" class="clickable-row">
                                 <td>
                                     <input 
-                                        type="checkbox" 
-                                        v-model="selectedAppointments" 
+                                        type="radio" 
+                                        v-model="selectedAppointmentId" 
                                         :value="cita.id"
                                     >
                                 </td>
@@ -159,7 +155,7 @@
         </div>
 
         <!-- Payment Section -->
-        <div v-if="(comprobanteType === 'citas' && selectedAppointments.length) || (comprobanteType === 'productos' && selectedProductoComprobante)" class="card mb-4">
+        <div v-if="(comprobanteType === 'citas' && selectedAppointmentId) || (comprobanteType === 'productos' && selectedProductoComprobante)" class="card mb-4">
             <div class="card-header">Generar Comprobante</div>
             <div class="card-body">
                 <div class="row">
@@ -213,8 +209,7 @@ export default {
             selectedPatientId: '', // ID of the selected patient
             selectedPatient: null, // Details of the selected patient
             pendingAppointments: [], // List of pending appointments for the selected patient
-            selectedAppointments: [], // List of selected appointments
-            selectAll: false, // Flag to select/deselect all appointments
+            selectedAppointmentId: '', // ID of the selected appointment
             metodosPago: [], // List of payment methods
             comprobante: {
                 tipo: 'b', // Type of comprobante (boleta or factura)
@@ -323,22 +318,9 @@ export default {
                 currency: 'PEN'
             }).format(amount);
         },
-        // Toggle the selection of all appointments
-        toggleAll() {
-            if (this.selectAll) {
-                this.selectedAppointments = this.pendingAppointments.map(cita => cita.id);
-            } else {
-                this.selectedAppointments = [];
-            }
-        },
-        // Toggle the selection of a specific appointment
-        toggleAppointmentSelection(id) {
-            const index = this.selectedAppointments.indexOf(id);
-            if (index === -1) {
-                this.selectedAppointments.push(id);
-            } else {
-                this.selectedAppointments.splice(index, 1);
-            }
+        // Select a specific appointment
+        selectAppointment(id) {
+            this.selectedAppointmentId = id;
         },
         // Select a product purchase request and fetch its items
         selectProductoComprobante(id) {
@@ -363,7 +345,7 @@ export default {
                     response = await axios.post('/api/comprobantes', {
                         tipo: this.comprobante.tipo,
                         id_metodo_pago: this.comprobante.id_metodo_pago,
-                        citas: this.selectedAppointments,
+                        citas: [this.selectedAppointmentId],
                         paciente_id: this.selectedPatient.id
                     });
                 } else if (this.comprobanteType === 'productos') {
