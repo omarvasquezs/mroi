@@ -14,13 +14,31 @@ class ComprobanteController extends Controller
     public function index()
     {
         try {
-            $comprobantes = Comprobante::with(['citas', 'metodoPago'])->get();
+            // Load comprobantes with related models
+            $comprobantes = Comprobante::with([
+                'citas.paciente',   // Include paciente data for citas
+                'metodoPago',
+                'productoComprobante' // Include productos_comprobante relation
+            ])->get();
 
             foreach ($comprobantes as $comprobante) {
+                // Determine the type of service
                 if ($comprobante->citas()->exists()) {
                     $comprobante->servicio = 'Cita';
-                } elseif (ProductoComprobante::where('comprobante_id', $comprobante->id)->exists()) {
+                    
+                    // Add patient information from cita relation
+                    $cita = $comprobante->citas->first();
+                    if ($cita && $cita->paciente) {
+                        $paciente = $cita->paciente;
+                        $comprobante->paciente_nombre = trim($paciente->nombres . ' ' . $paciente->ap_paterno . ' ' . $paciente->ap_materno);
+                    }
+                } elseif ($comprobante->productoComprobante) {
                     $comprobante->servicio = 'Producto';
+                    
+                    // Add patient name from productos_comprobante
+                    if ($comprobante->productoComprobante) {
+                        $comprobante->paciente_nombre = $comprobante->productoComprobante->nombres;
+                    }
                 } else {
                     $comprobante->servicio = 'Desconocido';
                 }

@@ -35,6 +35,7 @@
                         <tr>
                             <th>Número de Comprobante</th>
                             <th>Tipo de Comprobante</th>
+                            <th>Paciente</th>
                             <th>Servicio</th>
                             <th>Monto</th>
                             <th>Método de Pago</th>
@@ -46,6 +47,7 @@
                         <tr v-for="comprobante in sortedComprobantes" :key="comprobante.id">
                             <td>{{ `${comprobante.serie}-${comprobante.correlativo.toString().padStart(8, '0')}` }}</td>
                             <td>{{ comprobante.tipo === 'b' ? 'Boleta' : 'Factura' }}</td>
+                            <td>{{ comprobante.paciente_nombre || 'N/A' }}</td>
                             <td>{{ comprobante.servicio }}</td>
                             <td>{{ formatCurrency(comprobante.monto_total) }}</td>
                             <td>{{ getMetodoPago(comprobante.id_metodo_pago) }}</td>
