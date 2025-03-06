@@ -18,15 +18,33 @@ class ComprobanteController extends Controller
             $perPage = $request->query('per_page', 10);
             $page = $request->query('page', 1);
 
-            // Load comprobantes with related models and paginate
+            // Load comprobantes with related models
             $comprobantesQuery = Comprobante::with([
                 'citas.paciente',
                 'metodoPago',
                 'productoComprobante'
             ]);
 
-            // Apply any additional filters if needed
-            // For example: if ($request->has('search')) { $comprobantesQuery->where(...) }
+            // Apply date filters
+            if ($request->has('fecha_inicio') && !empty($request->fecha_inicio)) {
+                $comprobantesQuery->whereDate('created_at', '>=', $request->fecha_inicio);
+            }
+
+            if ($request->has('fecha_fin') && !empty($request->fecha_fin)) {
+                $comprobantesQuery->whereDate('created_at', '<=', $request->fecha_fin);
+            }
+
+            if ($request->has('fecha_hoy_dia') && $request->fecha_hoy_dia == 1) {
+                $today = now()->format('Y-m-d');
+                $comprobantesQuery->whereDate('created_at', $today);
+            }
+
+            if ($request->has('mes_actual') && $request->mes_actual == 1) {
+                $firstDay = now()->startOfMonth()->format('Y-m-d');
+                $lastDay = now()->endOfMonth()->format('Y-m-d');
+                $comprobantesQuery->whereDate('created_at', '>=', $firstDay)
+                                 ->whereDate('created_at', '<=', $lastDay);
+            }
 
             // Get paginated results
             $paginatedComprobantes = $comprobantesQuery->paginate($perPage, ['*'], 'page', $page);
