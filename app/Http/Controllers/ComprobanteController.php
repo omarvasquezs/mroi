@@ -11,17 +11,28 @@ use Illuminate\Support\Facades\Log;
 
 class ComprobanteController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         try {
-            // Load comprobantes with related models
-            $comprobantes = Comprobante::with([
-                'citas.paciente',   // Include paciente data for citas
-                'metodoPago',
-                'productoComprobante' // Include productos_comprobante relation
-            ])->get();
+            // Get pagination parameters, default to 10 items per page
+            $perPage = $request->query('per_page', 10);
+            $page = $request->query('page', 1);
 
-            foreach ($comprobantes as $comprobante) {
+            // Load comprobantes with related models and paginate
+            $comprobantesQuery = Comprobante::with([
+                'citas.paciente',
+                'metodoPago',
+                'productoComprobante'
+            ]);
+
+            // Apply any additional filters if needed
+            // For example: if ($request->has('search')) { $comprobantesQuery->where(...) }
+
+            // Get paginated results
+            $paginatedComprobantes = $comprobantesQuery->paginate($perPage, ['*'], 'page', $page);
+
+            // Process each comprobante to add necessary fields
+            foreach ($paginatedComprobantes as $comprobante) {
                 // Determine the type of service
                 if ($comprobante->citas()->exists()) {
                     $comprobante->servicio = 'Cita';
@@ -44,7 +55,7 @@ class ComprobanteController extends Controller
                 }
             }
 
-            return response()->json($comprobantes);
+            return response()->json($paginatedComprobantes);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

@@ -26,6 +26,17 @@
                     <label class="form-check-label non-selectable pointer" for="mes-actual">MES ACTUAL</label>
                 </div>
             </div>
+            <div class="col-md-3">
+                <label for="per-page" class="pointer">POR PÁGINA:</label>
+                <div class="input-group">
+                    <select id="per-page" v-model="pagination.perPage" class="form-control form-select pointer" @change="handlePerPageChange">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+            </div>
         </div>
         <div class="card mb-4">
             <div class="card-header">Comprobantes Generados</div>
@@ -58,6 +69,18 @@
                         </tr>
                     </tbody>
                 </table>
+                
+                <!-- Updated Pagination Controls - removed the "Por página" selector -->
+                <nav v-if="pagination.total > pagination.perPage" class="mt-4 d-flex justify-content-end">
+                    <ul class="pagination">
+                        <li class="page-item" :class="{ disabled: pagination.currentPage <= 1 }">
+                            <a class="page-link" href="#" @click.prevent="changePage(pagination.currentPage - 1)">Anterior</a>
+                        </li>
+                        <li class="page-item" :class="{ disabled: pagination.currentPage >= pagination.lastPage }">
+                            <a class="page-link" href="#" @click.prevent="changePage(pagination.currentPage + 1)">Siguiente</a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
         </div>
 
@@ -103,35 +126,23 @@ export default {
             },
             pdfUrl: '', // URL of the PDF to be displayed in the modal
             modalComprobanteNumero: '', // Número de Comprobante for the modal title
-            loading: false // Loading state for PDF generation
+            loading: false, // Loading state for PDF generation
+            pagination: {
+                currentPage: 1,
+                perPage: 10,
+                total: 0,
+                lastPage: 1
+            }
         };
     },
     computed: {
+        // Replace the filteredComprobantes method with this one since filtering will be done on the server
         filteredComprobantes() {
-            let filtered = this.comprobantes;
-
-            if (this.filters.fechaInicio) {
-                filtered = filtered.filter(comprobante => new Date(comprobante.created_at) >= new Date(this.filters.fechaInicio));
-            }
-
-            if (this.filters.fechaFin) {
-                filtered = filtered.filter(comprobante => new Date(comprobante.created_at) <= new Date(this.filters.fechaFin));
-            }
-
-            if (this.filters.fechaHoyDia) {
-                const today = new Date().toISOString().split('T')[0];
-                filtered = filtered.filter(comprobante => comprobante.created_at.startsWith(today));
-            }
-
-            if (this.filters.mesActual) {
-                const currentMonth = new Date().toISOString().slice(0, 7);
-                filtered = filtered.filter(comprobante => comprobante.created_at.startsWith(currentMonth));
-            }
-
-            return filtered;
+            return this.comprobantes;
         },
+        
         sortedComprobantes() {
-            return this.filteredComprobantes.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            return this.filteredComprobantes;
         }
     },
     mounted() {
@@ -144,8 +155,21 @@ export default {
         },
         async fetchComprobantes() {
             try {
-                const response = await axios.get('/api/comprobantes');
-                this.comprobantes = response.data;
+                const response = await axios.get('/api/comprobantes', {
+                    params: {
+                        page: this.pagination.currentPage,
+                        per_page: this.pagination.perPage,
+                        fecha_inicio: this.filters.fechaInicio || '',
+                        fecha_fin: this.filters.fechaFin || '',
+                        fecha_hoy_dia: this.filters.fechaHoyDia ? 1 : 0,
+                        mes_actual: this.filters.mesActual ? 1 : 0
+                    }
+                });
+                
+                this.comprobantes = response.data.data;
+                this.pagination.currentPage = response.data.current_page;
+                this.pagination.lastPage = response.data.last_page;
+                this.pagination.total = response.data.total;
             } catch (error) {
                 console.error('Error fetching comprobantes:', error);
             }
@@ -179,13 +203,27 @@ export default {
             const metodo = this.metodosPago.find(m => m.id === id);
             return metodo ? metodo.nombre : 'N/A';
         },
+        changePage(page) {
+            // Don't navigate past bounds
+            if (page < 1 || page > this.pagination.lastPage) return;
+            
+            this.pagination.currentPage = page;
+            this.fetchComprobantes();
+        },
+        handlePerPageChange() {
+            this.pagination.currentPage = 1; // Reset to first page when changing items per page
+            this.fetchComprobantes();
+        },
         clearDateFilters() {
             this.filters.fechaInicio = '';
             this.filters.fechaFin = '';
+            this.pagination.currentPage = 1; // Reset to first page when changing filters
+            this.fetchComprobantes();
         },
         clearCheckboxFilters() {
             this.filters.fechaHoyDia = false;
             this.filters.mesActual = false;
+            this.pagination.currentPage = 1; // Reset to first page when changing filters
         },
         toggleFechaHoyDia() {
             if (this.filters.fechaHoyDia) {
@@ -196,6 +234,8 @@ export default {
             } else {
                 this.clearDateFilters();
             }
+            this.pagination.currentPage = 1; // Reset to first page when changing filters
+            this.fetchComprobantes();
         },
         toggleMesActual() {
             if (this.filters.mesActual) {
@@ -208,6 +248,8 @@ export default {
             } else {
                 this.clearDateFilters();
             }
+            this.pagination.currentPage = 1; // Reset to first page when changing filters
+            this.fetchComprobantes();
         },
         async generateComprobante(comprobanteId) {
             this.loading = true; // Set loading state to true
