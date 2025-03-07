@@ -95,9 +95,11 @@
                 <div class="stock-badge" :class="producto.num_stock > 0 ? 'in-stock' : 'out-of-stock'">
                   {{ producto.num_stock > 0 ? `En stock: ${producto.num_stock}` : 'Agotado' }}
                 </div>
-                <img v-if="producto.imagen" :src="`${baseUrl}/images/stock/${producto.imagen}`" class="card-img-top product-image"
-                  :alt="producto.descripcion || 'Sin descripción'">
-                <div v-else class="card-img-top product-image no-image">Sin imagen</div>
+                <img 
+                  :src="producto.imagen ? `${baseUrl}/images/stock/${producto.imagen}` : `${baseUrl}/images/image-missing.svg`" 
+                  class="card-img-top product-image"
+                  :alt="producto.descripcion || 'Sin descripción'"
+                >
                 <div class="card-body product-card-body">
                   <h5 class="card-title">{{ producto.descripcion || 'Sin descripción' }}</h5>
                   <p class="card-text">S/. {{ producto.precio }}</p>
@@ -554,7 +556,7 @@ export default {
 
 .product-image {
   height: 200px;
-  object-fit: cover;
+  object-fit: contain;
   padding: 1rem;
 }
 
