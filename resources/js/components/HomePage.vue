@@ -110,6 +110,7 @@ export default {
                 { type: 'link', label: 'Administrar Usuarios del Sistema', icon: 'fas fa-user-cog', url: '/usuarios', condition: 'Entidades|Utilitarios' },
                 { type: 'link', label: 'Administrar tipos de cita', icon: 'fas fa-calendar-alt', url: '/tipos-citas', condition: 'Entidades|Utilitarios' },
                 { type: 'link', label: 'Registro Proveedores', icon: 'fas fa-truck', url: '/proveedores', condition: 'Servicios Recibidos|Proveedores' },
+                { type: 'link', label: 'Gestionar Marcas', icon: 'fas fa-tag', url: '/marcas', condition: 'Servicios Recibidos|Proveedores' }, // New menu item for Marcas
                 { type: 'link', label: 'Equipos de optometría', icon: 'fas fa-tools', url: '/equipos-de-optometria', condition: 'Servicios Recibidos|Inventario' },
                 { type: 'link', label: 'HC Ambulatoria', icon: 'fas fa-notes-medical', url: '/hc-ambulatoria', condition: 'Atención Médica|Historia Clínica' },
                 { type: 'link', label: 'Registro de Intervenciones', icon: 'fas fa-syringe', url: '/registro-intervenciones', condition: 'Atención Médica|Intervenciones Quirúrgicas' },

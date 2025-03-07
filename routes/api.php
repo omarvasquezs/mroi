@@ -52,6 +52,9 @@ Route::apiResource('productos-comprobante', ProductoComprobanteController::class
 Route::apiResource('proveedores', ProveedorController::class);
 Route::apiResource('materiales', MaterialController::class);
 
+// Routes for Marcas
+Route::apiResource('marcas', 'App\Http\Controllers\MarcaController');
+
 Route::get('/productos-comprobante', [ProductoComprobanteController::class, 'index']);
 Route::get('/productos-comprobante/{id}', [ProductoComprobanteController::class, 'show']);
 

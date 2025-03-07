@@ -83,6 +83,11 @@ const routes = [
         component: () => import("../components/MaterialesCrud.vue"),
     },
     {
+        path: "/marcas",
+        name: "Marcas",
+        component: () => import("../components/MarcasCrud.vue"),
+    },
+    {
         path: "/:pathMatch(.*)*",
         component: () => import("../components/NotfoundPage.vue"),
     }

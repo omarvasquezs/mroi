@@ -20,4 +20,13 @@ class Proveedor extends Model
         'pagina_web',
         'nombre_representante'
     ];
+
+    /**
+     * The marcas that belong to the proveedor.
+     */
+    public function marcas()
+    {
+        return $this->belongsToMany(Marca::class, 'marca_proveedor', 'proveedor_id', 'marca_id')
+                    ->withTimestamps();
+    }
 }
