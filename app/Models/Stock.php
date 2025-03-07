@@ -10,7 +10,7 @@ class Stock extends Model
     use HasFactory;
 
     protected $fillable = [
-        'producto',
+        'descripcion',
         'imagen',
         'precio',
         'tipo_producto',

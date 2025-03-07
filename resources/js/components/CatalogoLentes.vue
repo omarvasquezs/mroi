@@ -13,7 +13,7 @@
             <h5 class="card-title mb-3"></h5>
             <div class="mb-3">
               <label class="form-label">Búsqueda</label>
-              <input type="text" v-model="filters.producto" class="form-control" placeholder="Buscar productos...">
+              <input type="text" v-model="filters.descripcion" class="form-control" placeholder="Buscar productos...">
             </div>
             <div class="row mb-3">
               <div class="col">
@@ -95,10 +95,11 @@
                 <div class="stock-badge" :class="producto.num_stock > 0 ? 'in-stock' : 'out-of-stock'">
                   {{ producto.num_stock > 0 ? `En stock: ${producto.num_stock}` : 'Agotado' }}
                 </div>
-                <img :src="`${baseUrl}/images/stock/${producto.imagen}`" class="card-img-top product-image"
-                  :alt="producto.producto">
+                <img v-if="producto.imagen" :src="`${baseUrl}/images/stock/${producto.imagen}`" class="card-img-top product-image"
+                  :alt="producto.descripcion || 'Sin descripción'">
+                <div v-else class="card-img-top product-image no-image">Sin imagen</div>
                 <div class="card-body product-card-body">
-                  <h5 class="card-title">{{ producto.producto }}</h5>
+                  <h5 class="card-title">{{ producto.descripcion || 'Sin descripción' }}</h5>
                   <p class="card-text">S/. {{ producto.precio }}</p>
                   <button @click="agregarProducto(producto)" class="btn btn-success w-100 mt-2" 
                           :disabled="producto.num_stock <= 0">
@@ -180,7 +181,7 @@
               <tbody>
                 <tr v-for="(item, index) in cart" :key="item.id">
                   <td><input type="checkbox" v-model="selectedItems" :value="item.id"></td>
-                  <td>{{ item.producto }}</td>
+                  <td>{{ item.descripcion || 'Sin descripción' }}</td>
                   <td>S/. {{ item.precio }}</td>
                   <td>
                     <input type="number" v-model.number="item.quantity" min="1" class="form-control"
@@ -228,7 +229,7 @@ export default {
         prev_page_url: null
       },
       filters: {
-        producto: '',
+        descripcion: '',
         precio_min: null,
         precio_max: null,
         tipo_producto: []
@@ -333,7 +334,7 @@ export default {
     },
     resetFilters() {
       this.filters = {
-        producto: '',
+        descripcion: '',
         precio_min: null,
         precio_max: null,
         tipo_producto: []
@@ -793,5 +794,14 @@ export default {
 
 .product-card {
   position: relative;
+}
+
+.no-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fa;
+  color: #6c757d;
+  font-style: italic;
 }
 </style>

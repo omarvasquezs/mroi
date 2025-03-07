@@ -16,7 +16,7 @@
       <thead>
         <tr>
           <th>Imagen</th>
-          <th>Producto</th>
+          <th>Descripción</th>
           <th>Precio</th>
           <th>Tipo de Producto</th>
           <th>Proveedor</th>
@@ -27,8 +27,8 @@
           <th></th>
           <th>
             <div class="position-relative">
-              <input type="text" v-model="filters.producto" @input="applyFilters" class="form-control" placeholder="Filtrar por Producto">
-              <button v-if="filters.producto" @click="clearFilter('producto')" class="btn-clear">
+              <input type="text" v-model="filters.descripcion" @input="applyFilters" class="form-control" placeholder="Filtrar por Descripción">
+              <button v-if="filters.descripcion" @click="clearFilter('descripcion')" class="btn-clear">
                 <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
               </button>
             </div>
@@ -73,8 +73,11 @@
           <td colspan="7" class="text-center">No hay productos en el stock.</td>
         </tr>
         <tr v-else v-for="item in items" :key="item.id">
-          <td><img :src="`${baseUrl}/images/stock/${item.imagen}`" alt="Producto" style="height: 50px;"></td>
-          <td>{{ item.producto }}</td>
+          <td>
+            <img v-if="item.imagen" :src="`${baseUrl}/images/stock/${item.imagen}`" alt="Producto" style="height: 50px;">
+            <span v-else>Sin imagen</span>
+          </td>
+          <td>{{ item.descripcion || 'Sin descripción' }}</td>
           <td>S/. {{ item.precio }}</td>
           <td>{{ getTipoProductoLabel(item.tipo_producto) }}</td>
           <td>{{ item.proveedor ? item.proveedor.razon_social : 'N/A' }}</td>
@@ -140,11 +143,11 @@
                 </div>
               </div>
 
-              <!-- Row 2: Producto in its own row -->
+              <!-- Row 2: Descripcion in its own row -->
               <div class="row mb-3">
                 <div class="col-12">
-                  <label for="producto" class="form-label">Producto*:</label>
-                  <input type="text" v-model="form.producto" id="producto" class="form-control" required>
+                  <label for="descripcion" class="form-label">Descripción:</label>
+                  <input type="text" v-model="form.descripcion" id="descripcion" class="form-control">
                 </div>
               </div>
 
@@ -214,14 +217,13 @@
 
               <!-- Row 6: Imagen upload -->
               <div class="mb-3">
-                <label for="imagen" class="form-label">Imagen{{ isEditing ? ' (dejar en blanco para mantener la actual)' : '*' }}:</label>
+                <label for="imagen" class="form-label">Imagen{{ isEditing ? ' (dejar en blanco para mantener la actual)' : '' }}:</label>
                 <input 
                   type="file" 
                   @change="handleImageUpload" 
                   id="imagen" 
                   ref="fileInput"
                   class="form-control" 
-                  :required="!isEditing"
                 >
               </div>
 
@@ -253,10 +255,11 @@
             <div v-if="detailItem">
               <div class="row mb-4">
                 <div class="col-md-6 text-center mb-3">
-                  <img :src="`${baseUrl}/images/stock/${detailItem.imagen}`" alt="Producto" class="img-fluid details-image" style="max-height: 250px;">
+                  <img v-if="detailItem.imagen" :src="`${baseUrl}/images/stock/${detailItem.imagen}`" alt="Producto" class="img-fluid details-image" style="max-height: 250px;">
+                  <div v-else class="no-image-placeholder">Sin imagen</div>
                 </div>
                 <div class="col-md-6">
-                  <h4>{{ detailItem.producto }}</h4>
+                  <h4>{{ detailItem.descripcion || 'Sin descripción' }}</h4>
                   <p class="mb-1"><strong>Código:</strong> {{ detailItem.codigo || 'N/A' }}</p>
                   <p class="mb-1"><strong>Precio:</strong> S/. {{ detailItem.precio }}</p>
                   <p class="mb-1"><strong>Stock:</strong> {{ detailItem.num_stock }}</p>
@@ -300,7 +303,7 @@ export default {
       loading: true,
       form: {
         tipo_producto: '',
-        producto: '',
+        descripcion: '',
         precio: '',
         id_proveedor: '',
         imagen: null,
@@ -324,7 +327,7 @@ export default {
         prev_page_url: null
       },
       filters: {
-        producto: '',
+        descripcion: '',
         precio: '',
         tipo_producto: '',
         proveedor: ''
@@ -336,7 +339,7 @@ export default {
     fetchItems(url = '/api/stock') {
       this.loading = true;
       const params = {
-        producto: this.filters.producto || null,
+        descripcion: this.filters.descripcion || null,
         precio: this.filters.precio || null,
         tipo_producto: this.filters.tipo_producto || null,
         proveedor: this.filters.proveedor || null,
@@ -395,7 +398,7 @@ export default {
     },
     editItem(item) {
       this.form = {
-        producto: item.producto,
+        descripcion: item.descripcion || '',
         precio: item.precio,
         tipo_producto: item.tipo_producto,
         id_proveedor: item.id_proveedor,
@@ -406,7 +409,7 @@ export default {
         fecha_compra: item.fecha_compra || '',
         num_stock: item.num_stock || 0
       };
-      this.imagePreview = `${this.baseUrl}/images/stock/${item.imagen}`;
+      this.imagePreview = item.imagen ? `${this.baseUrl}/images/stock/${item.imagen}` : null;
       this.showForm = true;
       this.isEditing = true;
       this.editingId = item.id;
@@ -414,7 +417,7 @@ export default {
     },
     async submitForm() {
       const formData = new FormData();
-      formData.append('producto', this.form.producto);
+      formData.append('descripcion', this.form.descripcion || '');
       formData.append('precio', this.form.precio);
       formData.append('tipo_producto', this.form.tipo_producto);
       formData.append('id_proveedor', this.form.id_proveedor);
@@ -470,7 +473,7 @@ export default {
     resetForm() {
       this.form = {
         tipo_producto: '',
-        producto: '',
+        descripcion: '',
         precio: '',
         id_proveedor: '',
         imagen: null,
@@ -507,7 +510,7 @@ export default {
     },
     resetFilters() {
       this.filters = {
-        producto: '',
+        descripcion: '',
         precio: '',
         tipo_producto: '',
         proveedor: ''
@@ -629,5 +632,15 @@ export default {
   border: 1px solid #dee2e6;
   border-radius: 4px;
   padding: 5px;
+}
+
+.no-image-placeholder {
+  height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #ccc;
+  color: #999;
+  font-style: italic;
 }
 </style>

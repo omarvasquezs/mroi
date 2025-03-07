@@ -15,8 +15,8 @@ class StockController extends Controller
         $perPage = 10; // Default for CatalogoLentes
 
         // Text search for producto
-        if ($request->filled('producto')) {
-            $query->where('producto', 'like', '%' . $request->producto . '%');
+        if ($request->filled('descripcion')) {
+            $query->where('descripcion', 'like', '%' . $request->producto . '%');
         }
         
         // Price filters for CatalogoLentes
@@ -66,7 +66,7 @@ class StockController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'producto' => 'required|string|max:255',
+            'descripcion' => 'required|string|max:255',
             'imagen' => 'required|file|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'precio' => 'required|numeric|min:0',
             'tipo_producto' => 'required|in:l,m,c,u',
@@ -74,7 +74,8 @@ class StockController extends Controller
             'codigo' => 'nullable|string|max:255',
             'genero' => 'nullable|in:H,M,N,U',
             'id_material' => 'nullable|exists:materiales,id',
-            'fecha_compra' => 'nullable|date'
+            'fecha_compra' => 'nullable|date',
+            'num_stock' => 'required|integer|min:0'
         ]);
 
         try {
@@ -93,7 +94,7 @@ class StockController extends Controller
             }
 
             $stock = Stock::create([
-                'producto' => $validated['producto'],
+                'descripcion' => $validated['descripcion'],
                 'imagen' => $validated['imagen'],
                 'precio' => $validated['precio'],
                 'tipo_producto' => $validated['tipo_producto'],
@@ -101,7 +102,8 @@ class StockController extends Controller
                 'codigo' => $validated['codigo'] ?? null,
                 'genero' => $validated['genero'] ?? null,
                 'id_material' => $validated['id_material'] ?? null,
-                'fecha_compra' => $validated['fecha_compra'] ?? null
+                'fecha_compra' => $validated['fecha_compra'] ?? null,
+                'num_stock' => $validated['num_stock']
             ]);
 
             return response()->json($stock, 201);
@@ -119,7 +121,7 @@ class StockController extends Controller
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'producto' => 'required|string|max:255',
+            'descripcion' => 'required|string|max:255',
             'precio' => 'required|numeric|min:0',
             'tipo_producto' => 'required|in:l,m,c,u',
             'id_proveedor' => 'required|exists:proveedores,id',
@@ -134,7 +136,7 @@ class StockController extends Controller
         try {
             $stock = Stock::findOrFail($id);
             $updateData = [
-                'producto' => $validated['producto'],
+                'descripcion' => $validated['descripcion'],
                 'precio' => $validated['precio'],
                 'tipo_producto' => $validated['tipo_producto'],
                 'id_proveedor' => $validated['id_proveedor'],
@@ -199,7 +201,7 @@ class StockController extends Controller
                 
                 Log::info('Stock updated:', [
                     'id' => $stock->id,
-                    'producto' => $stock->producto,
+                    'descripcion' => $stock->producto,
                     'old_stock' => $stock->getOriginal('num_stock'),
                     'new_stock' => $stock->num_stock
                 ]);
