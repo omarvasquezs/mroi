@@ -14,7 +14,7 @@ class Stock extends Model
         'imagen',
         'precio',
         'tipo_producto',
-        'id_proveedor',
+        'id_marca',
         'num_stock',
         'codigo',
         'genero',
@@ -24,9 +24,10 @@ class Stock extends Model
 
     protected $table = 'stock';
 
-    public function proveedor()
+    // Replace proveedor relationship with marca
+    public function marca()
     {
-        return $this->belongsTo(Proveedor::class, 'id_proveedor');
+        return $this->belongsTo(Marca::class, 'id_marca');
     }
     
     public function material()

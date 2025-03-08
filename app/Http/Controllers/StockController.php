@@ -11,7 +11,7 @@ class StockController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Stock::with(['proveedor', 'material']);
+        $query = Stock::with(['marca', 'material']); // Changed from proveedor to marca
         $perPage = 10; // Default for CatalogoLentes
 
         // Text search for descripcion (previously producto)
@@ -40,10 +40,10 @@ class StockController extends Controller
             $query->whereIn('tipo_producto', $tipoProductos);
         }
 
-        // Filter by proveedor
-        if ($request->filled('proveedor')) {
-            $query->whereHas('proveedor', function ($q) use ($request) {
-                $q->where('razon_social', 'like', '%' . $request->proveedor . '%');
+        // Filter by marca instead of proveedor
+        if ($request->filled('marca')) {
+            $query->whereHas('marca', function ($q) use ($request) {
+                $q->where('marca', 'like', '%' . $request->marca . '%');
             });
         }
 
@@ -66,11 +66,11 @@ class StockController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'descripcion' => 'nullable|string|max:255', // Changed from required to nullable
-            'imagen' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp|max:2048', // Changed from required to nullable
+            'descripcion' => 'nullable|string|max:255',
+            'imagen' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'precio' => 'required|numeric|min:0',
             'tipo_producto' => 'required|in:l,m,c,u',
-            'id_proveedor' => 'required|exists:proveedores,id',
+            'id_marca' => 'required|exists:marcas,id', // Changed from id_proveedor to id_marca
             'codigo' => 'nullable|string|max:255',
             'genero' => 'nullable|in:H,M,N,U',
             'id_material' => 'nullable|exists:materiales,id',
@@ -100,7 +100,7 @@ class StockController extends Controller
                 'imagen' => $validated['imagen'],
                 'precio' => $validated['precio'],
                 'tipo_producto' => $validated['tipo_producto'],
-                'id_proveedor' => $validated['id_proveedor'],
+                'id_marca' => $validated['id_marca'], // Changed from id_proveedor to id_marca
                 'codigo' => $validated['codigo'] ?? null,
                 'genero' => $validated['genero'] ?? null,
                 'id_material' => $validated['id_material'] ?? null,
@@ -116,17 +116,17 @@ class StockController extends Controller
 
     public function show($id)
     {
-        $stock = Stock::with(['proveedor', 'material'])->findOrFail($id);
+        $stock = Stock::with(['marca', 'material'])->findOrFail($id); // Changed from proveedor to marca
         return response()->json($stock);
     }
 
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'descripcion' => 'nullable|string|max:255', // Changed from required to nullable
+            'descripcion' => 'nullable|string|max:255',
             'precio' => 'required|numeric|min:0',
             'tipo_producto' => 'required|in:l,m,c,u',
-            'id_proveedor' => 'required|exists:proveedores,id',
+            'id_marca' => 'required|exists:marcas,id', // Changed from id_proveedor to id_marca
             'imagen' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'codigo' => 'nullable|string|max:255',
             'genero' => 'nullable|in:H,M,N,U',
@@ -141,7 +141,7 @@ class StockController extends Controller
                 'descripcion' => $validated['descripcion'] ?? $stock->descripcion,
                 'precio' => $validated['precio'],
                 'tipo_producto' => $validated['tipo_producto'],
-                'id_proveedor' => $validated['id_proveedor'],
+                'id_marca' => $validated['id_marca'], // Changed from id_proveedor to id_marca
                 'codigo' => $validated['codigo'] ?? $stock->codigo,
                 'genero' => $validated['genero'] ?? $stock->genero,
                 'id_material' => $validated['id_material'] ?? $stock->id_material,

@@ -19,7 +19,7 @@
           <th>Descripción</th>
           <th>Precio</th>
           <th>Tipo de Producto</th>
-          <th>Proveedor</th>
+          <th>Marca</th>
           <th>En Stock</th>
           <th>Acciones</th>
         </tr>
@@ -55,8 +55,8 @@
           </th>
           <th>
             <div class="position-relative">
-              <input type="text" v-model="filters.proveedor" @input="applyFilters" class="form-control" placeholder="Filtrar por Proveedor">
-              <button v-if="filters.proveedor" @click="clearFilter('proveedor')" class="btn-clear">
+              <input type="text" v-model="filters.marca" @input="applyFilters" class="form-control" placeholder="Filtrar por Marca">
+              <button v-if="filters.marca" @click="clearFilter('marca')" class="btn-clear">
                 <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
               </button>
             </div>
@@ -80,7 +80,7 @@
           <td>{{ item.descripcion || 'Sin descripción' }}</td>
           <td>S/. {{ item.precio }}</td>
           <td>{{ getTipoProductoLabel(item.tipo_producto) }}</td>
-          <td>{{ item.proveedor ? item.proveedor.razon_social : 'N/A' }}</td>
+          <td>{{ item.marca ? item.marca.marca : 'N/A' }}</td>
           <td class="text-center">
             <span class="badge rounded-pill" :class="item.num_stock > 0 ? 'bg-success' : 'bg-danger'">
               {{ item.num_stock }}
@@ -195,19 +195,19 @@
                 </div>
               </div>
 
-              <!-- Row 5: Fecha de compra and Proveedor -->
+              <!-- Row 5: Fecha de compra and Marca (instead of Proveedor) -->
               <div class="row mb-3">
                 <div class="col-md-6">
                   <label for="fecha_compra" class="form-label">Fecha de Compra:</label>
                   <input type="date" v-model="form.fecha_compra" id="fecha_compra" class="form-control">
                 </div>
                 <div class="col-md-6">
-                  <label for="proveedor" class="form-label">Proveedor*:</label>
+                  <label for="marca" class="form-label">Marca*:</label>
                   <div class="position-relative select-wrapper">
-                    <select v-model="form.id_proveedor" id="proveedor" class="form-control" required>
-                      <option value="" disabled selected>Seleccione un proveedor</option>
-                      <option v-for="proveedor in proveedores" :key="proveedor.id" :value="proveedor.id">
-                        {{ proveedor.razon_social }}
+                    <select v-model="form.id_marca" id="marca" class="form-control" required>
+                      <option value="" disabled selected>Seleccione una marca</option>
+                      <option v-for="marca in marcas" :key="marca.id" :value="marca.id">
+                        {{ marca.marca }}
                       </option>
                     </select>
                     <i class="fas fa-chevron-down select-arrow"></i>
@@ -274,7 +274,7 @@
                   <p class="mb-1"><strong>Fecha de Compra:</strong> {{ detailItem.fecha_compra || 'N/A' }}</p>
                 </div>
                 <div class="col-md-6">
-                  <p class="mb-1"><strong>Proveedor:</strong> {{ detailItem.proveedor ? detailItem.proveedor.razon_social : 'N/A' }}</p>
+                  <p class="mb-1"><strong>Marca:</strong> {{ detailItem.marca ? detailItem.marca.marca : 'N/A' }}</p>
                   <p class="mb-1"><strong>ID del Producto:</strong> {{ detailItem.id }}</p>
                 </div>
               </div>
@@ -298,14 +298,14 @@ export default {
     return {
       baseUrl: window.location.origin,
       items: [],
-      proveedores: [],
+      marcas: [],
       materiales: [],
       loading: true,
       form: {
         tipo_producto: '',
         descripcion: '',
         precio: '',
-        id_proveedor: '',
+        id_marca: '',
         imagen: null,
         codigo: '',
         genero: '',
@@ -330,7 +330,7 @@ export default {
         descripcion: '',
         precio: '',
         tipo_producto: '',
-        proveedor: ''
+        marca: ''
       },
       detailItem: null,
     };
@@ -342,7 +342,7 @@ export default {
         descripcion: this.filters.descripcion || null,
         precio: this.filters.precio || null,
         tipo_producto: this.filters.tipo_producto || null,
-        proveedor: this.filters.proveedor || null,
+        marca: this.filters.marca || null,
         page: this.pagination.current_page
       };
       
@@ -367,13 +367,13 @@ export default {
           this.loading = false;
         });
     },
-    fetchProveedores() {
-      axios.get('/api/proveedores')
+    fetchMarcas() {
+      axios.get('/api/marcas')
         .then(response => {
-          this.proveedores = response.data.data;
+          this.marcas = response.data.data;
         })
         .catch(error => {
-          console.error('Error fetching proveedores:', error);
+          console.error('Error fetching marcas:', error);
         });
     },
     fetchMateriales() {
@@ -401,7 +401,7 @@ export default {
         descripcion: item.descripcion || '',
         precio: item.precio,
         tipo_producto: item.tipo_producto,
-        id_proveedor: item.id_proveedor,
+        id_marca: item.id_marca,
         imagen: null,
         codigo: item.codigo || '',
         genero: item.genero || '',
@@ -420,7 +420,7 @@ export default {
       formData.append('descripcion', this.form.descripcion || '');
       formData.append('precio', this.form.precio);
       formData.append('tipo_producto', this.form.tipo_producto);
-      formData.append('id_proveedor', this.form.id_proveedor);
+      formData.append('id_marca', this.form.id_marca);
       formData.append('num_stock', this.form.num_stock);
       
       // Append new fields
@@ -475,7 +475,7 @@ export default {
         tipo_producto: '',
         descripcion: '',
         precio: '',
-        id_proveedor: '',
+        id_marca: '',
         imagen: null,
         codigo: '',
         genero: '',
@@ -513,7 +513,7 @@ export default {
         descripcion: '',
         precio: '',
         tipo_producto: '',
-        proveedor: ''
+        marca: ''
       };
       this.applyFilters();
     },
@@ -570,7 +570,7 @@ export default {
   },
   mounted() {
     this.fetchItems();
-    this.fetchProveedores();
+    this.fetchMarcas();
     this.fetchMateriales();
   }
 };
