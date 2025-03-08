@@ -101,14 +101,6 @@
                 <div v-else class="text-muted">Sin proveedores asignados</div>
               </div>
             </div>
-            <div class="row mb-3">
-              <div class="col-sm-3"><strong>Creado en:</strong></div>
-              <div class="col-sm-9">{{ selectedMarca.created_at }}</div>
-            </div>
-            <div class="row mb-3">
-              <div class="col-sm-3"><strong>Actualizado en:</strong></div>
-              <div class="col-sm-9">{{ selectedMarca.updated_at }}</div>
-            </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
