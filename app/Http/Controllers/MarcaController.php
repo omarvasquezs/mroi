@@ -142,14 +142,21 @@ class MarcaController extends Controller
     public function destroy($id)
     {
         try {
+            DB::beginTransaction();
+            
             $marca = Marca::findOrFail($id);
             
-            // The relationships in marca_proveedor will be automatically removed
-            // if you've set up the foreign key constraints with onDelete('cascade')
+            // Manually delete related records in the marca_proveedor table
+            DB::table('marca_proveedor')->where('marca_id', $id)->delete();
+            
+            // Now delete the marca record
             $marca->delete();
+            
+            DB::commit();
             
             return response()->json(null, 204);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
