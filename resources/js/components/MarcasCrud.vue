@@ -157,7 +157,7 @@
                       type="text" 
                       v-model="proveedorSearch"
                       @input="searchProveedores"
-                      @focus="showProveedorResults = true"
+                      @focus="showAllProveedores"
                       @keydown.down.prevent="navigateResults('down')"
                       @keydown.up.prevent="navigateResults('up')"
                       @keydown.enter.prevent="selectProveedor(selectedResultIndex)"
@@ -287,15 +287,34 @@ export default {
         // Filter out already selected proveedores
         const selectedIds = this.selectedProveedores.map(p => p.id);
         
-        this.filteredProveedores = this.allProveedores
-          .filter(p => !selectedIds.includes(p.id) && 
-                      (p.razon_social.toLowerCase().includes(searchTerm) || 
-                       p.ruc.includes(searchTerm)))
-          .slice(0, 10); // Limit to 10 results
-          
+        // Show all available providers when search term is empty
+        if (searchTerm === '') {
+          this.filteredProveedores = this.allProveedores
+            .filter(p => !selectedIds.includes(p.id))
+            .slice(0, 10); // Limit to 10 results
+        } else {
+          this.filteredProveedores = this.allProveedores
+            .filter(p => !selectedIds.includes(p.id) && 
+                        (p.razon_social.toLowerCase().includes(searchTerm) || 
+                         p.ruc.includes(searchTerm)))
+            .slice(0, 10); // Limit to 10 results
+        }
+        
         this.selectedResultIndex = this.filteredProveedores.length > 0 ? 0 : -1;
         this.showProveedorResults = true;
       }, 300);
+    },
+    
+    // Add this new method for showing all providers
+    showAllProveedores() {
+      const selectedIds = this.selectedProveedores.map(p => p.id);
+      
+      this.filteredProveedores = this.allProveedores
+        .filter(p => !selectedIds.includes(p.id))
+        .slice(0, 10); // Limit to 10 results
+      
+      this.selectedResultIndex = this.filteredProveedores.length > 0 ? 0 : -1;
+      this.showProveedorResults = true;
     },
     addProveedor(proveedor) {
       if (!this.selectedProveedores.some(p => p.id === proveedor.id)) {
