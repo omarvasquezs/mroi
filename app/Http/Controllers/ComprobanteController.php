@@ -17,6 +17,10 @@ class ComprobanteController extends Controller
             // Get pagination parameters, default to 10 items per page
             $perPage = $request->query('per_page', 10);
             $page = $request->query('page', 1);
+            
+            // Get sorting parameters, default to created_at desc
+            $sortBy = $request->query('sort_by', 'created_at');
+            $sortDirection = $request->query('sort_direction', 'desc');
 
             // Load comprobantes with related models
             $comprobantesQuery = Comprobante::with([
@@ -45,6 +49,9 @@ class ComprobanteController extends Controller
                 $comprobantesQuery->whereDate('created_at', '>=', $firstDay)
                                  ->whereDate('created_at', '<=', $lastDay);
             }
+            
+            // Apply sorting
+            $comprobantesQuery->orderBy($sortBy, $sortDirection);
 
             // Get paginated results
             $paginatedComprobantes = $comprobantesQuery->paginate($perPage, ['*'], 'page', $page);
