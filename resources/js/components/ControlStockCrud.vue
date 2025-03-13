@@ -159,7 +159,12 @@
               <div class="row mb-3">
                 <div class="col-md-6">
                   <label for="codigo" class="form-label">Código:</label>
-                  <input type="text" v-model="form.codigo" id="codigo" class="form-control">
+                  <div class="input-group">
+                    <span class="input-group-text">
+                      <i class="fas fa-barcode"></i>
+                    </span>
+                    <input type="text" v-model="form.codigo" id="codigo" class="form-control">
+                  </div>
                 </div>
                 <div class="col-md-6">
                   <label for="precio" class="form-label">Precio*:</label>
