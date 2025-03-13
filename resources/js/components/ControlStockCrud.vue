@@ -15,32 +15,15 @@
     <table class="table table-striped">
       <thead>
         <tr>
-          <th>Imagen</th>
-          <th>Descripción</th>
-          <th>Precio</th>
           <th>Tipo de Producto</th>
+          <th>Descripción</th>
           <th>Marca</th>
+          <th>Material</th>
+          <th>Precio</th>
           <th>En Stock</th>
           <th>Acciones</th>
         </tr>
         <tr>
-          <th></th>
-          <th>
-            <div class="position-relative">
-              <input type="text" v-model="filters.descripcion" @input="applyFilters" class="form-control" placeholder="Filtrar por Descripción">
-              <button v-if="filters.descripcion" @click="clearFilter('descripcion')" class="btn-clear">
-                <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
-              </button>
-            </div>
-          </th>
-          <th>
-            <div class="position-relative">
-              <input type="number" v-model="filters.precio" @input="applyFilters" class="form-control" placeholder="Filtrar por Precio">
-              <button v-if="filters.precio" @click="clearFilter('precio')" class="btn-clear">
-                <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
-              </button>
-            </div>
-          </th>
           <th>
             <div class="position-relative select-wrapper">
               <select v-model="filters.tipo_producto" @change="applyFilters" class="form-control">
@@ -55,8 +38,32 @@
           </th>
           <th>
             <div class="position-relative">
+              <input type="text" v-model="filters.descripcion" @input="applyFilters" class="form-control" placeholder="Filtrar por Descripción">
+              <button v-if="filters.descripcion" @click="clearFilter('descripcion')" class="btn-clear">
+                <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
+              </button>
+            </div>
+          </th>
+          <th>
+            <div class="position-relative">
               <input type="text" v-model="filters.marca" @input="applyFilters" class="form-control" placeholder="Filtrar por Marca">
               <button v-if="filters.marca" @click="clearFilter('marca')" class="btn-clear">
+                <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
+              </button>
+            </div>
+          </th>
+          <th>
+            <div class="position-relative">
+              <input type="text" v-model="filters.material" @input="applyFilters" class="form-control" placeholder="Filtrar por Material">
+              <button v-if="filters.material" @click="clearFilter('material')" class="btn-clear">
+                <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
+              </button>
+            </div>
+          </th>
+          <th>
+            <div class="position-relative">
+              <input type="number" v-model="filters.precio" @input="applyFilters" class="form-control" placeholder="Filtrar por Precio">
+              <button v-if="filters.precio" @click="clearFilter('precio')" class="btn-clear">
                 <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
               </button>
             </div>
@@ -73,14 +80,11 @@
           <td colspan="7" class="text-center">No hay productos en el stock.</td>
         </tr>
         <tr v-else v-for="item in items" :key="item.id">
-          <td>
-            <img v-if="item.imagen" :src="`${baseUrl}/images/stock/${item.imagen}`" alt="Producto" style="height: 50px;">
-            <span v-else>Sin imagen</span>
-          </td>
-          <td>{{ item.descripcion || 'Sin descripción' }}</td>
-          <td>S/. {{ item.precio }}</td>
           <td>{{ getTipoProductoLabel(item.tipo_producto) }}</td>
+          <td>{{ item.descripcion || 'Sin descripción' }}</td>
           <td>{{ item.marca ? item.marca.marca : 'N/A' }}</td>
+          <td>{{ item.material ? item.material.material : 'N/A' }}</td>
+          <td>S/. {{ item.precio }}</td>
           <td class="text-center">
             <span class="badge rounded-pill" :class="item.num_stock > 0 ? 'bg-success' : 'bg-danger'">
               {{ item.num_stock }}
@@ -330,7 +334,8 @@ export default {
         descripcion: '',
         precio: '',
         tipo_producto: '',
-        marca: ''
+        marca: '',
+        material: ''
       },
       detailItem: null,
     };
@@ -343,6 +348,7 @@ export default {
         precio: this.filters.precio || null,
         tipo_producto: this.filters.tipo_producto || null,
         marca: this.filters.marca || null,
+        material: this.filters.material || null,
         page: this.pagination.current_page
       };
       
@@ -513,7 +519,8 @@ export default {
         descripcion: '',
         precio: '',
         tipo_producto: '',
-        marca: ''
+        marca: '',
+        material: ''
       };
       this.applyFilters();
     },
