@@ -143,7 +143,12 @@
                 </div>
                 <div class="col-md-6">
                   <label for="num_stock" class="form-label">Cantidad en Stock*:</label>
-                  <input type="number" v-model="form.num_stock" id="num_stock" class="form-control" min="0" required>
+                  <div class="input-group">
+                    <span class="input-group-text">
+                      <i class="fas fa-boxes"></i>
+                    </span>
+                    <input type="number" v-model="form.num_stock" id="num_stock" class="form-control" min="0" required>
+                  </div>
                 </div>
               </div>
 
@@ -151,7 +156,12 @@
               <div class="row mb-3">
                 <div class="col-12">
                   <label for="descripcion" class="form-label">Descripción:</label>
-                  <input type="text" v-model="form.descripcion" id="descripcion" class="form-control">
+                  <div class="input-group">
+                    <span class="input-group-text">
+                      <i class="fas fa-tag"></i>
+                    </span>
+                    <input type="text" v-model="form.descripcion" id="descripcion" class="form-control">
+                  </div>
                 </div>
               </div>
 
