@@ -553,18 +553,20 @@ export default {
         });
     },
     fetchMarcas() {
-      axios.get('/api/marcas')
+      axios.get('/api/marcas', { params: { all: true, per_page: 1000 } }) // Request a high number per page to effectively get all
         .then(response => {
           this.marcas = response.data.data;
+          console.log('Fetched all marcas:', this.marcas.length);
         })
         .catch(error => {
           console.error('Error fetching marcas:', error);
         });
     },
     fetchMateriales() {
-      axios.get('/api/materiales')
+      axios.get('/api/materiales', { params: { all: true, per_page: 1000 } }) // Request a high number per page to effectively get all
         .then(response => {
           this.materiales = response.data.data || response.data;
+          console.log('Fetched all materiales:', this.materiales.length);
         })
         .catch(error => {
           console.error('Error fetching materiales:', error);

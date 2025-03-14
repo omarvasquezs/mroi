@@ -22,6 +22,14 @@ class MarcaController extends Controller
             $query->where('marca', 'like', '%' . $request->marca . '%');
         }
         
+        // If 'all' parameter is true, return all records without pagination
+        if ($request->has('all') && $request->all == true) {
+            $marcas = $query->orderBy('marca', 'asc')->get();
+            return response()->json([
+                'data' => $marcas
+            ]);
+        }
+        
         $perPage = $request->input('per_page', 10);
         
         $result = $query->orderBy('created_at', 'desc')->paginate($perPage);

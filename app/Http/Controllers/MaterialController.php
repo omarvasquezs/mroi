@@ -15,6 +15,14 @@ class MaterialController extends Controller
             $query->where('material', 'like', '%' . $request->material . '%');
         }
 
+        // If 'all' parameter is true, return all records without pagination
+        if ($request->has('all') && $request->all == true) {
+            $materiales = $query->orderBy('material', 'asc')->get();
+            return response()->json([
+                'data' => $materiales
+            ]);
+        }
+        
         $perPage = $request->input('per_page', 10);
         return $query->paginate($perPage);
     }
