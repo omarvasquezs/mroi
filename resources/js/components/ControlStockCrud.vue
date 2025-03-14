@@ -202,14 +202,24 @@
                 </div>
                 <div class="col-md-6">
                   <label for="material" class="form-label">Material:</label>
-                  <div class="position-relative select-wrapper">
-                    <select v-model="form.id_material" id="material" class="form-control">
-                      <option value="" selected>Seleccione un material</option>
-                      <option v-for="material in materiales" :key="material.id" :value="material.id">
-                        {{ material.material }}
-                      </option>
-                    </select>
-                    <i class="fas fa-chevron-down select-arrow"></i>
+                  <div class="d-flex">
+                    <div class="position-relative select-wrapper flex-grow-1">
+                      <select v-model="form.id_material" id="material" class="form-control">
+                        <option value="" selected>Seleccione un material</option>
+                        <option v-for="material in materiales" :key="material.id" :value="material.id">
+                          {{ material.material }}
+                        </option>
+                      </select>
+                      <i class="fas fa-chevron-down select-arrow"></i>
+                    </div>
+                    <button type="button" @click="showMaterialForm" class="btn btn-sm btn-outline-primary ms-2" title="Crear nuevo material">
+                      <i class="fas fa-plus"></i>
+                    </button>
+                    <button type="button" @click="editSelectedMaterial" class="btn btn-sm ms-2" 
+                      :class="form.id_material ? 'btn-outline-warning' : 'btn-outline-secondary'"
+                      :disabled="!form.id_material" title="Editar material seleccionado">
+                      <i class="fas fa-pencil-alt"></i>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -360,6 +370,42 @@
       </div>
     </div>
 
+    <!-- Material Modal -->
+    <div class="modal fade" id="materialModal" tabindex="-1" aria-labelledby="materialModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="materialModalLabel">{{ isEditingMaterial ? 'Editar Material' : 'Crear Material' }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="submitMaterialForm">
+              <div v-if="materialFormErrors.length" class="alert alert-danger">
+                <ul class="mb-0">
+                  <li v-for="(error, index) in materialFormErrors" :key="index">{{ error }}</li>
+                </ul>
+              </div>
+              
+              <div class="mb-3">
+                <label for="materialNombre" class="form-label">Nombre del Material*:</label>
+                <div class="input-group">
+                  <span class="input-group-text">
+                    <i class="fas fa-cube"></i>
+                  </span>
+                  <input type="text" v-model="materialForm.material" id="materialNombre" class="form-control" required>
+                </div>
+              </div>
+              
+              <div class="d-flex justify-content-end gap-2">
+                <button type="submit" class="btn btn-primary">{{ isEditingMaterial ? 'Actualizar' : 'Guardar' }}</button>
+                <button type="button" @click="closeMaterialModal" class="btn btn-secondary">Cerrar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Details Modal -->
     <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg">
@@ -465,6 +511,12 @@ export default {
       showProveedorResults: false,
       selectedResultIndex: -1,
       debounceTimer: null,
+      materialForm: {
+        material: ''
+      },
+      isEditingMaterial: false,
+      editingMaterialId: null,
+      materialFormErrors: [],
     };
   },
   methods: {
@@ -871,6 +923,93 @@ export default {
     selectProveedor(index) {
       if (index >= 0 && index < this.filteredProveedores.length) {
         this.addProveedor(this.filteredProveedores[index]);
+      }
+    },
+    // Material related methods
+    showMaterialForm() {
+      this.resetMaterialForm();
+      this.isEditingMaterial = false;
+      
+      // Ensure the stock modal is kept open by storing its instance
+      this.stockModalInstance = Modal.getInstance(document.getElementById('stockModal'));
+      
+      // Create and show the material modal
+      this.materialModalInstance = new Modal(document.getElementById('materialModal'));
+      this.materialModalInstance.show();
+    },
+    
+    resetMaterialForm() {
+      this.materialForm = {
+        material: ''
+      };
+      this.isEditingMaterial = false;
+      this.editingMaterialId = null;
+      this.materialFormErrors = [];
+    },
+    
+    editSelectedMaterial() {
+      if (!this.form.id_material) return;
+      
+      // Find the selected material
+      const selectedMaterial = this.materiales.find(m => m.id === this.form.id_material);
+      if (!selectedMaterial) return;
+      
+      // Set up form for editing
+      this.materialForm = { 
+        material: selectedMaterial.material
+      };
+      
+      this.isEditingMaterial = true;
+      this.editingMaterialId = selectedMaterial.id;
+      
+      // Store stock modal instance
+      this.stockModalInstance = Modal.getInstance(document.getElementById('stockModal'));
+      
+      // Show material modal
+      this.materialModalInstance = new Modal(document.getElementById('materialModal'));
+      this.materialModalInstance.show();
+    },
+    
+    closeMaterialModal() {
+      if (this.materialModalInstance) {
+        this.materialModalInstance.hide();
+      }
+    },
+    
+    async submitMaterialForm() {
+      this.materialFormErrors = [];
+      try {
+        let response;
+        
+        if (this.isEditingMaterial) {
+          response = await axios.put(`/api/materiales/${this.editingMaterialId}`, this.materialForm);
+        } else {
+          response = await axios.post('/api/materiales', this.materialForm);
+        }
+        
+        // Close the material modal
+        this.closeMaterialModal();
+        
+        // Show success message
+        this.alertMessage = this.isEditingMaterial ? 'Material actualizado con éxito.' : 'Material creado con éxito.';
+        
+        // Fetch updated list of materiales
+        await this.fetchMateriales();
+        
+        // Set the newly created/edited material as the selected material
+        const newMaterial = response.data.id || (response.data.material && response.data.material.id) || this.editingMaterialId;
+        if (newMaterial) {
+          this.form.id_material = newMaterial;
+        }
+        
+        setTimeout(() => this.alertMessage = '', 5000);
+      } catch (error) {
+        console.error('Error submitting material form:', error.response?.data);
+        if (error.response && error.response.status === 422) {
+          this.materialFormErrors = Object.values(error.response.data.errors).flat();
+        } else {
+          this.materialFormErrors = ['Ha ocurrido un error al procesar la solicitud.'];
+        }
       }
     },
   },
