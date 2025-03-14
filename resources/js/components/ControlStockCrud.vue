@@ -15,6 +15,7 @@
     <table class="table table-striped">
       <thead>
         <tr>
+          <th>Código</th>
           <th>Tipo de Producto</th>
           <th>Descripción</th>
           <th>Marca</th>
@@ -24,6 +25,14 @@
           <th>Acciones</th>
         </tr>
         <tr>
+          <th>
+            <div class="position-relative">
+              <input type="text" v-model="filters.codigo" @input="applyFilters" class="form-control" placeholder="Filtrar por Código">
+              <button v-if="filters.codigo" @click="clearFilter('codigo')" class="btn-clear">
+                <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
+              </button>
+            </div>
+          </th>
           <th>
             <div class="position-relative select-wrapper">
               <select v-model="filters.tipo_producto" @change="applyFilters" class="form-control">
@@ -74,12 +83,13 @@
       </thead>
       <tbody>
         <tr v-if="loading">
-          <td colspan="7" class="text-center">Cargando...</td>
+          <td colspan="8" class="text-center">Cargando...</td>
         </tr>
         <tr v-else-if="!items || items.length === 0">
-          <td colspan="7" class="text-center">No hay productos en el stock.</td>
+          <td colspan="8" class="text-center">No hay productos en el stock.</td>
         </tr>
         <tr v-else v-for="item in items" :key="item.id">
+          <td>{{ item.codigo || 'N/A' }}</td>
           <td>{{ getTipoProductoLabel(item.tipo_producto) }}</td>
           <td>{{ item.descripcion || 'Sin descripción' }}</td>
           <td>{{ item.marca ? item.marca.marca : 'N/A' }}</td>
@@ -490,6 +500,7 @@ export default {
         prev_page_url: null
       },
       filters: {
+        codigo: '',
         descripcion: '',
         precio: '',
         tipo_producto: '',
@@ -523,6 +534,7 @@ export default {
     fetchItems(url = '/api/stock') {
       this.loading = true;
       const params = {
+        codigo: this.filters.codigo || null,
         descripcion: this.filters.descripcion || null,
         precio: this.filters.precio || null,
         tipo_producto: this.filters.tipo_producto || null,
@@ -697,6 +709,7 @@ export default {
     },
     resetFilters() {
       this.filters = {
+        codigo: '',
         descripcion: '',
         precio: '',
         tipo_producto: '',

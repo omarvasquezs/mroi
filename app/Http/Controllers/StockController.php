@@ -47,6 +47,11 @@ class StockController extends Controller
             });
         }
 
+        // Filter by codigo
+        if ($request->filled('codigo')) {
+            $query->where('codigo', 'like', '%' . $request->codigo . '%');
+        }
+
         $result = $query->orderBy('created_at', 'desc')->paginate($perPage);
         return response()->json([
             'current_page' => $result->currentPage(),
