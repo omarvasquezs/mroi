@@ -222,14 +222,23 @@
                 </div>
                 <div class="col-md-6">
                   <label for="marca" class="form-label">Marca*:</label>
-                  <div class="position-relative select-wrapper">
-                    <select v-model="form.id_marca" id="marca" class="form-control" required>
-                      <option value="" disabled selected>Seleccione una marca</option>
-                      <option v-for="marca in marcas" :key="marca.id" :value="marca.id">
-                        {{ marca.marca }}
-                      </option>
-                    </select>
-                    <i class="fas fa-chevron-down select-arrow"></i>
+                  <div class="d-flex">
+                    <div class="position-relative select-wrapper flex-grow-1">
+                      <select v-model="form.id_marca" id="marca" class="form-control" required>
+                        <option value="" disabled selected>Seleccione una marca</option>
+                        <option v-for="marca in marcas" :key="marca.id" :value="marca.id">
+                          {{ marca.marca }}
+                        </option>
+                      </select>
+                      <i class="fas fa-chevron-down select-arrow"></i>
+                    </div>
+                    <button type="button" @click="showMarcaForm" class="btn btn-sm btn-outline-primary ms-2" title="Crear nueva marca">
+                      <i class="fas fa-plus"></i>
+                    </button>
+                    <button type="button" @click="editSelectedMarca" class="btn btn-sm btn-outline-warning ms-2" title="Editar marca seleccionada"
+                      :disabled="!form.id_marca">
+                      <i class="fas fa-pencil-alt"></i>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -255,6 +264,94 @@
               <div class="d-flex justify-content-end gap-2">
                 <button type="submit" class="btn btn-primary">{{ isEditing ? 'Actualizar' : 'Guardar' }}</button>
                 <button type="button" @click="closeModal" class="btn btn-secondary">Cerrar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Marca Modal -->
+    <div class="modal fade" id="marcaModal" tabindex="-1" aria-labelledby="marcaModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="marcaModalLabel">{{ isEditingMarca ? 'Editar Marca' : 'Crear Marca' }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="submitMarcaForm">
+              <div v-if="marcaFormErrors.length" class="alert alert-danger">
+                <ul class="mb-0">
+                  <li v-for="(error, index) in marcaFormErrors" :key="index">{{ error }}</li>
+                </ul>
+              </div>
+              
+              <div class="mb-3">
+                <label for="marcaNombre" class="form-label">Nombre de la Marca*:</label>
+                <div class="input-group">
+                  <span class="input-group-text">
+                    <i class="fas fa-trademark"></i>
+                  </span>
+                  <input type="text" v-model="marcaForm.marca" id="marcaNombre" class="form-control" required>
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <label for="proveedores" class="form-label">Proveedores:</label>
+                <div class="proveedor-selection">
+                  <!-- Selected Proveedores -->
+                  <div class="selected-proveedores mb-2">
+                    <div v-for="(proveedor, index) in selectedProveedores" :key="proveedor.id" 
+                         class="badge bg-info px-2 py-1 me-1 mb-1 selected-proveedor">
+                      {{ proveedor.razon_social }}
+                      <button type="button" @click="removeProveedor(index)" class="btn-close btn-close-white ms-1" 
+                              aria-label="Eliminar" style="font-size: 0.5rem;">
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <!-- Search Input -->
+                  <div class="position-relative">
+                    <input 
+                      type="text" 
+                      v-model="proveedorSearch"
+                      @input="searchProveedores"
+                      @focus="showAllProveedores"
+                      @keydown.down.prevent="navigateResults('down')"
+                      @keydown.up.prevent="navigateResults('up')"
+                      @keydown.enter.prevent="selectProveedor(selectedResultIndex)"
+                      @keydown.escape="showProveedorResults = false"
+                      class="form-control" 
+                      placeholder="Buscar proveedores..."
+                      autocomplete="off"
+                    >
+                    
+                    <!-- Dropdown Results -->
+                    <div v-if="showProveedorResults && filteredProveedores.length > 0" class="proveedor-results">
+                      <div 
+                        v-for="(proveedor, index) in filteredProveedores" 
+                        :key="proveedor.id" 
+                        class="proveedor-result-item"
+                        :class="{ 'active': index === selectedResultIndex }"
+                        @click="addProveedor(proveedor)"
+                        @mouseover="selectedResultIndex = index"
+                      >
+                        {{ proveedor.razon_social }}
+                      </div>
+                    </div>
+                    
+                    <!-- No Results Message -->
+                    <div v-if="showProveedorResults && proveedorSearch && filteredProveedores.length === 0" class="proveedor-no-results">
+                      No se encontraron proveedores
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="d-flex justify-content-end gap-2">
+                <button type="submit" class="btn btn-primary">{{ isEditingMarca ? 'Actualizar' : 'Guardar' }}</button>
+                <button type="button" @click="closeMarcaModal" class="btn btn-secondary">Cerrar</button>
               </div>
             </form>
           </div>
@@ -353,6 +450,20 @@ export default {
         material: ''
       },
       detailItem: null,
+      marcaForm: {
+        marca: '',
+        proveedores: []
+      },
+      isEditingMarca: false,
+      editingMarcaId: null,
+      marcaFormErrors: [],
+      allProveedores: [],
+      proveedorSearch: '',
+      filteredProveedores: [],
+      selectedProveedores: [],
+      showProveedorResults: false,
+      selectedResultIndex: -1,
+      debounceTimer: null,
     };
   },
   methods: {
@@ -589,11 +700,197 @@ export default {
           return 'N/A';
       }
     },
+    // Marca related methods
+    showMarcaForm() {
+      this.resetMarcaForm();
+      this.isEditingMarca = false;
+      
+      // Ensure the stock modal is kept open by storing its instance
+      this.stockModalInstance = Modal.getInstance(document.getElementById('stockModal'));
+      
+      // Create and show the marca modal
+      this.marcaModalInstance = new Modal(document.getElementById('marcaModal'));
+      this.marcaModalInstance.show();
+    },
+    
+    resetMarcaForm() {
+      this.marcaForm = {
+        marca: '',
+        proveedores: []
+      };
+      this.selectedProveedores = [];
+      this.isEditingMarca = false;
+      this.editingMarcaId = null;
+      this.marcaFormErrors = [];
+    },
+    
+    editSelectedMarca() {
+      if (!this.form.id_marca) return;
+      
+      // Find the selected marca
+      const selectedMarca = this.marcas.find(m => m.id === this.form.id_marca);
+      if (!selectedMarca) return;
+      
+      // Set up form for editing
+      this.marcaForm = { 
+        marca: selectedMarca.marca,
+        proveedores: selectedMarca.proveedores ? selectedMarca.proveedores.map(p => p.id) : []
+      };
+      
+      this.selectedProveedores = selectedMarca.proveedores || [];
+      this.isEditingMarca = true;
+      this.editingMarcaId = selectedMarca.id;
+      
+      // Store stock modal instance
+      this.stockModalInstance = Modal.getInstance(document.getElementById('stockModal'));
+      
+      // Show marca modal
+      this.marcaModalInstance = new Modal(document.getElementById('marcaModal'));
+      this.marcaModalInstance.show();
+    },
+    
+    closeMarcaModal() {
+      if (this.marcaModalInstance) {
+        this.marcaModalInstance.hide();
+      }
+    },
+    
+    async submitMarcaForm() {
+      this.marcaFormErrors = [];
+      try {
+        let response;
+        
+        if (this.isEditingMarca) {
+          response = await axios.put(`/api/marcas/${this.editingMarcaId}`, this.marcaForm);
+        } else {
+          response = await axios.post('/api/marcas', this.marcaForm);
+        }
+        
+        // Close the marca modal
+        this.closeMarcaModal();
+        
+        // Show success message
+        this.alertMessage = this.isEditingMarca ? 'Marca actualizada con éxito.' : 'Marca creada con éxito.';
+        
+        // Fetch updated list of marcas
+        await this.fetchMarcas();
+        
+        // Set the newly created/edited marca as the selected marca
+        const newMarca = response.data.id || (response.data.marca && response.data.marca.id) || this.editingMarcaId;
+        if (newMarca) {
+          this.form.id_marca = newMarca;
+        }
+        
+        setTimeout(() => this.alertMessage = '', 5000);
+      } catch (error) {
+        console.error('Error submitting marca form:', error.response?.data);
+        if (error.response && error.response.status === 422) {
+          this.marcaFormErrors = Object.values(error.response.data.errors).flat();
+        } else {
+          this.marcaFormErrors = ['Ha ocurrido un error al procesar la solicitud.'];
+        }
+      }
+    },
+    
+    // Proveedores methods for marca form
+    fetchProveedores() {
+      axios.get('/api/proveedores?all=true')
+        .then(response => {
+          this.allProveedores = response.data.data || response.data;
+        })
+        .catch(error => {
+          console.error('Error fetching proveedores:', error);
+        });
+    },
+    
+    searchProveedores() {
+      if (this.debounceTimer) clearTimeout(this.debounceTimer);
+      
+      this.debounceTimer = setTimeout(() => {
+        const searchTerm = this.proveedorSearch.toLowerCase().trim();
+        
+        // Filter out already selected proveedores
+        const selectedIds = this.selectedProveedores.map(p => p.id);
+        
+        // Show all available providers when search term is empty
+        if (searchTerm === '') {
+          this.filteredProveedores = this.allProveedores
+            .filter(p => !selectedIds.includes(p.id))
+            .slice(0, 10); // Limit to 10 results
+        } else {
+          this.filteredProveedores = this.allProveedores
+            .filter(p => !selectedIds.includes(p.id) && 
+                        (p.razon_social.toLowerCase().includes(searchTerm) || 
+                         (p.ruc && p.ruc.includes(searchTerm))))
+            .slice(0, 10); // Limit to 10 results
+        }
+        
+        this.selectedResultIndex = this.filteredProveedores.length > 0 ? 0 : -1;
+        this.showProveedorResults = true;
+      }, 300);
+    },
+    
+    showAllProveedores() {
+      const selectedIds = this.selectedProveedores.map(p => p.id);
+      
+      this.filteredProveedores = this.allProveedores
+        .filter(p => !selectedIds.includes(p.id))
+        .slice(0, 10); // Limit to 10 results
+      
+      this.selectedResultIndex = this.filteredProveedores.length > 0 ? 0 : -1;
+      this.showProveedorResults = true;
+    },
+    
+    addProveedor(proveedor) {
+      if (!this.selectedProveedores.some(p => p.id === proveedor.id)) {
+        this.selectedProveedores.push(proveedor);
+        this.marcaForm.proveedores = this.selectedProveedores.map(p => p.id);
+      }
+      this.proveedorSearch = '';
+      this.showProveedorResults = false;
+      this.filteredProveedores = [];
+    },
+    
+    removeProveedor(index) {
+      this.selectedProveedores.splice(index, 1);
+      this.marcaForm.proveedores = this.selectedProveedores.map(p => p.id);
+    },
+    
+    navigateResults(direction) {
+      if (this.filteredProveedores.length === 0) return;
+      
+      if (direction === 'down') {
+        this.selectedResultIndex = (this.selectedResultIndex + 1) % this.filteredProveedores.length;
+      } else if (direction === 'up') {
+        this.selectedResultIndex = this.selectedResultIndex <= 0 ? 
+          this.filteredProveedores.length - 1 : this.selectedResultIndex - 1;
+      }
+    },
+    
+    selectProveedor(index) {
+      if (index >= 0 && index < this.filteredProveedores.length) {
+        this.addProveedor(this.filteredProveedores[index]);
+      }
+    },
   },
   mounted() {
     this.fetchItems();
     this.fetchMarcas();
     this.fetchMateriales();
+    this.fetchProveedores();
+    
+    // Close proveedor dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      const isClickInsideResults = e.target.closest('.proveedor-results');
+      const isClickInsideInput = e.target.closest('.position-relative input');
+      
+      if (!isClickInsideResults && !isClickInsideInput) {
+        this.showProveedorResults = false;
+      }
+    });
+  },
+  beforeUnmount() {
+    document.removeEventListener('click', () => {});
   }
 };
 </script>
@@ -664,5 +961,66 @@ export default {
   border: 1px dashed #ccc;
   color: #999;
   font-style: italic;
+}
+
+/* Proveedor selection styles */
+.proveedor-selection {
+  position: relative;
+}
+
+.selected-proveedores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.selected-proveedor {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.proveedor-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 0 0 4px 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.proveedor-result-item {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.proveedor-result-item:hover,
+.proveedor-result-item.active {
+  background-color: #f8f9fa;
+}
+
+.proveedor-no-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 0 0 4px 4px;
+  padding: 8px 12px;
+  color: #6c757d;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+/* Ensure text doesn't overflow in selected proveedores badges */
+.selected-proveedor .btn-close {
+  width: 0.5em;
+  height: 0.5em;
 }
 </style>
