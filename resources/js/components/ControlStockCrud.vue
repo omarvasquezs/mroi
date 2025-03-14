@@ -235,8 +235,9 @@
                     <button type="button" @click="showMarcaForm" class="btn btn-sm btn-outline-primary ms-2" title="Crear nueva marca">
                       <i class="fas fa-plus"></i>
                     </button>
-                    <button type="button" @click="editSelectedMarca" class="btn btn-sm btn-outline-warning ms-2" title="Editar marca seleccionada"
-                      :disabled="!form.id_marca">
+                    <button type="button" @click="editSelectedMarca" class="btn btn-sm ms-2" 
+                      :class="form.id_marca ? 'btn-outline-warning' : 'btn-outline-secondary'"
+                      :disabled="!form.id_marca" title="Editar marca seleccionada">
                       <i class="fas fa-pencil-alt"></i>
                     </button>
                   </div>
