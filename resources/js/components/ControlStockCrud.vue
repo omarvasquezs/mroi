@@ -205,7 +205,7 @@
                   <div class="d-flex">
                     <div class="position-relative select-wrapper flex-grow-1">
                       <select v-model="form.id_material" id="material" class="form-control">
-                        <option value="" selected>Seleccione un material</option>
+                        <option value="" disabled selected>Seleccione un material</option>
                         <option v-for="material in materiales" :key="material.id" :value="material.id">
                           {{ material.material }}
                         </option>
