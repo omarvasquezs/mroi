@@ -4,8 +4,9 @@
             <button @click="goBack" class="btn btn-link">← Regresar</button>
         </div>
         <h2 class="my-4">Facturación</h2>
-        <div v-if="successMessage" class="alert alert-success">
+        <div v-if="successMessage" class="alert alert-success alert-dismissible">
             {{ successMessage }}
+            <button type="button" class="btn-close" @click="clearSuccessMessage" aria-label="Close"></button>
         </div>
         <div class="row mb-4">
             <div class="col-md-3">
@@ -118,6 +119,7 @@ export default {
             comprobantes: [],
             metodosPago: [],
             successMessage: this.$route.query.successMessage || '',
+            successMessageTimer: null,
             filters: {
                 fechaInicio: '',
                 fechaFin: '',
@@ -148,6 +150,11 @@ export default {
     mounted() {
         this.fetchComprobantes();
         this.fetchMetodosPago();
+        
+        // Set a timer to auto-dismiss the success message if it exists
+        if (this.successMessage) {
+            this.startSuccessMessageTimer();
+        }
     },
     methods: {
         goBack() {
@@ -291,6 +298,35 @@ export default {
             } finally {
                 this.loading = false; // Set loading state to false
             }
+        },
+        // Add methods to handle success message timeout and dismissal
+        startSuccessMessageTimer() {
+            // Clear any existing timer first
+            this.clearSuccessMessageTimer();
+            
+            // Set new timer to clear message after 5 seconds
+            this.successMessageTimer = setTimeout(() => {
+                this.clearSuccessMessage();
+            }, 5000);
+        },
+        
+        clearSuccessMessageTimer() {
+            if (this.successMessageTimer) {
+                clearTimeout(this.successMessageTimer);
+                this.successMessageTimer = null;
+            }
+        },
+        
+        clearSuccessMessage() {
+            this.successMessage = '';
+            this.clearSuccessMessageTimer();
+            
+            // Also clear the URL query parameter if it exists
+            if (this.$route.query.successMessage) {
+                const query = { ...this.$route.query };
+                delete query.successMessage;
+                this.$router.replace({ query });
+            }
         }
     }
 };
@@ -309,5 +345,15 @@ export default {
 .spinner-border {
     width: 3rem;
     height: 3rem;
+}
+.alert-dismissible {
+    position: relative;
+    padding-right: 3rem;
+}
+.btn-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 1.25rem 1rem;
 }
 </style>
