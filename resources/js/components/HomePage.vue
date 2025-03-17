@@ -70,23 +70,6 @@ export default {
                     ]
                 },
                 {
-                    title: 'Atención Médica',
-                    items: [
-                        { name: 'Intervenciones Quirúrgicas', icon: 'fas fa-syringe', url: '' },
-                        { name: 'Historia Clínica', icon: 'fas fa-notes-medical', url: '' },
-                        { name: 'Enfermería', icon: 'fas fa-user-nurse', url: '' }
-                    ]
-                },
-                {
-                    title: 'Examenes',
-                    items: [
-                        { name: 'Laboratorio', icon: 'fas fa-vials', url: '' },
-                        { name: 'Exámenes Auxiliares', icon: 'fas fa-x-ray', url: '' },
-                        { name: 'Procedimientos', icon: 'fas fa-procedures', url: '' },
-                        { name: 'Refraccion', icon: 'fas fa-eye', url: '' }
-                    ]
-                },
-                {
                     title: 'Servicios Recibidos',
                     items: [
                         { name: 'Proveedores', icon: 'fas fa-truck', url: '' },
