@@ -2,7 +2,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
         <div class="container">
             <a class="navbar-brand" href="/">
-                <img :src="`${baseUrl}/images/gyf_logo.png`" alt="GYF Logo" height="30">
+                <img :src="`${baseUrl}/images/mroi_logo.png`" alt="MROI Logo" height="30">
             </a>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">

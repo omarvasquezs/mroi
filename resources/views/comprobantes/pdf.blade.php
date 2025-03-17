@@ -52,12 +52,12 @@
     <div class="header">
         <!-- Logo del comprobante -->
         <div style="text-align: center; margin-bottom: 10px;">
-            <img src="{{ url('/images/gyf_logo_comprobantes_58.png') }}" style="max-width: 160px; height: auto; display: block; margin: 0 auto;">
+            <img src="{{ url('/images/mroi_logo_comprobantes_58.png') }}" style="max-width: 130px; height: auto; display: block; margin: 0 auto;">
         </div>
-        <h2 style="margin:0;">G & F oftalmólogas. S.A.C.</h2>
-        <p>Dirección: Av. El Sol esq. Jr. Unión. Villa el Salvador</p>
-        <p>RUC: 20613814265</p>
-        <p>Teléfono: 940 213 168</p>
+        <h2 style="margin:0;">OFTALMO CUBA E.I.R.L.</h2>
+        <p>Dirección: Av. Javier prado este 1684 Dist. San Isidro</p>
+        <p>RUC: 20603337442</p>
+        <p>Teléfono: 912 611 980 / 944 245 378</p>
     </div>
 
     <div class="details" style="text-align: center; padding-bottom: 5px;border-bottom: 1px dashed #000;">

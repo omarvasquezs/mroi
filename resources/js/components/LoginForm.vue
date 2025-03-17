@@ -1,7 +1,7 @@
 <template>
     <div class="login-container" id="login">
         <form @submit.prevent="handleSubmit" class="login-form">
-            <img :src="`${baseUrl}/images/gyf_logo_transparent.png`" alt="GYF Logo" class="logo" style="max-width: 100px;"/>
+            <img :src="`${baseUrl}/images/mroi_logo_transparent.png`" alt="MROI Logo" class="logo" style="max-width: 100px;"/>
             <h2>SISTEMA OPTICA v1.0.0</h2>
             <div class="form-group">
                 <label>Usuario:</label>
