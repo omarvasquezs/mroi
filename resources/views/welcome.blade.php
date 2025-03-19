@@ -15,7 +15,6 @@
 
 <body class="custom-body d-flex flex-column min-vh-100">
     <div id="app" class="flex-grow-1"></div>
-    @vite('resources/js/main.js')
 </body>
 
 </html>
