@@ -42,36 +42,38 @@
         <div class="card mb-4">
             <div class="card-header">Comprobantes Generados</div>
             <div class="card-body">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Acciones</th>
-                            <th>Número de Comprobante</th>
-                            <th>Tipo de Comprobante</th>
-                            <th>Paciente</th>
-                            <th>Servicio</th>
-                            <th>Monto</th>
-                            <th>Método de Pago</th>
-                            <th>Fecha de Registro</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="comprobante in sortedComprobantes" :key="comprobante.id">
-                            <td>
-                                <button class="btn btn-sm btn-outline-dark" @click="generateComprobante(comprobante.id)">
-                                    <i class="fas fa-file-pdf me-1"></i> VER
-                                </button>
-                            </td>
-                            <td>{{ `${comprobante.serie}-${comprobante.correlativo.toString().padStart(8, '0')}` }}</td>
-                            <td>{{ comprobante.tipo === 'b' ? 'Boleta' : 'Factura' }}</td>
-                            <td>{{ comprobante.paciente_nombre || 'N/A' }}</td>
-                            <td>{{ comprobante.servicio }}</td>
-                            <td>{{ formatCurrency(comprobante.monto_total) }}</td>
-                            <td>{{ getMetodoPago(comprobante.id_metodo_pago) }}</td>
-                            <td>{{ formatDate(comprobante.created_at) }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Acciones</th>
+                                <th>Número de Comprobante</th>
+                                <th>Tipo de Comprobante</th>
+                                <th>Paciente</th>
+                                <th>Servicio</th>
+                                <th>Monto</th>
+                                <th>Método de Pago</th>
+                                <th>Fecha de Registro</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="comprobante in sortedComprobantes" :key="comprobante.id">
+                                <td>
+                                    <button class="btn btn-sm btn-outline-dark" @click="generateComprobante(comprobante.id)">
+                                        <i class="fas fa-file-pdf me-1"></i> VER
+                                    </button>
+                                </td>
+                                <td>{{ `${comprobante.serie}-${comprobante.correlativo.toString().padStart(8, '0')}` }}</td>
+                                <td>{{ comprobante.tipo === 'b' ? 'Boleta' : 'Factura' }}</td>
+                                <td>{{ comprobante.paciente_nombre || 'N/A' }}</td>
+                                <td>{{ comprobante.servicio }}</td>
+                                <td>{{ formatCurrency(comprobante.monto_total) }}</td>
+                                <td>{{ getMetodoPago(comprobante.id_metodo_pago) }}</td>
+                                <td>{{ formatDate(comprobante.created_at) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
                 
                 <!-- Updated Pagination Controls - removed the "Por página" selector -->
                 <nav v-if="pagination.total > pagination.perPage" class="mt-4 d-flex justify-content-end">
