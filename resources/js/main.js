@@ -1,6 +1,4 @@
-import jQuery from 'jquery';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-
+// This file is part of the Laravel Admin Panel.
 (function ($) {
     "use strict";
 
