@@ -9,15 +9,15 @@
             <button type="button" class="btn-close" @click="clearSuccessMessage" aria-label="Close"></button>
         </div>
         <div class="row mb-4">
-            <div class="col-md-3">
+            <div class="col-lg-3 col-md-6 mb-4">
                 <label for="fecha-inicio">FECHA INICIO:</label>
                 <input type="date" id="fecha-inicio" v-model="filters.fechaInicio" class="form-control" @input="clearCheckboxFilters">
             </div>
-            <div class="col-md-3">
+            <div class="col-lg-3 col-md-6 mb-4">
                 <label for="fecha-fin">FECHA FIN:</label>
                 <input type="date" id="fecha-fin" v-model="filters.fechaFin" class="form-control" @input="clearCheckboxFilters">
             </div>
-            <div class="col-md-3">
+            <div class="col-lg-3 col-md-6">
                 <div class="form-check form-switch mb-2">
                     <input class="form-check-input" type="checkbox" id="fecha-hoy-dia" v-model="filters.fechaHoyDia" @change="toggleFechaHoyDia">
                     <label class="form-check-label non-selectable pointer" for="fecha-hoy-dia">FECHA HOY DÍA</label>
@@ -27,7 +27,7 @@
                     <label class="form-check-label non-selectable pointer" for="mes-actual">MES ACTUAL</label>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-lg-3 col-md-6">
                 <label for="per-page" class="pointer">POR PÁGINA:</label>
                 <div class="input-group">
                     <select id="per-page" v-model="pagination.perPage" class="form-control form-select pointer" @change="handlePerPageChange">
