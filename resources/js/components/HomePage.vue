@@ -1,26 +1,33 @@
 <template>
     <div class="d-flex justify-content-center" style="min-height: 80vh;">
         <div class="w-100">
-            <!-- Submenu Options -->
-            <div class="bg-light mb-4" style="min-height: 100px;">
+            <!-- Submenu Options - Made sticky -->
+            <div id="submenu-block-area" class="bg-light mb-4 sticky-submenu">
                 <div class="container-fluid">
-                    <div class="d-flex flex-wrap">
-                        <div v-for="item in submenuItems" :key="item.name" class="text-center submenu-item">
-                            <router-link v-if="item.type === 'link'" :to="item.url"
-                                class="btn custom-btn mx-1 my-1 text-wrap">
-                                <i :class="item.icon" class="d-block"></i> {{ item.label }}
-                            </router-link>
-                            <a v-else-if="item.type === 'a'" :href="item.url"
-                                class="btn custom-btn mx-1 my-1 text-wrap">
-                                <i :class="item.icon" class="d-block"></i> {{ item.label }}
-                            </a>
-                            <button v-else class="btn custom-btn mx-1 my-1 text-wrap">
-                                <i :class="item.icon" class="d-block"></i> {{ item.label }}
-                            </button>
+                    <div class="submenu-scroll-container">
+                        <div v-if="submenuItems.length === 0" class="text-center p-3 w-100 empty-submenu-message">
+                            <p class="mb-0">Seleccione una opción del menú para ver las acciones disponibles</p>
+                        </div>
+                        <div v-else class="d-flex submenu-scrollable">
+                            <div v-for="item in submenuItems" :key="item.name" class="text-center submenu-item">
+                                <router-link v-if="item.type === 'link'" :to="item.url"
+                                    class="btn custom-btn mx-1 my-1 text-wrap">
+                                    <i :class="item.icon" class="d-block"></i> {{ item.label }}
+                                </router-link>
+                                <a v-else-if="item.type === 'a'" :href="item.url"
+                                    class="btn custom-btn mx-1 my-1 text-wrap">
+                                    <i :class="item.icon" class="d-block"></i> {{ item.label }}
+                                </a>
+                                <button v-else class="btn custom-btn mx-1 my-1 text-wrap">
+                                    <i :class="item.icon" class="d-block"></i> {{ item.label }}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+            <!-- Add spacer for content below sticky submenu when needed -->
+            <div class="submenu-spacer"></div>
             <div class="row d-flex align-items-stretch">
                 <!-- Entidades Section -->
                 <div class="col-lg-4 col-md-6 mb-4 custom-list-group d-flex" v-for="menu in menus" :key="menu.title">
@@ -135,6 +142,12 @@ export default {
                        this.selectedSubMenu === subMenuTitle;
             });
         }
+    },
+    mounted() {
+        // Check if page has fixed navbar and add appropriate class to body
+        if (document.querySelector('.navbar.fixed-top')) {
+            document.body.classList.add('has-navbar-fixed-top');
+        }
     }
 };
 </script>
@@ -162,9 +175,88 @@ export default {
 }
 
 .submenu-item {
+    flex: 0 0 auto; /* Don't allow items to grow or shrink */
     height: 100px;
     display: flex;
     flex-direction: column;
     justify-content: center;
+}
+
+/* Modified sticky submenu styles to ensure it's always displayed and not overlapped by navbar */
+.sticky-submenu {
+    position: sticky;
+    top: 56px; /* Standard Bootstrap navbar height, adjust if your navbar has different height */
+    z-index: 999; /* Set below navbar's z-index which is typically 1000+ */
+    border-bottom: 1px solid #dee2e6;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    min-height: 100px; /* Ensure minimum height even when empty */
+    display: block;
+    background-color: #f8f9fa; /* Ensure background is opaque */
+}
+
+/* Add media query for larger screens where navbar might be taller */
+@media (min-width: 992px) {
+    .sticky-submenu {
+        top: 60px; /* Adjust based on your actual navbar height on desktop */
+    }
+}
+
+/* Handle cases where there might be a fixed-top navbar */
+body.has-navbar-fixed-top {
+    padding-top: 56px; /* Same as navbar height */
+}
+
+@media (min-width: 992px) {
+    body.has-navbar-fixed-top {
+        padding-top: 60px; /* Adjust based on your actual navbar height on desktop */
+    }
+}
+
+/* Space to prevent content jump when submenu becomes sticky */
+.submenu-spacer {
+    min-height: 10px;
+}
+
+/* Add padding to body to prevent content from hiding under sticky header if needed */
+body {
+    padding-top: 0;
+}
+
+/* Vertical alignment for empty submenu message */
+.empty-submenu-message {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100px;
+}
+
+/* Horizontal scrolling for submenu items */
+.submenu-scroll-container {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: thin; /* For Firefox */
+    -ms-overflow-style: -ms-autohiding-scrollbar; /* For IE and Edge */
+}
+
+.submenu-scrollable {
+    flex-wrap: nowrap;
+    min-width: min-content; /* Ensures all items are displayed */
+    padding: 10px 0;
+}
+
+/* Show scrollbar on hover for better UX */
+.submenu-scroll-container::-webkit-scrollbar {
+    height: 6px;
+    background-color: transparent;
+}
+
+.submenu-scroll-container::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 6px;
+}
+
+.submenu-scroll-container::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0,0,0,0.4);
 }
 </style>
