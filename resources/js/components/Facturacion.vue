@@ -45,6 +45,7 @@
                 <table class="table">
                     <thead>
                         <tr>
+                            <th>Acciones</th>
                             <th>Número de Comprobante</th>
                             <th>Tipo de Comprobante</th>
                             <th>Paciente</th>
@@ -52,11 +53,15 @@
                             <th>Monto</th>
                             <th>Método de Pago</th>
                             <th>Fecha de Registro</th>
-                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="comprobante in sortedComprobantes" :key="comprobante.id">
+                            <td>
+                                <button class="btn btn-sm btn-outline-dark" @click="generateComprobante(comprobante.id)">
+                                    <i class="fas fa-file-pdf me-1"></i> VER
+                                </button>
+                            </td>
                             <td>{{ `${comprobante.serie}-${comprobante.correlativo.toString().padStart(8, '0')}` }}</td>
                             <td>{{ comprobante.tipo === 'b' ? 'Boleta' : 'Factura' }}</td>
                             <td>{{ comprobante.paciente_nombre || 'N/A' }}</td>
@@ -64,9 +69,6 @@
                             <td>{{ formatCurrency(comprobante.monto_total) }}</td>
                             <td>{{ getMetodoPago(comprobante.id_metodo_pago) }}</td>
                             <td>{{ formatDate(comprobante.created_at) }}</td>
-                            <td>
-                                <i class="fas fa-file-pdf pointer" @click="generateComprobante(comprobante.id)"></i>
-                            </td>
                         </tr>
                     </tbody>
                 </table>
