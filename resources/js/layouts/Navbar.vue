@@ -4,6 +4,12 @@
             <a class="navbar-brand" href="/">
                 <img :src="`${baseUrl}/images/mroi_logo.png`" alt="MROI Logo" height="30">
             </a>
+            <!-- Add navbar toggler button -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
+                    data-bs-target="#navbarNav" aria-controls="navbarNav" 
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <!-- User Dropdown -->
