@@ -23,7 +23,7 @@
             </div>
             <div class="row d-flex align-items-stretch">
                 <!-- Entidades Section -->
-                <div class="col-md-4 mb-4 custom-list-group d-flex" v-for="menu in menus" :key="menu.title">
+                <div class="col-lg-4 col-md-6 mb-4 custom-list-group d-flex" v-for="menu in menus" :key="menu.title">
                     <div class="card flex-fill">
                         <div class="text-white card-header">{{ menu.title }}</div>
                         <div class="card-body">
