@@ -8,7 +8,7 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-md-3">
+    <div class="col-lg-3 col-md-12">
       <div class="mb-3">
         <label for="medicoSelect" class="form-label">Seleccionar Médico:</label>
         <select v-model="selectedMedico" id="medicoSelect" class="form-select">
@@ -33,7 +33,7 @@
         </div>
       </div>
     </div>
-    <div class="col-md-9">
+    <div class="col-lg-9 col-md-12">
       <div class="table-responsive table-wrapper">
         <table class="table table-bordered table-hover excel-table">
           <thead class="table-header">
