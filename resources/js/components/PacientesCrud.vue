@@ -16,7 +16,7 @@
           <th>Número de Historia</th>
           <th>Nombres</th>
           <th>Apellidos</th>
-          <th>DNI</th>
+          <th>DNI / CE</th>
           <th>Acciones</th>
         </tr>
         <tr>
@@ -50,7 +50,7 @@
           <th>
             <div class="position-relative">
               <input type="text" :value="filters.doc_identidad" @input="e => { filters.doc_identidad = e.target.value.replace(/\D/g, ''); applyFilters(); }"
-                class="form-control" placeholder="Filtrar por DNI">
+                class="form-control" placeholder="Filtrar por DNI / CE">
               <button v-if="filters.doc_identidad" @click="clearFilter('doc_identidad')" class="btn-clear">
                 <img :src="`${baseUrl}/images/close.png`" alt="Clear" class="clear-icon">
               </button>
@@ -100,7 +100,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="viewPacienteModalLabel">
-              Información del Paciente con DNI {{ selectedPaciente.doc_identidad }}
+              Información del Paciente con DNI / CE {{ selectedPaciente.doc_identidad }}
             </h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
@@ -122,7 +122,7 @@
               <div class="col-sm-9">{{ selectedPaciente.ap_materno }}</div>
             </div>
             <div class="row mb-3">
-              <div class="col-sm-3"><strong>DNI:</strong></div>
+              <div class="col-sm-3"><strong>DNI / CE:</strong></div>
               <div class="col-sm-9">{{ selectedPaciente.doc_identidad }}</div>
             </div>
             <div class="row mb-3">
@@ -187,15 +187,15 @@
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="pacienteModalLabel">
-              {{ isEditing ? `Editar Paciente con DNI ${form.doc_identidad}` : 'Crear Paciente' }}
+              {{ isEditing ? `Editar Paciente con DNI / CE ${form.doc_identidad}` : 'Crear Paciente' }}
             </h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body p-4">
             <form @submit.prevent="submitForm" class="mb-3" autocomplete="off">
-              <div v-if="formErrors.includes('DNI ya existe en la base de datos.')"
+              <div v-if="formErrors.includes('DNI / CE ya existe en la base de datos.')"
                 class="alert alert-danger alert-dismissible fade show" role="alert">
-                DNI ya existe en la base de datos.
+                DNI / CE ya existe en la base de datos.
                 <button type="button" class="btn-close" @click="closeFormErrorAlert" aria-label="Close"></button>
               </div>
               <fieldset class="mb-3">
@@ -228,13 +228,13 @@
                 </div>
                 <div class="row">
                   <div class="col-md-6 mb-3">
-                    <label for="PacientesDocIdentidad" class="form-label">DNI*:</label>
+                    <label for="PacientesDocIdentidad" class="form-label">DNI / CE*:</label>
                     <div class="input-group">
                       <span class="input-group-text"><i class="fas fa-id-card"></i></span>
                       <input type="text" v-model="form.doc_identidad" @input="onlyNumbers($event)"
                         id="PacientesDocIdentidad" name="PacientesDocIdentidad" class="form-control"
                         placeholder="Ej: 00123456" autocomplete="new-doc_identidad" required minlength="8"
-                        maxlength="8">
+                        maxlength="9">
                     </div>
                   </div>
                   <div class="col-md-6 mb-3">
@@ -466,10 +466,10 @@ export default {
 
       const dniExists = await this.checkDocIdentidadExists(formData.doc_identidad);
       if (dniExists && (!this.isEditing || (this.isEditing && formData.doc_identidad !== this.pacientes.find(p => p.id === this.editingId).doc_identidad))) {
-        this.formErrors.push('DNI ya existe en la base de datos.');
+        this.formErrors.push('DNI / CE ya existe en la base de datos.');
         this.scrollToTop();
         setTimeout(() => {
-          this.formErrors = this.formErrors.filter(error => error !== 'DNI ya existe en la base de datos.');
+          this.formErrors = this.formErrors.filter(error => error !== 'DNI / CE ya existe en la base de datos.');
         }, 3000);
         return;
       }
@@ -596,7 +596,7 @@ export default {
         });
     },
     closeFormErrorAlert(error) {
-      this.formErrors = this.formErrors.filter(error => error !== 'DNI ya existe en la base de datos.');
+      this.formErrors = this.formErrors.filter(error => error !== 'DNI / CE ya existe en la base de datos.');
     },
     formatNumHistoria(id) {
       return id.toString().padStart(7, '0');
