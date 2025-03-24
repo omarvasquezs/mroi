@@ -131,23 +131,10 @@ export default {
         selectMenu(menu, item) {
             this.selectedMenu = menu;
             this.selectedSubMenu = item.name;
-        },
-        handleScroll() {
-            const submenuBlock = document.getElementById('submenu-block-area');
-            const scrollPosition = window.scrollY;
-            const navbarHeight = document.querySelector('.navbar')?.offsetHeight || 56;
-            
-            // When at the top of the page, reduce the top spacing
-            if (scrollPosition < 10) {
-                submenuBlock.style.top = '10px';
-            } else {
-                // When scrolling down, ensure it stays below navbar
-                submenuBlock.style.top = `${navbarHeight}px`;
-            }
         }
     },
     computed: {
-        submenuItems() {  // This stays as computed property
+        submenuItems() {  
             return this.availableMenuItems.filter(item => {
                 const [menuTitle, subMenuTitle] = item.condition.split('|');
                 return this.selectedMenu && 
@@ -155,21 +142,6 @@ export default {
                        this.selectedSubMenu === subMenuTitle;
             });
         }
-    },
-    mounted() {
-        // Check if page has fixed navbar and add appropriate class to body
-        if (document.querySelector('.navbar.fixed-top')) {
-            document.body.classList.add('has-navbar-fixed-top');
-        }
-        
-        // Add scroll event listener to handle dynamic positioning
-        window.addEventListener('scroll', this.handleScroll);
-        // Initialize on page load
-        this.handleScroll();
-    },
-    beforeUnmount() {
-        // Clean up event listener
-        window.removeEventListener('scroll', this.handleScroll);
     }
 };
 </script>
@@ -202,47 +174,6 @@ export default {
     display: flex;
     flex-direction: column;
     justify-content: center;
-}
-
-/* Modified sticky submenu styles to ensure it's always displayed and not overlapped by navbar */
-.sticky-submenu {
-    position: sticky;
-    /* top value will be set dynamically by JavaScript */
-    z-index: 999; /* Set below navbar's z-index which is typically 1000+ */
-    border-bottom: 1px solid #dee2e6;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    min-height: 100px; /* Ensure minimum height even when empty */
-    display: block;
-    background-color: #f8f9fa; /* Ensure background is opaque */
-    transition: top 0.2s ease; /* Smooth transition for top position changes */
-}
-
-/* Remove the media queries for sticky-submenu top position since it's handled by JS */
-@media (min-width: 992px) {
-    .sticky-submenu {
-        /* top value handled by JavaScript */
-    }
-}
-
-/* Handle cases where there might be a fixed-top navbar */
-body.has-navbar-fixed-top {
-    padding-top: 56px; /* Same as navbar height */
-}
-
-@media (min-width: 992px) {
-    body.has-navbar-fixed-top {
-        padding-top: 60px; /* Adjust based on your actual navbar height on desktop */
-    }
-}
-
-/* Space to prevent content jump when submenu becomes sticky */
-.submenu-spacer {
-    min-height: 10px;
-}
-
-/* Add padding to body to prevent content from hiding under sticky header if needed */
-body {
-    padding-top: 0;
 }
 
 /* Vertical alignment for empty submenu message */
