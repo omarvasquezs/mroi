@@ -11,7 +11,8 @@
             <p>Cargando...</p>
           </div>
           <div v-else>
-            <div v-if="localCita">
+            <!-- Normal cita details view -->
+            <div v-if="localCita && !isRescheduling">
               <div class="row mb-3">
                 <div class="col-md-3"><strong>Historia:</strong></div>
                 <div class="col-md-9">{{ localCita.num_historia }}</div>
@@ -51,7 +52,69 @@
                   </span>
                 </div>
               </div>
+              <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <button class="btn btn-warning" @click="startRescheduling">
+                  <i class="fas fa-calendar-alt me-2"></i> Reprogramar Cita
+                </button>
+              </div>
             </div>
+            
+            <!-- Rescheduling view -->
+            <div v-else-if="isRescheduling">
+              <div class="row mb-3">
+                <div class="col-md-3"><strong>Paciente:</strong></div>
+                <div class="col-md-9">
+                  {{ localCita?.paciente.nombres }} {{ localCita?.paciente.ap_paterno }} {{ localCita?.paciente.ap_materno }}
+                </div>
+              </div>
+              <div class="mb-4">
+                <label class="form-label"><strong>Médico:</strong></label>
+                <select v-model="rescheduleData.id_medico" @change="checkMedicoAvailability" class="form-select">
+                  <option v-for="medico in medicos" :key="medico.id" :value="medico.id">
+                    {{ medico.nombre.toUpperCase() }}
+                  </option>
+                </select>
+              </div>
+              <div class="mb-4">
+                <label class="form-label"><strong>Fecha:</strong></label>
+                <input type="date" v-model="rescheduleData.fecha" class="form-control" @change="checkMedicoAvailability">
+              </div>
+              <div class="mb-4">
+                <label class="form-label"><strong>Hora:</strong></label>
+                <div class="time-slots-container">
+                  <button 
+                    v-for="slot in availableTimeSlots" 
+                    :key="slot.time" 
+                    class="btn time-slot" 
+                    :class="{ 
+                      'btn-primary': rescheduleData.hora === slot.time,
+                      'btn-outline-primary': rescheduleData.hora !== slot.time && slot.available, 
+                      'btn-outline-secondary disabled': !slot.available 
+                    }"
+                    :disabled="!slot.available"
+                    @click="rescheduleData.hora = slot.time"
+                  >
+                    {{ slot.time }}
+                  </button>
+                </div>
+                <div v-if="availableTimeSlots.length === 0" class="alert alert-info mt-2">
+                  Seleccione un médico y una fecha para ver las horas disponibles.
+                </div>
+              </div>
+              <div class="mb-4">
+                <label class="form-label"><strong>Observaciones:</strong></label>
+                <textarea v-model="rescheduleData.observaciones" class="form-control" rows="3"></textarea>
+              </div>
+              <div v-if="rescheduleError" class="alert alert-danger">
+                {{ rescheduleError }}
+              </div>
+              <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <button class="btn btn-secondary me-md-2" @click="cancelRescheduling">Cancelar</button>
+                <button class="btn btn-primary" @click="saveReschedule" :disabled="!isRescheduleFormValid">Guardar Cambios</button>
+              </div>
+            </div>
+
+            <!-- Create new cita view -->
             <div v-else>
               <div class="row mb-3">
                 <div class="col-md-3"><strong>Fecha Seleccionada:</strong></div>
@@ -103,12 +166,13 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-primary" v-if="!showCitaInfo" @click="saveCita">GENERAR PRE-FACTURA</button>
+          <button type="button" class="btn btn-primary" v-if="!showCitaInfo && !isRescheduling" @click="saveCita">GENERAR PRE-FACTURA</button>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CERRAR</button>
         </div>
       </div>
     </div>
   </div>
+  
   <!-- Modal for Creating/Editing Paciente -->
   <div class="modal fade" id="pacienteModal" tabindex="-1" aria-labelledby="pacienteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -372,19 +436,37 @@ export default {
       isEditing: false,
       pacienteModal: null,
       citaModal: null,
-      formValidationErrors: [] // Add this field to store validation errors
+      formValidationErrors: [], // Add this field to store validation errors
+      // Add new data properties for rescheduling
+      isRescheduling: false,
+      rescheduleData: {
+        id_medico: '',
+        fecha: '',
+        hora: '',
+        observaciones: ''
+      },
+      availableTimeSlots: [],
+      medicos: [],
+      rescheduleError: '',
+      // Add properties for local display of date and time
+      displayDate: null,
+      displayTime: '',
     }
   },
   computed: {
     formattedDate() {
-      return this.selectedDate.toLocaleDateString('es-ES', {
+      // Use displayDate if available, otherwise fallback to selectedDate
+      const dateToFormat = this.displayDate || this.selectedDate;
+      return dateToFormat.toLocaleDateString('es-ES', {
         day: '2-digit',
         month: 'long',
         year: 'numeric'
       }).replace(/ de /g, '/').toUpperCase();
     },
     formattedTime() {
-      const [hour, minute] = this.selectedTime.split(':');
+      // Use displayTime if available, otherwise fallback to selectedTime
+      const timeToFormat = this.displayTime || this.selectedTime;
+      const [hour, minute] = timeToFormat.split(':');
       const date = new Date();
       date.setHours(hour, minute);
       return date.toLocaleTimeString('es-ES', {
@@ -392,12 +474,21 @@ export default {
         minute: '2-digit',
         hour12: true
       }).toUpperCase();
+    },
+    // Add new computed property for reschedule form validation
+    isRescheduleFormValid() {
+      return this.rescheduleData.id_medico && 
+             this.rescheduleData.fecha && 
+             this.rescheduleData.hora;
     }
   },
   created() {
     this.fetchPacientes();
     this.fetchTiposCitas();
+    this.fetchMedicos();
     this.localCita = this.cita; // Initialize localCita with the prop's value
+    this.displayDate = this.selectedDate;
+    this.displayTime = this.selectedTime;
   },
   mounted() {
     this.citaModal = new Modal(document.getElementById('citaModal'));
@@ -533,6 +624,20 @@ export default {
       this.localCita = cita; // Assign to the local data property
       this.showCitaInfo = true;
       this.modalTitle = 'Información de la Cita';
+      
+      // Update display date and time from the cita data
+      if (cita && cita.fecha) {
+        const citaDate = new Date(cita.fecha);
+        this.displayDate = citaDate;
+        
+        // Extract time from the fecha field (format: "YYYY-MM-DD HH:mm:ss")
+        if (cita.hora) {
+          this.displayTime = cita.hora.substring(0, 5); // Get HH:mm
+        } else {
+          this.displayTime = citaDate.toTimeString().substring(0, 5); // Fallback to time from fecha
+        }
+      }
+      
       const modalElement = document.getElementById('citaModal');
       const modal = new window.bootstrap.Modal(modalElement);
       modal.show();
@@ -808,6 +913,164 @@ export default {
       } else {
         window.scrollTo(0, 0);
       }
+    },
+    // Add new methods for rescheduling
+    startRescheduling() {
+      if (!this.localCita) return;
+      
+      this.isRescheduling = true;
+      this.modalTitle = 'Reprogramar Cita';
+      
+      // Set initial values for rescheduleData
+      this.rescheduleData = {
+        id_medico: this.selectedMedico,
+        fecha: this.formatLocalDate(this.selectedDate),
+        hora: this.selectedTime,
+        observaciones: this.localCita.observaciones || ''
+      };
+      
+      // Check availability with initial values
+      this.checkMedicoAvailability();
+    },
+    
+    cancelRescheduling() {
+      this.isRescheduling = false;
+      this.modalTitle = 'Información de la Cita';
+      this.availableTimeSlots = [];
+      this.rescheduleError = '';
+    },
+    
+    async checkMedicoAvailability() {
+      if (!this.rescheduleData.id_medico || !this.rescheduleData.fecha) {
+        this.availableTimeSlots = [];
+        return;
+      }
+      
+      try {
+        const params = new URLSearchParams({
+          medico: this.rescheduleData.id_medico,
+          fecha: this.rescheduleData.fecha
+        });
+        
+        const response = await fetch(`/api/citas/availability?${params.toString()}`);
+        if (!response.ok) throw new Error('Error checking availability');
+        
+        const data = await response.json();
+        this.availableTimeSlots = data.availableSlots;
+        
+        // Mark the current appointment's time slot as available
+        if (this.localCita && 
+            this.rescheduleData.id_medico == this.selectedMedico &&
+            this.rescheduleData.fecha == this.formatLocalDate(this.selectedDate)) {
+          
+          const currentTimeSlot = this.availableTimeSlots.find(
+            slot => slot.time === this.selectedTime
+          );
+          
+          if (currentTimeSlot) {
+            currentTimeSlot.available = true;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking availability:', error);
+        this.availableTimeSlots = [];
+      }
+    },
+    
+    async saveReschedule() {
+      if (!this.isRescheduleFormValid || !this.localCita) {
+        return;
+      }
+      
+      try {
+        this.loading = true;
+        this.rescheduleError = '';
+        
+        const response = await fetch(`/api/citas/${this.localCita.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(this.rescheduleData)
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Error updating appointment');
+        }
+        
+        const updatedCita = await response.json();
+        
+        // Update local cita data
+        this.localCita = updatedCita;
+        
+        // Update display date and time with the new values
+        if (this.rescheduleData.fecha) {
+          this.displayDate = new Date(this.rescheduleData.fecha);
+        }
+        if (this.rescheduleData.hora) {
+          this.displayTime = this.rescheduleData.hora;
+        }
+        
+        // Reset UI
+        this.isRescheduling = false;
+        this.modalTitle = 'Información de la Cita';
+        
+        // Notify parent component
+        this.$emit('citaCreated');
+        
+        // Show success message
+        alert('Cita reprogramada exitosamente');
+      } catch (error) {
+        console.error('Error saving reschedule:', error);
+        this.rescheduleError = error.message || 'Error al reprogramar la cita';
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    async fetchMedicos() {
+      try {
+        const response = await fetch('/api/medicos-list');
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          this.medicos = data;
+        } else if (data.data && Array.isArray(data.data)) {
+          this.medicos = data.data;
+        } else {
+          throw new Error('Invalid data format');
+        }
+      } catch (error) {
+        console.error('Error fetching medicos:', error);
+        this.medicos = [];
+      }
+    },
+    
+    formatLocalDate(date) {
+      const d = new Date(date);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    },
+  },
+  watch: {
+    // Add watcher for cita prop
+    cita(newVal) {
+      this.localCita = newVal;
+      this.isRescheduling = false;
+      
+      // Update display date and time when cita changes
+      if (newVal && newVal.fecha) {
+        const citaDate = new Date(newVal.fecha);
+        this.displayDate = citaDate;
+        
+        if (newVal.hora) {
+          this.displayTime = newVal.hora.substring(0, 5);
+        } else {
+          this.displayTime = citaDate.toTimeString().substring(0, 5);
+        }
+      }
     }
   }
 }
@@ -817,5 +1080,17 @@ export default {
 .badge {
   font-size: 0.9em;
   padding: 0.5em 1em;
+}
+
+/* Add styles for time slot selection */
+.time-slots-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.time-slot {
+  width: 70px;
 }
 </style>

@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cita;
+use App\Models\Medico;
 use App\Models\TipoCita;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CitaController extends Controller
 {
@@ -99,5 +101,83 @@ class CitaController extends Controller
             ->first();
 
         return response()->json($cita);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'id_medico' => 'required|exists:medicos,id',
+            'fecha' => 'required|date',
+            'hora' => 'required',
+            'observaciones' => 'nullable|string'
+        ]);
+
+        $cita = Cita::findOrFail($id);
+
+        // Combine date and time
+        $fechaHora = date('Y-m-d H:i:s', strtotime($validated['fecha'] . ' ' . $validated['hora']));
+
+        // Check if the new time slot is available
+        $existingCita = Cita::where('id_medico', $validated['id_medico'])
+            ->whereDate('fecha', $validated['fecha'])
+            ->whereTime('fecha', $validated['hora'])
+            ->where('id', '!=', $id)
+            ->first();
+
+        if ($existingCita) {
+            return response()->json(['message' => 'Este horario ya está ocupado'], 422);
+        }
+
+        $cita->update([
+            'id_medico' => $validated['id_medico'],
+            'fecha' => $fechaHora,
+            'observaciones' => $validated['observaciones']
+        ]);
+
+        $cita->load(['paciente', 'medico', 'tipoCita']);
+
+        return response()->json($cita);
+    }
+
+    public function checkAvailability(Request $request)
+    {
+        $medicoId = $request->query('medico');
+        $fecha = $request->query('fecha');
+
+        if (!$medicoId || !$fecha) {
+            return response()->json(['message' => 'Medico ID and date are required'], 400);
+        }
+
+        // Get all appointments for the selected doctor and date
+        $citas = Cita::where('id_medico', $medicoId)
+            ->whereDate('fecha', $fecha)
+            ->get(['id', 'fecha']);
+
+        // Convert to a list of occupied time slots (hours)
+        $occupiedSlots = $citas->map(function ($cita) {
+            return date('H:i', strtotime($cita->fecha));
+        });
+
+        // Get working hours (8:00 to 19:00 with 30 minute intervals)
+        $workingHours = [];
+        $startHour = 8;
+        $endHour = 19;
+
+        for ($hour = $startHour; $hour < $endHour; $hour++) {
+            $formattedHour = str_pad($hour, 2, '0', STR_PAD_LEFT);
+            $workingHours[] = [
+                'time' => "$formattedHour:00",
+                'available' => !$occupiedSlots->contains("$formattedHour:00")
+            ];
+            $workingHours[] = [
+                'time' => "$formattedHour:30",
+                'available' => !$occupiedSlots->contains("$formattedHour:30")
+            ];
+        }
+
+        return response()->json([
+            'availableSlots' => $workingHours,
+            'doctor' => Medico::find($medicoId)
+        ]);
     }
 }

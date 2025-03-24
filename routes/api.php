@@ -34,7 +34,9 @@ Route::get('/pacientes-with-citas', [PacienteController::class, 'getPacientesWit
 
 Route::post('/citas', [CitaController::class, 'store']);
 Route::get('/citas', [CitaController::class, 'getCitasByMedicoAndFecha']);
+Route::put('/citas/{id}', [CitaController::class, 'update']);
 Route::get('/citas/check', [CitaController::class, 'checkCita']);
+Route::get('/citas/availability', [CitaController::class, 'checkAvailability']);
 
 Route::get('/tipos-citas-list', [TipoCitaController::class, 'getAllTipoCitas']);
 

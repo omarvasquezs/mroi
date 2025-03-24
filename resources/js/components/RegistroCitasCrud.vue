@@ -58,8 +58,15 @@
         </table>
       </div>
     </div>
-    <CitaModal ref="citaModal" :selected-time="selectedTime" :selected-date="selectedFecha"
-      :selected-medico="selectedMedico" :selected-medico-name="selectedMedicoName" :cita="selectedCita" @citaCreated="fetchCitas" />
+    <CitaModal 
+      ref="citaModal" 
+      :selected-time="selectedTime" 
+      :selected-date="selectedFecha"
+      :selected-medico="selectedMedico" 
+      :selected-medico-name="selectedMedicoName" 
+      :cita="selectedCita" 
+      @citaCreated="fetchCitas" 
+    />
   </div>
 </template>
 
@@ -230,33 +237,20 @@ export default {
             // Build citasMap with proper time formatting
             const citasMap = new Map();
             
-            // First, log each cita's data structure
+            // Process each cita
             data.forEach(cita => {
-              console.log('Processing cita:', {
-                original: cita,
-                fecha: cita.fecha,
-                hora: cita.hora,
-                num_historia: cita.num_historia,
-                paciente: cita.paciente,
-                tipo_cita: cita.tipoCita
-              });
-              
-              // Extract time from hora field (assuming format "HH:mm:ss")
+              // Extract time from fecha field (assuming format "YYYY-MM-DD HH:mm:ss")
               const timeStr = cita.hora ? cita.hora.substring(0, 5) : null;
               if (timeStr) {
                 citasMap.set(timeStr, cita);
               }
             });
 
-            console.log('CitasMap built:', Array.from(citasMap.entries()));
-
             // Map slots to citas
             this.citas = slots.map(slot => {
-              console.log('Processing slot:', slot.hora);
               const matchingCita = citasMap.get(slot.hora);
               
               if (matchingCita) {
-                console.log('Found match for slot', slot.hora, matchingCita);
                 const pacienteData = matchingCita.paciente || {};
                 const pacienteNombre = [
                   pacienteData.nombres,
@@ -279,7 +273,6 @@ export default {
           } else {
             this.citas = slots.map(slot => ({ ...slot, tipo_cita: '' }));
           }
-          console.log('Final processed citas:', this.citas);
         }
       } catch (error) {
         console.error('Error:', error);
