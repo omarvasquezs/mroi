@@ -56,6 +56,9 @@
                 <button class="btn btn-warning" @click="startRescheduling">
                   <i class="fas fa-calendar-alt me-2"></i> Reprogramar Cita
                 </button>
+                <button v-if="localCita.estado === 'd'" class="btn btn-danger" @click="confirmDeleteCita">
+                  <i class="fas fa-trash-alt me-2"></i> Eliminar Cita
+                </button>
               </div>
             </div>
             
@@ -1100,6 +1103,47 @@ export default {
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const day = String(d.getDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
+    },
+    // Add delete cita method
+    confirmDeleteCita() {
+      if (!this.localCita) return;
+      
+      if (confirm('¿Está seguro que desea eliminar esta cita? Esta acción no se puede deshacer.')) {
+        this.deleteCita();
+      }
+    },
+    
+    async deleteCita() {
+      try {
+        this.loading = true;
+        
+        const response = await fetch(`/api/citas/${this.localCita.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Error al eliminar la cita');
+        }
+        
+        // Close the modal
+        const modalx = document.getElementById('citaModal');
+        const bootstrapModalx = bootstrap.Modal.getInstance(modalx);
+        bootstrapModalx.hide();
+        
+        // Notify parent component to refresh the citas list
+        this.$emit('citaCreated');
+        
+        // Show success message
+        alert('Cita eliminada exitosamente');
+      } catch (error) {
+        console.error('Error deleting cita:', error);
+        alert('Error al eliminar la cita: ' + error.message);
+      } finally {
+        this.loading = false;
+      }
     },
   },
   watch: {

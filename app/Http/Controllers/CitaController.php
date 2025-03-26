@@ -270,4 +270,22 @@ class CitaController extends Controller
         
         return response()->json($cita);
     }
+
+    public function destroy($id)
+    {
+        $cita = Cita::findOrFail($id);
+        
+        // Only allow deletion of citas with estado = 'd' (pendiente)
+        if ($cita->estado !== 'd') {
+            return response()->json([
+                'message' => 'Solo se pueden eliminar citas con estado pendiente.'
+            ], 403);
+        }
+        
+        $cita->delete();
+        
+        return response()->json([
+            'message' => 'Cita eliminada exitosamente'
+        ]);
+    }
 }

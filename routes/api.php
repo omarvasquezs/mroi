@@ -40,6 +40,7 @@ Route::get('citas', [CitaController::class, 'getCitasByMedicoAndFecha']);
 Route::post('citas', [CitaController::class, 'store']);
 Route::get('citas/{id}', [CitaController::class, 'show']);
 Route::put('citas/{id}', [CitaController::class, 'update']);
+Route::delete('citas/{id}', [CitaController::class, 'destroy']);
 
 Route::get('/tipos-citas-list', [TipoCitaController::class, 'getAllTipoCitas']);
 
