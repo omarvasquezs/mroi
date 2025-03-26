@@ -61,11 +61,13 @@
             
             <!-- Rescheduling view -->
             <div v-else-if="isRescheduling">
-              <div class="row mb-3">
-                <div class="col-md-3"><strong>Paciente:</strong></div>
-                <div class="col-md-9">
-                  {{ localCita?.paciente.nombres }} {{ localCita?.paciente.ap_paterno }} {{ localCita?.paciente.ap_materno }}
-                </div>
+              <div class="mb-4">
+                <label class="form-label"><strong>Paciente:</strong></label>
+                <select v-model="rescheduleData.num_historia" class="form-select">
+                  <option v-for="paciente in pacientes" :key="paciente.num_historia" :value="paciente.num_historia">
+                    {{ paciente.nombre.toUpperCase() }}
+                  </option>
+                </select>
               </div>
               <div class="mb-4">
                 <label class="form-label"><strong>Médico:</strong></label>
@@ -105,6 +107,7 @@
                 <label class="form-label"><strong>Observaciones:</strong></label>
                 <textarea v-model="rescheduleData.observaciones" class="form-control" rows="3"></textarea>
               </div>
+
               <div v-if="rescheduleError" class="alert alert-danger">
                 {{ rescheduleError }}
               </div>
@@ -443,7 +446,8 @@ export default {
         id_medico: '',
         fecha: '',
         hora: '',
-        observaciones: ''
+        observaciones: '',
+        num_historia: '' // Add this field for rescheduling
       },
       availableTimeSlots: [],
       medicos: [],
@@ -926,7 +930,8 @@ export default {
         id_medico: this.selectedMedico,
         fecha: this.formatLocalDate(this.selectedDate),
         hora: this.selectedTime,
-        observaciones: this.localCita.observaciones || ''
+        observaciones: this.localCita.observaciones || '',
+        num_historia: this.localCita.num_historia // Set initial paciente
       };
       
       // Check availability with initial values
@@ -981,11 +986,31 @@ export default {
       if (!this.isRescheduleFormValid || !this.localCita) {
         return;
       }
-      
+    
       try {
         this.loading = true;
         this.rescheduleError = '';
-        
+    
+        // Validate that the selected paciente does not conflict with another appointment
+        const validationResponse = await fetch(`/api/citas/validate-conflict`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            num_historia: this.rescheduleData.num_historia,
+            id_medico: this.rescheduleData.id_medico,
+            fecha: this.rescheduleData.fecha,
+            hora: this.rescheduleData.hora
+          })
+        });
+    
+        if (!validationResponse.ok) {
+          const errorData = await validationResponse.json();
+          throw new Error(errorData.message || 'Error validating appointment conflict');
+        }
+    
+        // Proceed with saving the rescheduled appointment
         const response = await fetch(`/api/citas/${this.localCita.id}`, {
           method: 'PUT',
           headers: {
@@ -993,15 +1018,16 @@ export default {
           },
           body: JSON.stringify(this.rescheduleData)
         });
-        
+    
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.message || 'Error updating appointment');
         }
-        
+    
         const updatedCita = await response.json();
-        
-        // Update local cita data
+        console.log('Updated cita:', updatedCita);
+    
+        // Update local cita data with the response that should include paciente relation
         this.localCita = updatedCita;
         
         // Update display date and time with the new values
@@ -1011,14 +1037,14 @@ export default {
         if (this.rescheduleData.hora) {
           this.displayTime = this.rescheduleData.hora;
         }
-        
+    
         // Reset UI
         this.isRescheduling = false;
         this.modalTitle = 'Información de la Cita';
-        
+    
         // Notify parent component
         this.$emit('citaCreated');
-        
+    
         // Show success message
         alert('Cita reprogramada exitosamente');
       } catch (error) {

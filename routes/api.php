@@ -32,11 +32,14 @@ Route::get('/medicos-list', [MedicoController::class, 'getAllMedicos']);
 Route::get('/pacientes-list', [PacienteController::class, 'getAllPacientes']);
 Route::get('/pacientes-with-citas', [PacienteController::class, 'getPacientesWithCitas']); // New route for patients with appointments
 
-Route::post('/citas', [CitaController::class, 'store']);
-Route::get('/citas', [CitaController::class, 'getCitasByMedicoAndFecha']);
-Route::put('/citas/{id}', [CitaController::class, 'update']);
-Route::get('/citas/check', [CitaController::class, 'checkCita']);
-Route::get('/citas/availability', [CitaController::class, 'checkAvailability']);
+// Routes for appointment management
+Route::get('citas/check', [CitaController::class, 'checkCita']);
+Route::get('citas/availability', [CitaController::class, 'checkAvailability']);
+Route::post('citas/validate-conflict', [CitaController::class, 'validateConflict']);
+Route::get('citas', [CitaController::class, 'getCitasByMedicoAndFecha']);
+Route::post('citas', [CitaController::class, 'store']);
+Route::get('citas/{id}', [CitaController::class, 'show']);
+Route::put('citas/{id}', [CitaController::class, 'update']);
 
 Route::get('/tipos-citas-list', [TipoCitaController::class, 'getAllTipoCitas']);
 

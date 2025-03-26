@@ -109,7 +109,8 @@ class CitaController extends Controller
             'id_medico' => 'required|exists:medicos,id',
             'fecha' => 'required|date',
             'hora' => 'required',
-            'observaciones' => 'nullable|string'
+            'observaciones' => 'nullable|string',
+            'num_historia' => 'required|exists:pacientes,num_historia' // Add validation for num_historia
         ]);
 
         $cita = Cita::findOrFail($id);
@@ -131,9 +132,11 @@ class CitaController extends Controller
         $cita->update([
             'id_medico' => $validated['id_medico'],
             'fecha' => $fechaHora,
-            'observaciones' => $validated['observaciones']
+            'observaciones' => $validated['observaciones'],
+            'num_historia' => $validated['num_historia'] // Add num_historia to the update
         ]);
 
+        // Refresh the cita with all relationships
         $cita->load(['paciente', 'medico', 'tipoCita']);
 
         return response()->json($cita);
@@ -179,5 +182,38 @@ class CitaController extends Controller
             'availableSlots' => $workingHours,
             'doctor' => Medico::find($medicoId)
         ]);
+    }
+
+    public function validateConflict(Request $request)
+    {
+        $validated = $request->validate([
+            'num_historia' => 'required|exists:pacientes,num_historia',
+            'id_medico' => 'required|exists:medicos,id',
+            'fecha' => 'required|date',
+            'hora' => 'required'
+        ]);
+
+        // Combine date and time
+        $fechaHora = date('Y-m-d H:i:s', strtotime($validated['fecha'] . ' ' . $validated['hora']));
+
+        // Check for conflicts
+        $conflict = Cita::where('num_historia', $validated['num_historia'])
+            ->where('id_medico', $validated['id_medico'])
+            ->where('fecha', $fechaHora)
+            ->exists();
+
+        if ($conflict) {
+            return response()->json(['message' => 'El paciente ya tiene una cita con este médico en el mismo horario.'], 422);
+        }
+
+        return response()->json(['message' => 'No conflict found.'], 200);
+    }
+
+    public function show($id)
+    {
+        $cita = Cita::with(['paciente', 'medico', 'tipoCita'])
+            ->findOrFail($id);
+        
+        return response()->json($cita);
     }
 }
