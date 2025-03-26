@@ -12,10 +12,10 @@ class Cita extends Model
     protected $fillable = [
         'num_historia',
         'id_medico',
+        'id_tipo_cita',
         'fecha',
         'estado',
-        'observaciones',
-        'id_tipo_cita'
+        'observaciones'
     ];
 
     protected $casts = [

@@ -24,6 +24,18 @@ class CitaController extends Controller
         // Combine date and time
         $fechaHora = date('Y-m-d H:i:s', strtotime($validated['fecha'] . ' ' . $validated['hora']));
 
+        // Check if patient already has an appointment at the same time (with any doctor)
+        $existingPatientAppointment = Cita::where('num_historia', $validated['num_historia'])
+            ->whereDate('fecha', $validated['fecha'])
+            ->whereTime('fecha', $validated['hora'])
+            ->first();
+
+        if ($existingPatientAppointment) {
+            return response()->json([
+                'message' => 'El paciente ya tiene una cita programada a esta hora con otro médico.'
+            ], 422);
+        }
+
         $cita = Cita::create([
             'num_historia' => $validated['num_historia'],
             'id_medico' => $validated['id_medico'],
@@ -110,7 +122,7 @@ class CitaController extends Controller
             'fecha' => 'required|date',
             'hora' => 'required',
             'observaciones' => 'nullable|string',
-            'num_historia' => 'required|exists:pacientes,num_historia' // Add validation for num_historia
+            'num_historia' => 'required|exists:pacientes,num_historia'
         ]);
 
         $cita = Cita::findOrFail($id);
@@ -118,22 +130,36 @@ class CitaController extends Controller
         // Combine date and time
         $fechaHora = date('Y-m-d H:i:s', strtotime($validated['fecha'] . ' ' . $validated['hora']));
 
-        // Check if the new time slot is available
-        $existingCita = Cita::where('id_medico', $validated['id_medico'])
+        // Check if the patient already has an appointment at this time with any doctor (excluding this appointment)
+        $patientConflict = Cita::where('num_historia', $validated['num_historia'])
             ->whereDate('fecha', $validated['fecha'])
             ->whereTime('fecha', $validated['hora'])
             ->where('id', '!=', $id)
             ->first();
 
-        if ($existingCita) {
-            return response()->json(['message' => 'Este horario ya está ocupado'], 422);
+        if ($patientConflict) {
+            return response()->json([
+                'message' => 'El paciente ya tiene una cita programada a esta hora con otro médico.',
+                'conflicting_doctor' => $patientConflict->medico->nombre ?? 'Médico desconocido'
+            ], 422);
+        }
+
+        // Check if the doctor is available at this time (excluding this appointment)
+        $doctorConflict = Cita::where('id_medico', $validated['id_medico'])
+            ->whereDate('fecha', $validated['fecha'])
+            ->whereTime('fecha', $validated['hora'])
+            ->where('id', '!=', $id)
+            ->first();
+
+        if ($doctorConflict) {
+            return response()->json(['message' => 'El médico ya tiene una cita programada a esta hora.'], 422);
         }
 
         $cita->update([
             'id_medico' => $validated['id_medico'],
             'fecha' => $fechaHora,
             'observaciones' => $validated['observaciones'],
-            'num_historia' => $validated['num_historia'] // Add num_historia to the update
+            'num_historia' => $validated['num_historia']
         ]);
 
         // Refresh the cita with all relationships
@@ -190,20 +216,48 @@ class CitaController extends Controller
             'num_historia' => 'required|exists:pacientes,num_historia',
             'id_medico' => 'required|exists:medicos,id',
             'fecha' => 'required|date',
-            'hora' => 'required'
+            'hora' => 'required',
+            'current_cita_id' => 'nullable|integer' // Optional parameter for rescheduling
         ]);
 
         // Combine date and time
         $fechaHora = date('Y-m-d H:i:s', strtotime($validated['fecha'] . ' ' . $validated['hora']));
 
-        // Check for conflicts
-        $conflict = Cita::where('num_historia', $validated['num_historia'])
-            ->where('id_medico', $validated['id_medico'])
-            ->where('fecha', $fechaHora)
-            ->exists();
+        // Check if the patient already has an appointment at this time with any doctor
+        $query = Cita::where('num_historia', $validated['num_historia'])
+            ->whereDate('fecha', $validated['fecha'])
+            ->whereTime('fecha', $validated['hora']);
 
-        if ($conflict) {
-            return response()->json(['message' => 'El paciente ya tiene una cita con este médico en el mismo horario.'], 422);
+        // If rescheduling, exclude the current appointment from the check
+        if (isset($validated['current_cita_id'])) {
+            $query->where('id', '!=', $validated['current_cita_id']);
+        }
+
+        $existingAppointment = $query->first();
+
+        if ($existingAppointment) {
+            return response()->json([
+                'message' => 'El paciente ya tiene una cita programada a esta hora con otro médico.',
+                'conflicting_doctor' => $existingAppointment->medico->nombre ?? 'Médico desconocido'
+            ], 422);
+        }
+
+        // Check if this doctor is available at this time
+        $query = Cita::where('id_medico', $validated['id_medico'])
+            ->whereDate('fecha', $validated['fecha'])
+            ->whereTime('fecha', $validated['hora']);
+
+        // If rescheduling, exclude the current appointment from the check
+        if (isset($validated['current_cita_id'])) {
+            $query->where('id', '!=', $validated['current_cita_id']);
+        }
+
+        $doctorAppointment = $query->first();
+
+        if ($doctorAppointment) {
+            return response()->json([
+                'message' => 'El médico ya tiene una cita programada a esta hora.'
+            ], 422);
         }
 
         return response()->json(['message' => 'No conflict found.'], 200);

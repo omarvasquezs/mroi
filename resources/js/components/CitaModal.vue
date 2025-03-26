@@ -131,6 +131,13 @@
                 <div class="col-md-3"><strong>Médico Seleccionado:</strong></div>
                 <div class="col-md-9">{{ selectedMedicoName.toUpperCase() }}</div>
               </div>
+
+              <!-- Add auto-dismissible error alert with close button -->
+              <div v-if="rescheduleError" class="alert alert-danger alert-dismissible fade show mb-3">
+                {{ rescheduleError }}
+                <button type="button" class="btn-close" @click="rescheduleError = ''" aria-label="Close"></button>
+              </div>
+
               <div class="mb-3">
                 <label class="form-label"><strong>Paciente:</strong></label>
                 <div class="input-group">
@@ -530,6 +537,7 @@ export default {
     async saveCita() {
       // Reset validation errors
       this.formValidationErrors = [];
+      this.rescheduleError = ''; // Clear any previous error messages
       
       // Validate form fields
       if (!this.formData.id_tipo_cita) {
@@ -547,7 +555,9 @@ export default {
 
       try {
         const adjustedDate = new Date(this.selectedDate.getTime() - this.selectedDate.getTimezoneOffset() * 60000);
-        const response = await fetch('/api/citas', {
+        
+        // Create the request object so we can handle it without throwing network errors
+        const request = new Request('/api/citas', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -561,7 +571,11 @@ export default {
             id_tipo_cita: this.formData.id_tipo_cita
           })
         });
-
+        
+        // Use a custom fetch that doesn't throw on 422 responses
+        const response = await fetch(request);
+        const data = await response.json();
+        
         if (response.ok) {
           this.$emit('citaCreated');
           this.formData = { num_historia: '', observaciones: '', id_tipo_cita: '' };
@@ -569,9 +583,16 @@ export default {
           const modalx = document.getElementById('citaModal');
           const bootstrapModalx = bootstrap.Modal.getInstance(modalx);
           bootstrapModalx.hide();
+        } else {
+          // Handle 422 and other error responses
+          if (data && data.message) {
+            this.rescheduleError = data.message;
+          } else {
+            this.rescheduleError = 'Error al crear la cita. Por favor intente nuevamente.';
+          }
         }
       } catch (error) {
-        console.error('Error saving cita:', error);
+        this.rescheduleError = 'Error al crear la cita. Por favor intente nuevamente.';
       }
     },
     closeModal() {
@@ -1001,7 +1022,8 @@ export default {
             num_historia: this.rescheduleData.num_historia,
             id_medico: this.rescheduleData.id_medico,
             fecha: this.rescheduleData.fecha,
-            hora: this.rescheduleData.hora
+            hora: this.rescheduleData.hora,
+            current_cita_id: this.localCita.id // Add the current cita ID to exclude from conflict checks
           })
         });
     
@@ -1096,6 +1118,15 @@ export default {
         } else {
           this.displayTime = citaDate.toTimeString().substring(0, 5);
         }
+      }
+    },
+    // Add auto-timeout for error message
+    rescheduleError(newValue) {
+      if (newValue) {
+        // Auto-clear error message after 5 seconds
+        setTimeout(() => {
+          this.rescheduleError = '';
+        }, 5000);
       }
     }
   }
