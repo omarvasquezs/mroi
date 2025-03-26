@@ -112,7 +112,7 @@
                 {{ rescheduleError }}
               </div>
               <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                <button class="btn btn-secondary me-md-2" @click="cancelRescheduling">Cancelar</button>
+                <button class="btn btn-secondary me-md-2" @click="cancelRescheduling">Regresar</button>
                 <button class="btn btn-primary" @click="saveReschedule" :disabled="!isRescheduleFormValid">Guardar Cambios</button>
               </div>
             </div>
