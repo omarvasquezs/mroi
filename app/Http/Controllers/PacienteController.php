@@ -100,7 +100,19 @@ class PacienteController extends Controller
 
     public function destroy($id)
     {
-        Paciente::destroy($id);
+        $paciente = Paciente::findOrFail($id);
+        
+        // Check if the patient has any appointments
+        $hasAppointments = Cita::where('num_historia', $paciente->num_historia)->exists();
+        
+        if ($hasAppointments) {
+            return response()->json([
+                'error' => 'No se puede eliminar el paciente',
+                'message' => 'El paciente tiene citas programadas. Debe eliminar primero todas las citas asociadas.'
+            ], 409); // Conflict status code
+        }
+        
+        $paciente->delete();
         return response()->json(null, 204);
     }
 

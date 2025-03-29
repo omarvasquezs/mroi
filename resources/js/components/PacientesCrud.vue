@@ -529,8 +529,34 @@ export default {
           this.showAlert('Paciente eliminado exitosamente.');
         })
         .catch(error => {
-          console.error(error);
+          if (error.response && error.response.status === 409) {
+            this.showErrorAlert(error.response.data.message || 'No se puede eliminar el paciente porque tiene citas asociadas.');
+          } else {
+            this.showErrorAlert('Error al eliminar el paciente.');
+            console.error(error);
+          }
         });
+    },
+    showErrorAlert(message) {
+      this.alertMessage = message;
+      // Find the alert element and add 'alert-danger' class
+      setTimeout(() => {
+        const alertElement = document.querySelector('.alert');
+        if (alertElement) {
+          alertElement.classList.remove('alert-success');
+          alertElement.classList.add('alert-danger');
+        }
+      }, 0);
+      
+      setTimeout(() => {
+        this.alertMessage = '';
+        // Reset the alert class after the message disappears
+        const alertElement = document.querySelector('.alert');
+        if (alertElement) {
+          alertElement.classList.remove('alert-danger');
+          alertElement.classList.add('alert-success');
+        }
+      }, 5000);
     },
     closeModal() {
       const modal = Modal.getInstance(document.getElementById('pacienteModal'));
