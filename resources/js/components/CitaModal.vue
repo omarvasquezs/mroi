@@ -161,12 +161,18 @@
               </div>
               <div class="mb-3">
                 <label class="form-label"><strong>Tipo de Cita:</strong></label>
-                <select v-model="formData.id_tipo_cita" class="form-select" :class="{'is-invalid': formValidationErrors.includes('tipo_cita')}">
-                  <option value="" disabled>Seleccione tipo de cita</option>
-                  <option v-for="tipo in tiposCitas" :key="tipo.id" :value="tipo.id">
-                    {{ tipo.tipo_cita }} - S/. {{ tipo.precio }}
-                  </option>
-                </select>
+                <div class="input-group">
+                  <select v-model="formData.id_tipo_cita" class="form-select" :class="{'is-invalid': formValidationErrors.includes('tipo_cita')}">
+                    <option value="" disabled>Seleccione tipo de cita</option>
+                    <option v-for="tipo in tiposCitas" :key="tipo.id" :value="tipo.id">
+                      {{ tipo.tipo_cita }} - S/. {{ tipo.precio }}
+                    </option>
+                  </select>
+                  <button @click="editTipoCita(tiposCitas.find(t => t.id === formData.id_tipo_cita))" class="btn btn-success ms-2"><i class="fas fa-pencil-alt"></i></button>
+                  <button @click="showCreateTipoCitaForm" class="btn btn-primary ms-2" title="Agregar nuevo tipo de cita">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
                 <div class="invalid-feedback" v-if="formValidationErrors.includes('tipo_cita')">
                   Por favor seleccione un tipo de cita.
                 </div>
@@ -378,6 +384,37 @@
       </div>
     </div>
   </div>
+  
+  <!-- Modal for Tipo de Cita -->
+  <div class="modal fade" id="tipoCitaModal" tabindex="-1" aria-labelledby="tipoCitaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="tipoCitaModalLabel">{{ isEditingTipoCita ? 'Editar Tipo de Cita' : 'Crear Tipo de Cita' }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form @submit.prevent="submitTipoCitaForm">
+            <div class="mb-3">
+              <label for="tipo_cita" class="form-label">Tipo de Cita*:</label>
+              <input type="text" v-model="tipoCitaForm.tipo_cita" id="tipo_cita" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="precio" class="form-label">Precio*:</label>
+              <div class="input-group">
+                <span class="input-group-text">S/.</span>
+                <input type="number" v-model="tipoCitaForm.precio" id="precio" class="form-control" step="0.01" required>
+              </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2">
+              <button type="submit" class="btn btn-primary">{{ isEditingTipoCita ? 'Actualizar' : 'Guardar' }}</button>
+              <button type="button" @click="closeTipoCitaModal" class="btn btn-secondary">Cerrar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -465,6 +502,12 @@ export default {
       // Add properties for local display of date and time
       displayDate: null,
       displayTime: '',
+      // Add properties for Tipo de Cita modal
+      isEditingTipoCita: false,
+      tipoCitaForm: {
+        tipo_cita: '',
+        precio: ''
+      }
     }
   },
   computed: {
@@ -537,6 +580,103 @@ export default {
         console.error('Error fetching tipos citas:', error);
       }
     },
+    // Tipo de Cita methods
+    showCreateTipoCitaForm() {
+      // Hide the cita modal before showing tipo cita modal
+      const citaModalElement = document.getElementById('citaModal');
+      const citaModal = Modal.getInstance(citaModalElement);
+      citaModal.hide();
+
+      // Reset the form
+      this.tipoCitaForm = {
+        tipo_cita: '',
+        precio: ''
+      };
+      
+      // Set editing flag
+      this.isEditingTipoCita = false;
+      
+      // Show the tipo cita modal
+      setTimeout(() => {
+        const modal = new Modal(document.getElementById('tipoCitaModal'));
+        modal.show();
+      }, 500);
+    },
+    
+    editTipoCita(tipoCita) {
+      if (!tipoCita) return;
+      
+      // Hide the cita modal before showing tipo cita modal
+      const citaModalElement = document.getElementById('citaModal');
+      const citaModal = Modal.getInstance(citaModalElement);
+      citaModal.hide();
+
+      // Copy tipo cita data to form
+      this.tipoCitaForm = { 
+        id: tipoCita.id,
+        tipo_cita: tipoCita.tipo_cita,
+        precio: tipoCita.precio
+      };
+      
+      // Set editing flag
+      this.isEditingTipoCita = true;
+      
+      // Show the tipo cita modal
+      setTimeout(() => {
+        const modal = new Modal(document.getElementById('tipoCitaModal'));
+        modal.show();
+      }, 500);
+    },
+    
+    async submitTipoCitaForm() {
+      try {
+        this.loading = true;
+        let response;
+        
+        if (this.isEditingTipoCita) {
+          // Update existing tipo cita
+          response = await axios.put(`/api/tipos-citas/${this.tipoCitaForm.id}`, this.tipoCitaForm);
+        } else {
+          // Create new tipo cita
+          response = await axios.post('/api/tipos-citas', this.tipoCitaForm);
+        }
+        
+        // Close modal and refresh tipos citas
+        this.closeTipoCitaModal();
+        await this.fetchTiposCitas();
+        
+        // If creating new, select the newly created tipo cita
+        if (!this.isEditingTipoCita && response.data && response.data.id) {
+          this.formData.id_tipo_cita = response.data.id;
+        }
+        
+        // Show success message
+        const message = this.isEditingTipoCita 
+          ? 'Tipo de Cita actualizado con éxito' 
+          : 'Tipo de Cita creado con éxito';
+        this.showAlert(message);
+        
+      } catch (error) {
+        console.error('Error saving tipo cita:', error);
+        this.showAlert('Error al guardar el tipo de cita');
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    closeTipoCitaModal() {
+      const modal = Modal.getInstance(document.getElementById('tipoCitaModal'));
+      if (modal) {
+        modal.hide();
+      }
+      
+      // Reopen the cita modal
+      setTimeout(() => {
+        const citaModal = new Modal(document.getElementById('citaModal'));
+        citaModal.show();
+      }, 500);
+    },
+    
     async saveCita() {
       // Reset validation errors
       this.formValidationErrors = [];
