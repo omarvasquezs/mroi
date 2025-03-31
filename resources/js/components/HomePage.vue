@@ -77,6 +77,12 @@ export default {
                     ]
                 },
                 {
+                    title: 'Atención Médica',
+                    items: [
+                        { name: 'Intervenciones Quirúrgicas', icon: 'fas fa-syringe', url: '' }
+                    ]
+                },
+                {
                     title: 'Servicios Recibidos',
                     items: [
                         { name: 'Proveedores', icon: 'fas fa-truck', url: '' },
@@ -102,20 +108,12 @@ export default {
                 { type: 'link', label: 'Registro Proveedores', icon: 'fas fa-truck', url: '/proveedores', condition: 'Servicios Recibidos|Proveedores' },
                 { type: 'link', label: 'Gestionar Marcas', icon: 'fas fa-tag', url: '/marcas', condition: 'Servicios Recibidos|Proveedores' }, // New menu item for Marcas
                 { type: 'link', label: 'Equipos de optometría', icon: 'fas fa-tools', url: '/equipos-de-optometria', condition: 'Servicios Recibidos|Inventario' },
-                { type: 'link', label: 'HC Ambulatoria', icon: 'fas fa-notes-medical', url: '/hc-ambulatoria', condition: 'Atención Médica|Historia Clínica' },
                 { type: 'link', label: 'Registro de Intervenciones', icon: 'fas fa-syringe', url: '/registro-intervenciones', condition: 'Atención Médica|Intervenciones Quirúrgicas' },
-                { type: 'link', label: 'Tipo de Intervención', icon: 'fas fa-syringe', url: '/tipo-intervencion', condition: 'Atención Médica|Intervenciones Quirúrgicas' },
-                { type: 'link', label: 'Quirófanos', icon: 'fas fa-procedures', url: '/quirofanos', condition: 'Atención Médica|Intervenciones Quirúrgicas' },
-                { type: 'link', label: 'Separación Quirófanos', icon: 'fas fa-procedures', url: '/separacion-quirofanos', condition: 'Atención Médica|Intervenciones Quirúrgicas' },
-                { type: 'link', label: 'Disponibilidad Quirófanos', icon: 'fas fa-procedures', url: '/disponibilidad-quirofanos', condition: 'Atención Médica|Intervenciones Quirúrgicas' },
-                { type: 'link', label: 'Consulta de Programación', icon: 'fas fa-calendar-check', url: '/consulta-programacion', condition: 'Atención Médica|Intervenciones Quirúrgicas' },
-                { type: 'link', label: 'Enfermeras', icon: 'fas fa-user-nurse', url: '/enfermeras', condition: 'Atención Médica|Enfermería' },
-                { type: 'link', label: 'Turnos de Enfermería', icon: 'fas fa-calendar-alt', url: '/turnos-enfermeria', condition: 'Atención Médica|Enfermería' },
-                { type: 'link', label: 'HC Enfermería', icon: 'fas fa-notes-medical', url: '/hc-enfermeria', condition: 'Atención Médica|Enfermería' },
-                { type: 'link', label: 'Monitor Enfermería', icon: 'fas fa-desktop', url: '/monitor-enfermeria', condition: 'Atención Médica|Enfermería' },
+                { type: 'link', label: 'Tipo de Intervención', icon: 'fas fa-list-ul', url: '/tipo-intervencion', condition: 'Atención Médica|Intervenciones Quirúrgicas' },
                 { type: 'link', label: 'Registro de Examenes', icon: 'fas fa-vials', url: '/registro-examenes', condition: 'Examenes|Laboratorio' },
                 { type: 'link', label: 'Registro de Citas', icon: 'fas fa-stethoscope', url: '/registro-citas', condition: 'Atención Hospitalaria|Registro de Citas' },
                 { type: 'link', label: 'Gestionar Caja', icon: 'fas fa-cash-register', url: '/caja', condition: 'Servicios Contables|Caja' },
+                { type: 'link', label: 'Deudores', icon: 'fas fa-hand-holding-usd', url: '/consulta-programacion', condition: 'Servicios Contables|Caja' },
                 { type: 'link', label: 'Movimientos', icon: 'fas fa-receipt', url: '/facturacion', condition: 'Servicios Contables|Facturación' },
                 { 
                     type: 'link', 
