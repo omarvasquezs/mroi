@@ -13,6 +13,8 @@ use App\Http\Controllers\MetodoPagoController;
 use App\Http\Controllers\ProductoComprobanteController;
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\IntervencionController;
+use App\Http\Controllers\TipoIntervencionController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -42,7 +44,18 @@ Route::get('citas/{id}', [CitaController::class, 'show']);
 Route::put('citas/{id}', [CitaController::class, 'update']);
 Route::delete('citas/{id}', [CitaController::class, 'destroy']);
 
+// Routes for intervention management
+Route::get('intervenciones/check', [IntervencionController::class, 'checkIntervencion']);
+Route::get('intervenciones/availability', [IntervencionController::class, 'checkAvailability']);
+Route::post('intervenciones/validate-conflict', [IntervencionController::class, 'validateConflict']);
+Route::get('intervenciones', [IntervencionController::class, 'getIntervencionesByMedicoAndFecha']);
+Route::post('intervenciones', [IntervencionController::class, 'store']);
+Route::get('intervenciones/{id}', [IntervencionController::class, 'show']);
+Route::put('intervenciones/{id}', [IntervencionController::class, 'update']);
+Route::delete('intervenciones/{id}', [IntervencionController::class, 'destroy']);
+
 Route::get('/tipos-citas-list', [TipoCitaController::class, 'getAllTipoCitas']);
+Route::get('/tipos-intervenciones-list', [TipoIntervencionController::class, 'getAllTiposIntervenciones']);
 
 Route::get('/pacientes/search/{term}', [PacienteController::class, 'search']);
 Route::post('/comprobantes', [ComprobanteController::class, 'store']);
@@ -53,6 +66,7 @@ Route::apiResource('pacientes', PacienteController::class);
 Route::apiResource('medicos', MedicoController::class);
 Route::apiResource('stock', StockController::class);
 Route::apiResource('tipos-citas', TipoCitaController::class);
+Route::apiResource('tipos-intervenciones', TipoIntervencionController::class);
 Route::apiResource('metodos-pago', MetodoPagoController::class);
 Route::apiResource('productos-comprobante', ProductoComprobanteController::class);
 Route::apiResource('proveedores', ProveedorController::class);

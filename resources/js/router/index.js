@@ -34,6 +34,11 @@ const routes = [
         component: () => import("../components/RegistroCitasCrud.vue"),
     },
     {
+        path: "/registro-intervenciones",
+        name: "RegistroIntervenciones",
+        component: () => import("../components/RegistroIntervencionesCrud.vue"),
+    },
+    {
         path: "/control-stock",
         name: "ControlStock",
         component: () => import("../components/ControlStockCrud.vue"),
@@ -47,6 +52,11 @@ const routes = [
         path: "/tipos-citas",
         name: "TiposCitas",
         component: () => import("../components/TiposCitasCrud.vue"),
+    },
+    {
+        path: "/tipo-intervencion",
+        name: "TiposIntervenciones",
+        component: () => import("../components/TiposIntervencionCrud.vue"),
     },
     {
         path: '/caja',
