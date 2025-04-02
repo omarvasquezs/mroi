@@ -50,10 +50,12 @@
               v-for="(intervencion, index) in intervenciones" 
               :key="index"
               class="time-slot-row"
-              :class="{ 'selected-row': isRowSelected(index), 'has-intervention': hasIntervention(intervencion) }"
-              @mousedown="startDragSelection(index)"
+              :class="{ 
+                'selected-row': isRowSelected(index),
+                'has-intervention': hasIntervention(intervencion)
+              }"
+              @mousedown="startDragSelection($event, index)"
               @mouseover="updateDragSelection(index)"
-              @mouseup="endDragSelection()"
             >
               <td>{{ index + 1 }}</td>
               <td>{{ intervencion.hora }}</td>
@@ -109,10 +111,15 @@ export default {
       
       // Drag selection properties
       isDragging: false,
-      dragStartIndex: null,
-      dragEndIndex: null,
+      isMouseDown: false,
+      startRowIndex: null,
+      currentRowIndex: null,
       selectedTimeStart: '',
-      selectedTimeEnd: ''
+      selectedTimeEnd: '',
+      
+      // Drag and drop properties
+      draggedRowIndex: null,
+      dragOverRowIndex: null
     };
   },
   watch: {
@@ -128,12 +135,8 @@ export default {
     this.fetchMedicos();
     this.generateIntervenciones();
     
-    // Add mouse up listener for cases when the mouse is released outside the table
+    // Add mouse up listener to document
     document.addEventListener('mouseup', this.endDragSelection);
-  },
-  beforeUnmount() {
-    // Clean up event listener
-    document.removeEventListener('mouseup', this.endDragSelection);
   },
   methods: {
     goBack() {
@@ -244,41 +247,46 @@ export default {
     },
     
     // Drag selection methods
-    startDragSelection(index) {
+    startDragSelection(event, index) {
+      // Prevent text selection
+      event.preventDefault();
+      
+      this.isMouseDown = true;
+      this.startRowIndex = index;
+      this.currentRowIndex = index;
       this.isDragging = true;
-      this.dragStartIndex = index;
-      this.dragEndIndex = index;
+      
+      // Clear any existing selection first
+      this.clearSelection();
+      
+      // Set initial time range
       this.selectedTimeStart = this.intervenciones[index].hora;
       this.selectedTimeEnd = this.intervenciones[index].hora;
     },
     
     updateDragSelection(index) {
-      if (!this.isDragging) return;
+      if (!this.isMouseDown) return;
       
-      // Update the end of the selection
-      this.dragEndIndex = index;
+      this.currentRowIndex = index;
       this.selectedTimeEnd = this.intervenciones[index].hora;
     },
     
     endDragSelection() {
-      if (!this.isDragging) return;
-      
-      // Sort the indices to handle selection in both directions
-      const [startIndex, endIndex] = [this.dragStartIndex, this.dragEndIndex].sort((a, b) => a - b);
-      
-      // Update the selected time range
-      this.selectedTimeStart = this.intervenciones[startIndex].hora;
-      this.selectedTimeEnd = this.intervenciones[endIndex].hora;
-      
-      // Keep isDragging true to show the controls but prevent further updates
-      // The selection can only be cancelled or confirmed by the user
+      this.isMouseDown = false;
+    },
+    
+    clearSelection() {
+      this.selectedTimeStart = '';
+      this.selectedTimeEnd = '';
     },
     
     isRowSelected(index) {
-      if (!this.isDragging) return false;
+      if (!this.isMouseDown && !this.isDragging) return false;
       
-      const [startIndex, endIndex] = [this.dragStartIndex, this.dragEndIndex].sort((a, b) => a - b);
-      return index >= startIndex && index <= endIndex;
+      const start = Math.min(this.startRowIndex, this.currentRowIndex);
+      const end = Math.max(this.startRowIndex, this.currentRowIndex);
+      
+      return index >= start && index <= end;
     },
     
     hasIntervention(intervencion) {
@@ -309,6 +317,74 @@ export default {
       
       // Reset the selection state
       this.isDragging = false;
+    },
+    
+    // Row dragging methods
+    handleDragStart(event, index) {
+      this.draggedRowIndex = index;
+      this.dragOverRowIndex = null;
+      
+      // Set data for the drag operation
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', index);
+      
+      // Add a class to the dragged row for styling
+      setTimeout(() => {
+        event.target.classList.add('dragging');
+      }, 0);
+    },
+    
+    handleDragOver(event, index) {
+      // Allow the drop
+      event.preventDefault();
+      return false;
+    },
+    
+    handleDragEnter(event, index) {
+      // Highlight the row being dragged over
+      this.dragOverRowIndex = index;
+      event.target.closest('tr').classList.add('drag-over');
+    },
+    
+    handleDragLeave(event) {
+      // Remove highlight from the row
+      const row = event.target.closest('tr');
+      if (row) row.classList.remove('drag-over');
+    },
+    
+    handleDrop(event, index) {
+      // Remove highlight from the row
+      const row = event.target.closest('tr');
+      if (row) row.classList.remove('drag-over');
+      
+      // Don't do anything if dropped on the same row
+      if (this.draggedRowIndex === index) {
+        return;
+      }
+      
+      // Get the data from the drag operation
+      const fromIndex = this.draggedRowIndex;
+      const toIndex = index;
+      
+      // Reorder the rows
+      const item = this.intervenciones[fromIndex];
+      this.intervenciones.splice(fromIndex, 1);
+      this.intervenciones.splice(toIndex, 0, item);
+      
+      // Reset drag state
+      this.draggedRowIndex = null;
+      this.dragOverRowIndex = null;
+    },
+    
+    handleDragEnd() {
+      // Reset drag state
+      this.draggedRowIndex = null;
+      this.dragOverRowIndex = null;
+      
+      // Remove all drag classes from rows
+      document.querySelectorAll('.time-slot-row').forEach(row => {
+        row.classList.remove('dragging', 'drag-over');
+      });
     }
   }
 };
@@ -331,6 +407,7 @@ export default {
   margin-bottom: 1rem;
   max-height: 500px;
   overflow-y: auto;
+  user-select: none; /* Prevent text selection */
 }
 
 .excel-table {
@@ -347,6 +424,10 @@ export default {
 .time-slot-row {
   cursor: pointer;
   transition: background-color 0.2s;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .time-slot-row:hover {
@@ -354,7 +435,7 @@ export default {
 }
 
 .time-slot-row.selected-row {
-  background-color: #cfe2ff !important;
+  background-color: #99ccff !important;
 }
 
 .time-slot-row.has-intervention {
@@ -380,5 +461,33 @@ export default {
   justify-content: center;
   gap: 10px;
   border: 1px solid #dee2e6;
+}
+
+/* Global style added to document when dragging */
+:global(.dragging-in-progress) {
+  cursor: grabbing !important;
+}
+
+:global(.dragging-in-progress *) {
+  cursor: grabbing !important;
+}
+
+:global(.dragging-in-progress .time-slot-row) {
+  transition: background-color 0.1s ease;
+}
+
+/* Drag and drop styling */
+.time-slot-row.dragging {
+  opacity: 0.7;
+  background-color: #cfe2ff !important;
+  cursor: grabbing;
+}
+
+.time-slot-row.drag-over {
+  border-top: 3px solid #0d6efd;
+}
+
+.time-slot-row.drag-over td {
+  background-color: #e8f0fe;
 }
 </style>
