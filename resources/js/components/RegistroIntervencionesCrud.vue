@@ -34,7 +34,7 @@
       </div>
     </div>
     <div class="col-lg-9 col-md-12">
-      <div class="table-responsive table-wrapper">
+      <div class="table-responsive table-wrapper" ref="tableWrapper">
         <table class="table table-bordered table-hover excel-table">
           <thead class="table-header">
             <tr>
@@ -55,7 +55,7 @@
                 'has-intervention': hasIntervention(intervencion)
               }"
               @mousedown="startDragSelection($event, index)"
-              @mouseover="updateDragSelection(index)"
+              @mouseover="handleMouseOver($event, index)"
             >
               <td>{{ index + 1 }}</td>
               <td>{{ intervencion.hora }}</td>
@@ -119,7 +119,10 @@ export default {
       
       // Drag and drop properties
       draggedRowIndex: null,
-      dragOverRowIndex: null
+      dragOverRowIndex: null,
+      scrollInterval: null,
+      autoScrollSpeed: 5,
+      autoScrollThreshold: 80,
     };
   },
   watch: {
@@ -135,8 +138,20 @@ export default {
     this.fetchMedicos();
     this.generateIntervenciones();
     
-    // Add mouse up listener to document
+    // Add event listeners to document
     document.addEventListener('mouseup', this.endDragSelection);
+    document.addEventListener('mousemove', this.handleMouseMove);
+
+    // Force an update after component is mounted to ensure styles are applied
+    this.$nextTick(() => {
+      this.$forceUpdate();
+    });
+  },
+  beforeUnmount() {
+    // Clean up event listeners when component is unmounted
+    document.removeEventListener('mouseup', this.endDragSelection);
+    document.removeEventListener('mousemove', this.handleMouseMove);
+    this.clearAutoScrollInterval();
   },
   methods: {
     goBack() {
@@ -247,13 +262,22 @@ export default {
       });
     },
     
-    // Drag selection methods
+    // Modified clearSelection to properly reset all selection state
     clearSelection() {
-      // Reset selection states
       this.selectedTimeStart = '';
       this.selectedTimeEnd = '';
+      this.clearAutoScrollInterval();
     },
     
+    // Clear auto-scroll interval
+    clearAutoScrollInterval() {
+      if (this.scrollInterval) {
+        clearInterval(this.scrollInterval);
+        this.scrollInterval = null;
+      }
+    },
+    
+    // Improved drag selection start
     startDragSelection(event, index) {
       // Prevent text selection
       event.preventDefault();
@@ -270,51 +294,119 @@ export default {
       this.selectedTimeStart = this.intervenciones[index].hora;
       this.selectedTimeEnd = this.intervenciones[index].hora;
       
-      // Add event listeners to the document for mousemove and mouseup events
-      document.addEventListener('mousemove', this.handleMouseMove);
+      document.body.classList.add('dragging-in-progress');
     },
     
-    handleMouseMove(event) {
-      if (!this.isMouseDown) return;
-      
-      const tableWrapper = document.querySelector('.table-wrapper');
-      if (!tableWrapper) return;
-      
-      const tableRect = tableWrapper.getBoundingClientRect();
-      
-      // Auto-scroll functionality
-      if (event.clientY < tableRect.top + 50) {
-        // Near top edge - scroll up
-        tableWrapper.scrollTop -= 10;
-      } else if (event.clientY > tableRect.bottom - 50) {
-        // Near bottom edge - scroll down
-        tableWrapper.scrollTop += 10;
-      }
-    },
-    
-    updateDragSelection(index, event) {
+    // Handle mouse over during drag
+    handleMouseOver(event, index) {
       if (!this.isMouseDown) return;
       
       this.currentRowIndex = index;
-      this.selectedTimeEnd = this.intervenciones[index].hora;
+      
+      // Update the end time based on the current row
+      if (this.startRowIndex <= this.currentRowIndex) {
+        // Dragging downward
+        this.selectedTimeEnd = this.intervenciones[index].hora;
+      } else {
+        // Dragging upward
+        this.selectedTimeStart = this.intervenciones[index].hora;
+        this.selectedTimeEnd = this.intervenciones[this.startRowIndex].hora;
+      }
       
       // Force Vue to re-render the selection
       this.$forceUpdate();
     },
     
+    // Improved mouse move handler for smooth scrolling
+    handleMouseMove(event) {
+      if (!this.isMouseDown) return;
+      
+      // Get reference to table wrapper
+      const tableWrapper = this.$refs.tableWrapper;
+      if (!tableWrapper) return;
+      
+      const rect = tableWrapper.getBoundingClientRect();
+      
+      // Check if we need to auto-scroll
+      if (event.clientY < rect.top + this.autoScrollThreshold) {
+        // Near top - scroll up
+        this.startAutoScroll('up', Math.max(1, (rect.top + this.autoScrollThreshold - event.clientY) / 10));
+      } else if (event.clientY > rect.bottom - this.autoScrollThreshold) {
+        // Near bottom - scroll down
+        this.startAutoScroll('down', Math.max(1, (event.clientY - (rect.bottom - this.autoScrollThreshold)) / 10));
+      } else {
+        // Not near edges - stop scrolling
+        this.clearAutoScrollInterval();
+      }
+    },
+    
+    // Start auto-scrolling in a direction with dynamic speed
+    startAutoScroll(direction, speed) {
+      // Clear any existing interval first
+      this.clearAutoScrollInterval();
+      
+      const tableWrapper = this.$refs.tableWrapper;
+      if (!tableWrapper) return;
+      
+      // Calculate scroll step based on speed (faster near edges)
+      const scrollStep = Math.min(15, Math.max(3, speed * this.autoScrollSpeed));
+      
+      this.scrollInterval = setInterval(() => {
+        if (direction === 'up') {
+          tableWrapper.scrollTop -= scrollStep;
+          
+          // Find the row at the top of the visible area
+          const rows = tableWrapper.querySelectorAll('tr.time-slot-row');
+          for (let i = 0; i < rows.length; i++) {
+            const rowRect = rows[i].getBoundingClientRect();
+            const rect = tableWrapper.getBoundingClientRect(); // Define rect here
+            if (rowRect.top >= rect.top) {
+              // This row is at or below the top of the viewport
+              this.handleMouseOver(null, i);
+              break;
+            }
+          }
+        } else {
+          tableWrapper.scrollTop += scrollStep;
+          
+          // Find the row at the bottom of the visible area
+          const rows = tableWrapper.querySelectorAll('tr.time-slot-row');
+          for (let i = rows.length - 1; i >= 0; i--) {
+            const rowRect = rows[i].getBoundingClientRect();
+            const rect = tableWrapper.getBoundingClientRect(); // Define rect here
+            if (rowRect.bottom <= rect.bottom) {
+              // This row is at or above the bottom of the viewport
+              this.handleMouseOver(null, i);
+              break;
+            }
+          }
+        }
+      }, 16); // ~60fps for smooth scrolling
+    },
+    
+    // Improved end drag selection
     endDragSelection() {
       if (this.isMouseDown) {
         this.isMouseDown = false;
-        // Remove the mousemove event listener
-        document.removeEventListener('mousemove', this.handleMouseMove);
+        this.clearAutoScrollInterval();
+        document.body.classList.remove('dragging-in-progress');
         
         // Keep isDragging true to maintain the selection visible
+        // Only if we have an actual selection (not just clicking on a single cell)
         if (this.startRowIndex !== this.currentRowIndex) {
           this.isDragging = true;
+          
+          // Ensure the time range is correctly ordered
+          const start = Math.min(this.startRowIndex, this.currentRowIndex);
+          const end = Math.max(this.startRowIndex, this.currentRowIndex);
+          
+          this.selectedTimeStart = this.intervenciones[start].hora;
+          this.selectedTimeEnd = this.intervenciones[end].hora;
         }
       }
     },
     
+    // Improved row selection check
     isRowSelected(index) {
       if (!this.isDragging && !this.isMouseDown) return false;
       
@@ -437,73 +529,52 @@ export default {
   overflow: hidden;
 }
 
+/* Improve the visibility of selected rows */
+.time-slot-row.selected-row {
+  background-color: #99ccff !important;
+  border: 1px solid #66a3ff !important;
+  outline: 1px solid #3385ff;
+  position: relative;
+  z-index: 2;
+}
+
+.time-slot-row.selected-row td {
+  background-color: #99ccff !important;
+}
+
+/* Make the table wrapper have a fixed height for proper scrolling */
 .table-wrapper {
   position: relative;
   margin-bottom: 1rem;
   max-height: 500px;
+  height: 500px; /* Fixed height for predictable scrolling */
   overflow-y: auto;
+  overflow-x: hidden;
   user-select: none; /* Prevent text selection */
+  scrollbar-width: thin;
+  scrollbar-color: #ddd #f5f5f5;
 }
 
-.excel-table {
-  font-size: 0.9rem;
+.table-wrapper::-webkit-scrollbar {
+  width: 8px;
 }
 
-.excel-table th {
-  background-color: #f0f0f0;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+.table-wrapper::-webkit-scrollbar-track {
+  background: #f5f5f5;
 }
 
-.time-slot-row {
-  cursor: pointer;
-  transition: background-color 0.2s;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
+.table-wrapper::-webkit-scrollbar-thumb {
+  background-color: #ddd;
+  border-radius: 10px;
+  border: 2px solid #f5f5f5;
 }
 
-.time-slot-row:hover {
-  background-color: #f8f9fa;
-}
-
-.time-slot-row.selected-row {
-  background-color: #99ccff !important;
-}
-
-.time-slot-row.has-intervention {
-  background-color: #e2f0d9;
-}
-
-.time-slot-row.has-intervention.selected-row {
-  background-color: #9fc5e8 !important;
-}
-
-.selection-controls-bar {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #ffffff;
-  padding: 12px 20px;
-  border-radius: 30px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  border: 1px solid #dee2e6;
-}
-
-/* Global style added to document when dragging */
-:global(.dragging-in-progress) {
+/* Change cursor to indicate dragging is in progress */
+body.dragging-in-progress {
   cursor: grabbing !important;
 }
 
-:global(.dragging-in-progress *) {
+body.dragging-in-progress * {
   cursor: grabbing !important;
 }
 
@@ -524,5 +595,22 @@ export default {
 
 .time-slot-row.drag-over td {
   background-color: #e8f0fe;
+}
+
+.selection-controls-bar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid #dee2e6;
 }
 </style>
