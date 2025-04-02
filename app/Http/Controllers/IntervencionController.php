@@ -16,18 +16,18 @@ class IntervencionController extends Controller
             'num_historia' => 'required|exists:pacientes,num_historia',
             'id_medico' => 'required|exists:medicos,id',
             'fecha' => 'required|date',
-            'hora' => 'required',
+            'hora_inicio' => 'required',
+            'hora_fin' => 'required',
             'observaciones' => 'nullable|string',
             'id_tipo_intervencion' => 'required|exists:tipos_intervenciones,id'
         ]);
 
-        // Combine date and time
-        $fechaHora = date('Y-m-d H:i:s', strtotime($validated['fecha'] . ' ' . $validated['hora']));
-
         $intervencion = Intervencion::create([
             'num_historia' => $validated['num_historia'],
             'id_medico' => $validated['id_medico'],
-            'fecha' => $fechaHora,
+            'fecha' => $validated['fecha'],
+            'hora_inicio' => $validated['hora_inicio'],
+            'hora_fin' => $validated['hora_fin'],
             'observaciones' => $validated['observaciones'],
             'id_tipo_intervencion' => $validated['id_tipo_intervencion']
         ]);
@@ -59,22 +59,11 @@ class IntervencionController extends Controller
                 'num_historia',
                 'id_medico',
                 'fecha',
+                'hora_inicio',
+                'hora_fin',
                 'observaciones',
                 'id_tipo_intervencion'
             ]);
-
-        // Transform the data to ensure we have the time in the right format
-        $intervenciones = $intervenciones->map(function ($intervencion) {
-            return [
-                'id' => $intervencion->id,
-                'num_historia' => $intervencion->num_historia,
-                'fecha' => $intervencion->fecha,
-                'hora' => date('H:i:s', strtotime($intervencion->fecha)),
-                'observaciones' => $intervencion->observaciones,
-                'paciente' => $intervencion->paciente,
-                'tipoIntervencion' => $intervencion->tipoIntervencion
-            ];
-        });
 
         return response()->json($intervenciones);
     }
@@ -96,7 +85,11 @@ class IntervencionController extends Controller
 
         $intervencion = Intervencion::where('id_medico', $medicoId)
             ->whereDate('fecha', $fecha)
-            ->whereTime('fecha', $hora)
+            ->where(function ($query) use ($hora) {
+                // Find interventions where the given time falls within the range
+                $query->whereTime('hora_inicio', '<=', $hora)
+                      ->whereTime('hora_fin', '>', $hora);
+            })
             ->with(['paciente', 'tipoIntervencion'])
             ->first();
 
@@ -108,21 +101,23 @@ class IntervencionController extends Controller
         $validated = $request->validate([
             'id_medico' => 'required|exists:medicos,id',
             'fecha' => 'required|date',
-            'hora' => 'required',
+            'hora_inicio' => 'required',
+            'hora_fin' => 'required',
             'observaciones' => 'nullable|string',
-            'num_historia' => 'required|exists:pacientes,num_historia'
+            'num_historia' => 'required|exists:pacientes,num_historia',
+            'id_tipo_intervencion' => 'required|exists:tipos_intervenciones,id'
         ]);
 
         $intervencion = Intervencion::findOrFail($id);
 
-        // Combine date and time
-        $fechaHora = date('Y-m-d H:i:s', strtotime($validated['fecha'] . ' ' . $validated['hora']));
-
         $intervencion->update([
             'id_medico' => $validated['id_medico'],
-            'fecha' => $fechaHora,
+            'fecha' => $validated['fecha'],
+            'hora_inicio' => $validated['hora_inicio'],
+            'hora_fin' => $validated['hora_fin'],
             'observaciones' => $validated['observaciones'],
-            'num_historia' => $validated['num_historia']
+            'num_historia' => $validated['num_historia'],
+            'id_tipo_intervencion' => $validated['id_tipo_intervencion']
         ]);
 
         // Refresh the intervencion with all relationships
@@ -143,28 +138,39 @@ class IntervencionController extends Controller
         // Get all interventions for the selected doctor and date
         $intervenciones = Intervencion::where('id_medico', $medicoId)
             ->whereDate('fecha', $fecha)
-            ->get(['id', 'fecha']);
+            ->get(['id', 'hora_inicio', 'hora_fin']);
 
-        // Convert to a list of occupied time slots (hours)
-        $occupiedSlots = $intervenciones->map(function ($intervencion) {
-            return date('H:i', strtotime($intervencion->fecha));
-        });
-
-        // Get working hours (8:00 to 19:00 with 30 minute intervals)
+        // Get working hours (8:00 to 19:00 with 15 minute intervals)
         $workingHours = [];
         $startHour = 8;
         $endHour = 19;
 
+        // Generate all possible time slots
         for ($hour = $startHour; $hour < $endHour; $hour++) {
             $formattedHour = str_pad($hour, 2, '0', STR_PAD_LEFT);
-            $workingHours[] = [
-                'time' => "$formattedHour:00",
-                'available' => !$occupiedSlots->contains("$formattedHour:00")
-            ];
-            $workingHours[] = [
-                'time' => "$formattedHour:30",
-                'available' => !$occupiedSlots->contains("$formattedHour:30")
-            ];
+            
+            // Generate slots at 00, 15, 30, and 45 minutes past the hour
+            foreach ([0, 15, 30, 45] as $minute) {
+                $formattedMinute = str_pad($minute, 2, '0', STR_PAD_LEFT);
+                $timeSlot = "$formattedHour:$formattedMinute";
+                
+                // Check if this time slot is available
+                $isAvailable = true;
+                foreach ($intervenciones as $intervencion) {
+                    $startTime = substr($intervencion->hora_inicio, 0, 5); // Format HH:MM
+                    $endTime = substr($intervencion->hora_fin, 0, 5); // Format HH:MM
+                    
+                    if ($timeSlot >= $startTime && $timeSlot < $endTime) {
+                        $isAvailable = false;
+                        break;
+                    }
+                }
+                
+                $workingHours[] = [
+                    'time' => $timeSlot,
+                    'available' => $isAvailable
+                ];
+            }
         }
 
         return response()->json([
@@ -179,25 +185,41 @@ class IntervencionController extends Controller
             'num_historia' => 'required|exists:pacientes,num_historia',
             'id_medico' => 'required|exists:medicos,id',
             'fecha' => 'required|date',
-            'hora' => 'required',
+            'hora_inicio' => 'required',
+            'hora_fin' => 'required',
             'current_intervencion_id' => 'nullable|integer'
         ]);
 
-        // Check if this doctor is available at this time
+        // Check if this doctor has any conflicting interventions at this time range
         $query = Intervencion::where('id_medico', $validated['id_medico'])
             ->whereDate('fecha', $validated['fecha'])
-            ->whereTime('fecha', $validated['hora']);
+            ->where(function ($query) use ($validated) {
+                // Check for time range overlap
+                $query->where(function ($q) use ($validated) {
+                    // New intervention starts during an existing one
+                    $q->where('hora_inicio', '<=', $validated['hora_inicio'])
+                      ->where('hora_fin', '>', $validated['hora_inicio']);
+                })->orWhere(function ($q) use ($validated) {
+                    // New intervention ends during an existing one
+                    $q->where('hora_inicio', '<', $validated['hora_fin'])
+                      ->where('hora_fin', '>=', $validated['hora_fin']);
+                })->orWhere(function ($q) use ($validated) {
+                    // New intervention completely contains an existing one
+                    $q->where('hora_inicio', '>=', $validated['hora_inicio'])
+                      ->where('hora_fin', '<=', $validated['hora_fin']);
+                });
+            });
 
         // If rescheduling, exclude the current intervention from the check
         if (isset($validated['current_intervencion_id'])) {
             $query->where('id', '!=', $validated['current_intervencion_id']);
         }
 
-        $doctorIntervencion = $query->first();
+        $conflictIntervencion = $query->first();
 
-        if ($doctorIntervencion) {
+        if ($conflictIntervencion) {
             return response()->json([
-                'message' => 'El médico ya tiene una intervención programada a esta hora.'
+                'message' => 'El médico ya tiene una intervención programada en este rango de tiempo.'
             ], 422);
         }
 

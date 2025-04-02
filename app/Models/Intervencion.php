@@ -13,16 +13,38 @@ class Intervencion extends Model
         'num_historia',
         'id_medico',
         'id_tipo_intervencion',
-        'fecha',
+        'fecha_hora_inicio',
+        'fecha_hora_fin',
+        'duracion_minutos',
         'estado',
         'observaciones'
     ];
 
     protected $casts = [
-        'fecha' => 'datetime',
+        'fecha_hora_inicio' => 'datetime',
+        'fecha_hora_fin' => 'datetime',
+        'duracion_minutos' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime'
     ];
+
+    // Accessor to get fecha (date only) for backward compatibility
+    public function getFechaAttribute()
+    {
+        return $this->fecha_hora_inicio ? $this->fecha_hora_inicio->toDateString() : null;
+    }
+
+    // Accessor to get hora_inicio (time only) for backward compatibility
+    public function getHoraInicioAttribute()
+    {
+        return $this->fecha_hora_inicio ? $this->fecha_hora_inicio->format('H:i') : null;
+    }
+
+    // Accessor to get hora_fin (time only)
+    public function getHoraFinAttribute()
+    {
+        return $this->fecha_hora_fin ? $this->fecha_hora_fin->format('H:i') : null;
+    }
 
     public function paciente(): BelongsTo
     {

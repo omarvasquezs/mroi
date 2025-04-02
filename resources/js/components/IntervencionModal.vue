@@ -30,7 +30,7 @@
             </div>
             <div class="row mb-3">
               <div class="col-md-3"><strong>Hora:</strong></div>
-              <div class="col-md-9">{{ formattedTime }}</div>
+              <div class="col-md-9">{{ formattedTimeRange }}</div>
             </div>
             <div class="row mb-3">
               <div class="col-md-3"><strong>Observaciones:</strong></div>
@@ -60,8 +60,11 @@
                       {{ paciente.nombre }}
                     </option>
                   </select>
-                  <button @click="editPaciente(pacientes.find(p => p.num_historia === form.num_historia))" 
-                    class="btn btn-success ms-2" v-if="form.num_historia" type="button">
+                  <button 
+                    @click="editPaciente(pacientes.find(p => p.num_historia === form.num_historia))" 
+                    class="btn btn-success ms-2" 
+                    v-if="form.num_historia && pacientes.find(p => p.num_historia === form.num_historia)" 
+                    type="button">
                     <i class="fas fa-pencil-alt"></i>
                   </button>
                   <button @click="showNewPacienteForm" class="btn btn-primary ms-2" 
@@ -89,6 +92,24 @@
                     <i class="fas fa-plus"></i>
                   </button>
                 </div>
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label"><strong>Fecha:</strong></label>
+                <input type="date" v-model="form.fecha" class="form-control" required :min="minDate">
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label"><strong>Horario:</strong></label>
+                <div class="time-range-display p-3 border rounded bg-light">
+                  {{ timeRangeDisplay || 'No se ha seleccionado un rango de horas' }}
+                  <small class="d-block text-muted mt-1">
+                    Para seleccionar o cambiar el horario, arrastra sobre las franjas horarias en el calendario
+                  </small>
+                </div>
+                <!-- Hidden inputs to store the values -->
+                <input type="hidden" v-model="form.hora_inicio">
+                <input type="hidden" v-model="form.hora_fin">
               </div>
 
               <div class="mb-4">
@@ -341,18 +362,19 @@
 </template>
 
 <script>
-import { Modal } from 'bootstrap';
-import axios from 'axios';
-
 export default {
   props: {
-    selectedDate: {
-      type: Date,
-      required: true
-    },
     selectedTime: {
       type: String,
       default: ''
+    },
+    selectedTimeEnd: {
+      type: String,
+      default: ''
+    },
+    selectedDate: {
+      type: Date,
+      default: null
     },
     selectedMedico: {
       type: [String, Number],
@@ -365,20 +387,21 @@ export default {
     intervencion: {
       type: Object,
       default: null
-    }
+    },
   },
   data() {
     return {
       modal: null,
       loading: false,
-      isRescheduling: false,
       form: {
-        num_historia: '',
+        id: '',
         id_medico: '',
+        num_historia: '',
         fecha: '',
-        hora: '',
-        id_tipo_intervencion: '',
-        observaciones: ''
+        hora_inicio: '',
+        hora_fin: '',
+        observaciones: '',
+        tipo_intervencion_id: ''
       },
       pacientes: [],
       medicos: [],
@@ -387,7 +410,8 @@ export default {
       isSubmitting: false,
       // Add properties for local display of date and time
       displayDate: null,
-      displayTime: '',
+      displayTimeStart: '',
+      displayTimeEnd: '',
       // For tipo intervencion modal
       isEditingTipoIntervencion: false,
       tipoIntervencionForm: {
@@ -419,30 +443,42 @@ export default {
       },
       pacienteFormErrors: [],
       editingPacienteId: null,
-      pacienteModal: null
+      pacienteModal: null,
+      rescheduling: false
     };
   },
   computed: {
     formattedDate() {
-      // Use displayDate if available, otherwise fallback to selectedDate
-      const dateToFormat = this.displayDate || this.selectedDate;
-      return dateToFormat.toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-      }).replace(/ de /g, '/').toUpperCase();
+      if (!this.intervencion || !this.intervencion.fecha) return '';
+      return new Date(this.intervencion.fecha).toLocaleDateString();
     },
-    formattedTime() {
-      // Use displayTime if available, otherwise fallback to selectedTime
-      const timeToFormat = this.displayTime || this.selectedTime;
-      const [hour, minute] = timeToFormat.split(':');
-      const date = new Date();
-      date.setHours(hour, minute);
-      return date.toLocaleTimeString('es-ES', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      }).toUpperCase();
+    formattedTimeRange() {
+      if (!this.intervencion) return '';
+      
+      let horaInicio = this.intervencion.hora_inicio || 
+                       (this.intervencion.fecha ? new Date(this.intervencion.fecha).toLocaleTimeString('es-ES', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        }) : '');
+                        
+      let horaFin = this.intervencion.hora_fin || horaInicio;
+      
+      if (horaInicio === horaFin) {
+        return horaInicio;
+      } else {
+        return `${horaInicio} - ${horaFin}`;
+      }
+    },
+    isRescheduling() {
+      return this.rescheduling;
+    },
+    timeRangeDisplay() {
+      if (this.selectedTime && this.selectedTimeEnd && this.selectedTime !== this.selectedTimeEnd) {
+        return `${this.selectedTime} - ${this.selectedTimeEnd}`;
+      } else if (this.selectedTime) {
+        return this.selectedTime;
+      }
+      return '';
     },
     minDate() {
       const today = new Date();
@@ -451,7 +487,8 @@ export default {
   },
   created() {
     this.displayDate = this.selectedDate;
-    this.displayTime = this.selectedTime;
+    this.displayTimeStart = this.selectedTime;
+    this.displayTimeEnd = this.selectedTimeEnd || this.calculateDefaultEndTime(this.selectedTime);
   },
   mounted() {
     this.fetchPacientes();
@@ -459,229 +496,196 @@ export default {
     this.fetchTiposIntervenciones();
   },
   methods: {
+    async fetchPacientes() {
+      try {
+        const response = await fetch('/api/pacientes-list');
+        if (!response.ok) {
+          throw new Error('Error al cargar los pacientes');
+        }
+        const data = await response.json();
+        this.pacientes = data.map(paciente => ({
+          num_historia: paciente.num_historia,
+          id: paciente.id,
+          nombre: `${paciente.nombres} ${paciente.ap_paterno} ${paciente.ap_materno} (${paciente.doc_identidad})`,
+          ...paciente
+        }));
+      } catch (error) {
+        console.error('Error fetching pacientes:', error);
+      }
+    },
+    
+    async fetchMedicos() {
+      try {
+        const response = await fetch('/api/medicos-list');
+        if (!response.ok) {
+          throw new Error('Error al cargar los médicos');
+        }
+        const data = await response.json();
+        this.medicos = data.map(medico => ({
+          id: medico.id,
+          nombre: `${medico.nombres} ${medico.ap_paterno} ${medico.ap_materno}`
+        }));
+      } catch (error) {
+        console.error('Error fetching medicos:', error);
+      }
+    },
+    
+    async fetchTiposIntervenciones() {
+      try {
+        const response = await fetch('/api/tipos-intervenciones');
+        if (!response.ok) {
+          throw new Error('Error al cargar los tipos de intervenciones');
+        }
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          this.tiposIntervenciones = data.filter(item => item && typeof item === 'object' && item.id != null);
+        } else if (data && typeof data === 'object') {
+          // If data has a data property that's an array
+          if (Array.isArray(data.data)) {
+            this.tiposIntervenciones = data.data.filter(item => item && typeof item === 'object' && item.id != null);
+          } else {
+            // Convert object to array if needed
+            this.tiposIntervenciones = Object.values(data).filter(item => item && typeof item === 'object' && item.id != null);
+          }
+        } else {
+          this.tiposIntervenciones = [];
+          console.error('Unexpected API response format:', data);
+        }
+      } catch (error) {
+        console.error('Error fetching tipos de intervenciones:', error);
+      }
+    },
+    
+    calculateDefaultEndTime(startTime) {
+      if (!startTime) return '';
+      
+      const [hour, minute] = startTime.split(':');
+      if (!hour || !minute) return '';
+      
+      // Add 30 minutes by default to the start time
+      const date = new Date();
+      date.setHours(Number(hour), Number(minute) + 30);
+      
+      return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    },
+    
     openModal() {
       this.loading = true;
+      this.errorMessage = '';
+      this.isSubmitting = false;
+      
+      // Reset form
       this.resetForm();
       
-      if (this.selectedTime) {
-        this.form.hora = this.selectedTime;
-      }
-      
-      if (this.selectedDate) {
-        const year = this.selectedDate.getFullYear();
-        const month = String(this.selectedDate.getMonth() + 1).padStart(2, '0');
-        const day = String(this.selectedDate.getDate()).padStart(2, '0');
-        this.form.fecha = `${year}-${month}-${day}`;
-      }
-      
-      if (this.selectedMedico) {
-        this.form.id_medico = this.selectedMedico;
-      }
-
-      // If an intervention is provided, set it as the current intervention
+      // If we have an intervention, we're viewing/editing, otherwise creating new
       if (this.intervencion) {
-        // Update display date and time
-        if (this.intervencion.fecha) {
-          const fechaObj = new Date(this.intervencion.fecha);
-          this.displayDate = fechaObj;
-          
-          if (this.intervencion.hora) {
-            this.displayTime = this.intervencion.hora.substring(0, 5); // Get HH:mm
-          } else {
-            this.displayTime = fechaObj.toTimeString().substring(0, 5); // Fallback to time from fecha
-          }
-        }
+        this.populateForm();
       } else {
-        this.displayDate = this.selectedDate;
-        this.displayTime = this.selectedTime;
-      }
-
-      if (!this.modal) {
-        this.modal = new Modal(document.getElementById('intervencionModal'));
+        // Set default values from props for new intervention
+        this.form.id_medico = this.selectedMedico;
+        if (this.selectedDate) {
+          this.form.fecha = this.formatDate(this.selectedDate);
+        }
+        this.form.hora_inicio = this.selectedTime;
+        this.form.hora_fin = this.selectedTimeEnd || this.selectedTime;
       }
       
       this.loading = false;
-      this.modal.show();
+      
+      // Open modal using Bootstrap JS
+      const modal = new bootstrap.Modal(document.getElementById('intervencionModal'));
+      modal.show();
     },
-    
-    populateFormWithIntervencion() {
-      const fechaObj = new Date(this.intervencion.fecha);
-      const year = fechaObj.getFullYear();
-      const month = String(fechaObj.getMonth() + 1).padStart(2, '0');
-      const day = String(fechaObj.getDate()).padStart(2, '0');
-      const hours = String(fechaObj.getHours()).padStart(2, '0');
-      const minutes = String(fechaObj.getMinutes()).padStart(2, '0');
-
-      this.form = {
-        num_historia: this.intervencion.num_historia,
-        id_medico: this.intervencion.id_medico,
-        fecha: `${year}-${month}-${day}`,
-        hora: `${hours}:${minutes}`,
-        id_tipo_intervencion: this.intervencion.id_tipo_intervencion,
-        observaciones: this.intervencion.observaciones || ''
-      };
-    },
-    
     resetForm() {
       this.form = {
+        id: '',
+        id_medico: '',
         num_historia: '',
-        id_medico: this.selectedMedico || '',
-        fecha: this.selectedDate ? this.formatDate(this.selectedDate) : '',
-        hora: this.selectedTime || '',
-        id_tipo_intervencion: '',
-        observaciones: ''
+        fecha: '',
+        hora_inicio: '',
+        hora_fin: '',
+        observaciones: '',
+        id_tipo_intervencion: ''
       };
-      this.errorMessage = '';
-      this.isSubmitting = false;
+      this.rescheduling = false;
     },
-    
+    populateForm() {
+      // Populate form with intervention data
+      this.form = {
+        id: this.intervencion.id || '',
+        id_medico: this.intervencion.id_medico || this.selectedMedico || '',
+        num_historia: this.intervencion.num_historia || '',
+        fecha: this.intervencion.fecha ? this.formatDate(new Date(this.intervencion.fecha)) : '',
+        hora_inicio: this.intervencion.hora_inicio || 
+                 (this.intervencion.fecha ? new Date(this.intervencion.fecha).toLocaleTimeString('es-ES', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }) : ''),
+        hora_fin: this.intervencion.hora_fin || this.intervencion.hora_inicio || 
+                 (this.intervencion.fecha ? new Date(this.intervencion.fecha).toLocaleTimeString('es-ES', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }) : ''),
+        observaciones: this.intervencion.observaciones || '',
+        tipo_intervencion_id: this.intervencion.tipo_intervencion_id || ''
+      };
+    },
     formatDate(date) {
+      if (!date) return '';
       const d = new Date(date);
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const day = String(d.getDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
     },
-    
-    async fetchPacientes() {
-      try {
-        const response = await fetch('/api/pacientes-list');
-        const data = await response.json();
-        this.pacientes = Array.isArray(data) ? data.map(p => ({
-          ...p,
-          nombre: this.formatPatientName(p)
-        })) : [];
-      } catch (error) {
-        console.error('Error fetching pacientes:', error);
-        this.pacientes = [];
-      }
-    },
-    
-    formatPatientName(paciente) {
-      if (!paciente) return '';
-      const nombres = paciente.nombres || '';
-      const paterno = paciente.ap_paterno || '';
-      const materno = paciente.ap_materno || '';
-      return `${nombres} ${paterno} ${materno}`.toUpperCase().trim();
-    },
-    
-    async fetchMedicos() {
-      try {
-        const response = await fetch('/api/medicos-list');
-        if (response.ok) {
-          const data = await response.json();
-          this.medicos = Array.isArray(data) ? data : (data.data || []);
-        } else {
-          console.error('Error fetching medicos');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      }
-    },
-    
-    async fetchTiposIntervenciones() {
-      try {
-        const response = await fetch('/api/tipos-intervenciones-list');
-        if (response.ok) {
-          const data = await response.json();
-          this.tiposIntervenciones = data;
-        } else {
-          console.error('Error fetching tipos intervenciones');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      }
-    },
-    
-    async validateConflict() {
-      if (!this.form.num_historia || !this.form.id_medico || !this.form.fecha || !this.form.hora) {
-        return { valid: false, message: 'Por favor complete todos los campos requeridos.' };
-      }
-
-      try {
-        const params = {
-          num_historia: this.form.num_historia,
-          id_medico: this.form.id_medico,
-          fecha: this.form.fecha,
-          hora: this.form.hora
-        };
-
-        if (this.intervencion) {
-          params.current_intervencion_id = this.intervencion.id;
-        }
-
-        const response = await fetch('/api/intervenciones/validate-conflict', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(params)
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          return { valid: false, message: data.message };
-        }
-
-        return { valid: true };
-      } catch (error) {
-        console.error('Error validating conflict:', error);
-        return { valid: false, message: 'Error al validar la disponibilidad. Por favor intente de nuevo.' };
-      }
-    },
-    
     async handleSubmit() {
+      if (!this.form.id_medico) {
+        this.errorMessage = 'Por favor seleccione un médico';
+        return;
+      }
+
       this.isSubmitting = true;
       this.errorMessage = '';
-
+      
       try {
-        const validationResult = await this.validateConflict();
-        if (!validationResult.valid) {
-          this.errorMessage = validationResult.message;
-          this.isSubmitting = false;
-          return;
-        }
-
+        const method = this.form.id ? 'PUT' : 'POST';
+        const url = this.form.id ? `/api/intervenciones/${this.form.id}` : '/api/intervenciones';
+        
+        // Prepare form data for submission
         const formData = {
-          num_historia: this.form.num_historia,
-          id_medico: this.form.id_medico,
-          id_tipo_intervencion: this.form.id_tipo_intervencion,
-          fecha: this.form.fecha,
-          hora: this.form.hora,
-          observaciones: this.form.observaciones
+          ...this.form,
+          // Ensure we send the full date/time for starting and ending times
+          fecha_hora_inicio: `${this.form.fecha} ${this.form.hora_inicio}:00`,
+          fecha_hora_fin: `${this.form.fecha} ${this.form.hora_fin || this.form.hora_inicio}:00`,
         };
-
-        let response;
-        if (this.intervencion) {
-          response = await fetch(`/api/intervenciones/${this.intervencion.id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-          });
-        } else {
-          response = await fetch('/api/intervenciones', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-          });
-        }
-
-        if (response.ok) {
-          this.modal.hide();
-          this.$emit('intervencionCreated');
-          this.resetForm();
-        } else {
+        
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(formData)
+        });
+        
+        if (!response.ok) {
           const errorData = await response.json();
-          this.errorMessage = errorData.message || 'Error al guardar la intervención.';
+          throw new Error(errorData.message || 'Error al guardar la intervención');
         }
+        
+        const data = await response.json();
+        
+        // Close modal
+        const modalElement = document.getElementById('intervencionModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        modalInstance.hide();
+        
+        // Emit event to refresh data
+        this.$emit('intervencionCreated', data);
+        
       } catch (error) {
-        console.error('Error:', error);
-        this.errorMessage = 'Error al procesar la solicitud.';
+        console.error('Error submitting form:', error);
+        this.errorMessage = error.message || 'Ocurrió un error al guardar la intervención';
       } finally {
         this.isSubmitting = false;
       }
@@ -806,7 +810,10 @@ export default {
     
     // Methods for handling patients
     editPaciente(paciente) {
-      if (!paciente) return;
+      if (!paciente) {
+        console.error('No patient found with the specified num_historia');
+        return;
+      }
       
       console.log('Editing patient:', paciente);
       
@@ -1015,5 +1022,41 @@ export default {
 
 .time-slot {
   width: 70px;
+}
+
+/* Styling for calendar view with interventions */
+.calendar-cell {
+  position: relative;
+  height: 40px;
+  border: 1px solid #dee2e6;
+  cursor: pointer;
+}
+
+.calendar-cell.selected {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+.intervention-block {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background-color: #007bff;
+  color: white;
+  font-size: 0.8rem;
+  padding: 2px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  z-index: 1;
+}
+
+.hover-range {
+  background-color: rgba(0, 123, 255, 0.2);
+}
+
+.time-range-display {
+  font-size: 1.1rem;
+  font-weight: bold;
+  text-align: center;
 }
 </style>
