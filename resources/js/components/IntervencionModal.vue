@@ -651,12 +651,13 @@ export default {
         const method = this.form.id ? 'PUT' : 'POST';
         const url = this.form.id ? `/api/intervenciones/${this.form.id}` : '/api/intervenciones';
         
-        // Prepare form data for submission
+        // Prepare form data for submission - using the new field structure
         const formData = {
           ...this.form,
-          // Ensure we send the full date/time for starting and ending times
-          fecha_hora_inicio: `${this.form.fecha} ${this.form.hora_inicio}:00`,
-          fecha_hora_fin: `${this.form.fecha} ${this.form.hora_fin || this.form.hora_inicio}:00`,
+          // Make sure we're sending the correct fields according to the new database structure
+          fecha: this.form.fecha,
+          hora_inicio: this.form.hora_inicio,
+          hora_fin: this.form.hora_fin || this.form.hora_inicio,
         };
         
         const response = await fetch(url, {

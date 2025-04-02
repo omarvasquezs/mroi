@@ -136,6 +136,10 @@ export default {
     document.removeEventListener('mouseup', this.endDragSelection);
   },
   methods: {
+    goBack() {
+      window.history.back();
+    },
+    
     async fetchMedicos() {
       this.loading = true;
       try {
@@ -214,9 +218,14 @@ export default {
       // Reset slots to empty
       this.generateIntervenciones();
       
+      console.log('Received intervenciones:', intervenciones);
+      
       // Map each intervention to its corresponding time slot
       intervenciones.forEach(intervencion => {
-        const time = this.extractTime(intervencion.fecha_hora_inicio);
+        // Use hora_inicio directly instead of extracting from fecha_hora_inicio
+        const time = intervencion.hora_inicio;
+        console.log(`Processing intervención with time: ${time}`, intervencion);
+        
         const slot = this.intervenciones.find(i => i.hora === time);
         
         if (slot) {
@@ -228,14 +237,10 @@ export default {
           slot.tipo_intervencion = intervencion.tipoIntervencion ? 
             intervencion.tipoIntervencion.tipo_intervencion : '';
           slot.intervencion = intervencion;
+        } else {
+          console.warn(`No matching slot found for time: ${time}`);
         }
       });
-    },
-    extractTime(dateTimeStr) {
-      const date = new Date(dateTimeStr);
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
-      return `${hours}:${minutes}`;
     },
     
     // Drag selection methods

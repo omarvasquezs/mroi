@@ -13,37 +13,42 @@ class Intervencion extends Model
         'num_historia',
         'id_medico',
         'id_tipo_intervencion',
-        'fecha_hora_inicio',
-        'fecha_hora_fin',
+        'fecha',
+        'hora_inicio',
+        'hora_fin',
         'duracion_minutos',
         'estado',
         'observaciones'
     ];
 
     protected $casts = [
-        'fecha_hora_inicio' => 'datetime',
-        'fecha_hora_fin' => 'datetime',
+        'fecha' => 'date',
+        'hora_inicio' => 'time',
+        'hora_fin' => 'time',
         'duracion_minutos' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime'
     ];
 
-    // Accessor to get fecha (date only) for backward compatibility
-    public function getFechaAttribute()
+    // Backward compatibility accessor for fecha_hora_inicio
+    public function getFechaHoraInicioAttribute()
     {
-        return $this->fecha_hora_inicio ? $this->fecha_hora_inicio->toDateString() : null;
+        if ($this->fecha && $this->hora_inicio) {
+            return $this->fecha->format('Y-m-d') . ' ' . $this->hora_inicio->format('H:i:s');
+        }
+        return null;
     }
 
-    // Accessor to get hora_inicio (time only) for backward compatibility
-    public function getHoraInicioAttribute()
+    // Backward compatibility accessor for fecha_hora_fin
+    public function getFechaHoraFinAttribute()
     {
-        return $this->fecha_hora_inicio ? $this->fecha_hora_inicio->format('H:i') : null;
-    }
-
-    // Accessor to get hora_fin (time only)
-    public function getHoraFinAttribute()
-    {
-        return $this->fecha_hora_fin ? $this->fecha_hora_fin->format('H:i') : null;
+        if ($this->fecha && $this->hora_fin) {
+            return $this->fecha->format('Y-m-d') . ' ' . $this->hora_fin->format('H:i:s');
+        } elseif ($this->fecha && $this->hora_inicio) {
+            // Use hora_inicio as fallback if hora_fin is not set
+            return $this->fecha->format('Y-m-d') . ' ' . $this->hora_inicio->format('H:i:s');
+        }
+        return null;
     }
 
     public function paciente(): BelongsTo
