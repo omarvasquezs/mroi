@@ -173,10 +173,11 @@ export default {
       
       try {
         const fecha = this.formatDate(this.selectedFecha);
-        const response = await fetch(`/api/intervenciones?id_medico=${this.selectedMedico}&fecha=${fecha}`);
+        // Fix: Using 'medico' as the parameter name instead of 'id_medico'
+        const response = await fetch(`/api/intervenciones?medico=${this.selectedMedico}&fecha=${fecha}`);
         
         if (!response.ok) {
-          throw new Error('Error al cargar las intervenciones');
+          throw new Error(`Error al cargar las intervenciones: ${response.status} ${response.statusText}`);
         }
         
         const data = await response.json();
@@ -247,6 +248,12 @@ export default {
     },
     
     // Drag selection methods
+    clearSelection() {
+      // Reset selection states
+      this.selectedTimeStart = '';
+      this.selectedTimeEnd = '';
+    },
+    
     startDragSelection(event, index) {
       // Prevent text selection
       event.preventDefault();
@@ -262,26 +269,54 @@ export default {
       // Set initial time range
       this.selectedTimeStart = this.intervenciones[index].hora;
       this.selectedTimeEnd = this.intervenciones[index].hora;
+      
+      // Add event listeners to the document for mousemove and mouseup events
+      document.addEventListener('mousemove', this.handleMouseMove);
     },
     
-    updateDragSelection(index) {
+    handleMouseMove(event) {
+      if (!this.isMouseDown) return;
+      
+      const tableWrapper = document.querySelector('.table-wrapper');
+      if (!tableWrapper) return;
+      
+      const tableRect = tableWrapper.getBoundingClientRect();
+      
+      // Auto-scroll functionality
+      if (event.clientY < tableRect.top + 50) {
+        // Near top edge - scroll up
+        tableWrapper.scrollTop -= 10;
+      } else if (event.clientY > tableRect.bottom - 50) {
+        // Near bottom edge - scroll down
+        tableWrapper.scrollTop += 10;
+      }
+    },
+    
+    updateDragSelection(index, event) {
       if (!this.isMouseDown) return;
       
       this.currentRowIndex = index;
       this.selectedTimeEnd = this.intervenciones[index].hora;
+      
+      // Force Vue to re-render the selection
+      this.$forceUpdate();
     },
     
     endDragSelection() {
-      this.isMouseDown = false;
-    },
-    
-    clearSelection() {
-      this.selectedTimeStart = '';
-      this.selectedTimeEnd = '';
+      if (this.isMouseDown) {
+        this.isMouseDown = false;
+        // Remove the mousemove event listener
+        document.removeEventListener('mousemove', this.handleMouseMove);
+        
+        // Keep isDragging true to maintain the selection visible
+        if (this.startRowIndex !== this.currentRowIndex) {
+          this.isDragging = true;
+        }
+      }
     },
     
     isRowSelected(index) {
-      if (!this.isMouseDown && !this.isDragging) return false;
+      if (!this.isDragging && !this.isMouseDown) return false;
       
       const start = Math.min(this.startRowIndex, this.currentRowIndex);
       const end = Math.max(this.startRowIndex, this.currentRowIndex);
