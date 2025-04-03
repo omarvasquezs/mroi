@@ -4,7 +4,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="intervencionModalLabel">
-            {{ intervencion ? 'Editar Intervención' : 'Registrar Nueva Intervención' }}
+            {{ intervencion ? 'Información de la Intervención' : 'Registrar Nueva Intervención' }}
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
@@ -25,21 +25,32 @@
               </div>
             </div>
             <div class="row mb-3">
-              <div class="col-md-3"><strong>Fecha:</strong></div>
-              <div class="col-md-9">{{ formattedDate }}</div>
+              <div class="col-md-3"><strong>Médico:</strong></div>
+              <div class="col-md-9">
+                {{ selectedMedicoName }}
+              </div>
             </div>
             <div class="row mb-3">
-              <div class="col-md-3"><strong>Hora:</strong></div>
-              <div class="col-md-9">{{ formattedTimeRange }}</div>
+              <div class="col-md-3"><strong>Horario:</strong></div>
+              <div class="col-md-9">{{ formattedDate }} | {{ formattedTimeRange }}</div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-3"><strong>Tipo de Intervención:</strong></div>
+              <div class="col-md-9">
+                {{ getTipoIntervencionDisplay(intervencion) }}
+              </div>
             </div>
             <div class="row mb-3">
               <div class="col-md-3"><strong>Observaciones:</strong></div>
               <div class="col-md-9">{{ intervencion.observaciones || 'Sin observaciones' }}</div>
             </div>
             <div class="row mb-3">
-              <div class="col-md-3"><strong>Tipo de Intervención:</strong></div>
+              <div class="col-md-3"><strong>Estado de Pago:</strong></div>
               <div class="col-md-9">
-                {{ intervencion.tipoIntervencion ? `${intervencion.tipoIntervencion.tipo_intervencion} - S/. ${intervencion.tipoIntervencion.precio}` : 'No especificado' }}
+                <span :class="['badge', intervencion.estado === 'p' ? 'bg-success' : 'bg-warning']"
+                  style="font-size: 0.9em; padding: 0.5em 1em;">
+                  {{ intervencion.estado === 'p' ? 'PAGADO' : 'PENDIENTE' }}
+                </span>
               </div>
             </div>
             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -94,14 +105,13 @@
                 </div>
               </div>
 
-              <div class="mb-4">
-                <label class="form-label"><strong>Fecha:</strong></label>
-                <input type="date" v-model="form.fecha" class="form-control" required :min="minDate">
-              </div>
+              <!-- Hidden fecha field - No longer visible but still stores the value -->
+              <input type="hidden" v-model="form.fecha">
 
               <div class="mb-4">
                 <label class="form-label"><strong>Horario:</strong></label>
                 <div class="time-range-display p-3 border rounded bg-light">
+                  <div class="date-display mb-2">{{ selectedDateFormatted }}</div>
                   {{ timeRangeDisplay || 'No se ha seleccionado un rango de horas' }}
                   <small class="d-block text-muted mt-1">
                     Para seleccionar o cambiar el horario, arrastra sobre las franjas horarias en el calendario
@@ -129,6 +139,9 @@
               </div>
             </form>
           </div>
+        </div>
+        <div class="modal-footer" v-if="intervencion && !isRescheduling">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CERRAR</button>
         </div>
       </div>
     </div>
@@ -480,6 +493,27 @@ export default {
       }
       return '';
     },
+    selectedDateFormatted() {
+      if (!this.selectedDate && !this.form.fecha) return '';
+      
+      let dateToFormat;
+      if (this.form.fecha) {
+        // If we have a form date value, use that
+        const [year, month, day] = this.form.fecha.split('-').map(Number);
+        dateToFormat = new Date(year, month - 1, day);
+      } else {
+        // Otherwise use the selected date prop
+        dateToFormat = new Date(this.selectedDate);
+      }
+      
+      // Format the date as a localized string
+      return dateToFormat.toLocaleDateString('es-ES', {
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric'
+      });
+    },
     minDate() {
       const today = new Date();
       return today.toISOString().split('T')[0];
@@ -488,7 +522,7 @@ export default {
   created() {
     this.displayDate = this.selectedDate;
     this.displayTimeStart = this.selectedTime;
-    this.displayTimeEnd = this.selectedTimeEnd || this.calculateDefaultEndTime(this.selectedTime);
+    this.displayTimeEnd = this.selectedTimeEnd || this.getDefaultEndTime(this.selectedTime);
   },
   mounted() {
     this.fetchPacientes();
@@ -556,25 +590,12 @@ export default {
       }
     },
     
-    calculateDefaultEndTime(startTime) {
-      if (!startTime) return '';
-      
-      const [hour, minute] = startTime.split(':');
-      if (!hour || !minute) return '';
-      
-      // Add 30 minutes by default to the start time
-      const date = new Date();
-      date.setHours(Number(hour), Number(minute) + 30);
-      
-      return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-    },
-    
     openModal() {
       this.loading = true;
       this.errorMessage = '';
       this.isSubmitting = false;
       
-      // Reset form
+      // Reset form first - always start with a clean form
       this.resetForm();
       
       // If we have an intervention, we're viewing/editing, otherwise creating new
@@ -586,16 +607,35 @@ export default {
         if (this.selectedDate) {
           this.form.fecha = this.formatDate(this.selectedDate);
         }
-        this.form.hora_inicio = this.selectedTime;
-        this.form.hora_fin = this.selectedTimeEnd || this.selectedTime;
+        this.form.hora_inicio = this.selectedTime || '';
+        this.form.hora_fin = this.selectedTimeEnd || this.getDefaultEndTime(this.selectedTime) || '';
       }
       
       this.loading = false;
       
       // Open modal using Bootstrap JS
       const modal = new bootstrap.Modal(document.getElementById('intervencionModal'));
+      this.modal = modal; // Store reference for later use
       modal.show();
     },
+    
+    // Helper method to calculate the end time based on start time
+    getDefaultEndTime(startTime) {
+      if (!startTime) return '';
+      
+      // Calculate the next time slot (adding 30 minutes)
+      const [hours, minutes] = startTime.split(':').map(Number);
+      let newHours = hours;
+      let newMinutes = minutes + 30;
+      
+      if (newMinutes >= 60) {
+        newHours += 1;
+        newMinutes -= 60;
+      }
+      
+      return `${String(newHours).padStart(2, '0')}:${String(newMinutes).padStart(2, '0')}`;
+    },
+    
     resetForm() {
       this.form = {
         id: '',
@@ -627,8 +667,11 @@ export default {
                     minute: '2-digit'
                   }) : ''),
         observaciones: this.intervencion.observaciones || '',
-        tipo_intervencion_id: this.intervencion.tipo_intervencion_id || ''
+        id_tipo_intervencion: this.intervencion.id_tipo_intervencion || ''
       };
+      
+      console.log('Populated form from intervencion:', this.form);
+      console.log('Original intervencion data:', this.intervencion);
     },
     formatDate(date) {
       if (!date) return '';
@@ -987,6 +1030,80 @@ export default {
     
     onlyNumbers(event) {
       event.target.value = event.target.value.replace(/[^\d]/g, '');
+    },
+    getTipoIntervencionDisplay(intervencion) {
+      // Debug logging
+      console.log('Getting tipo_intervencion display for:', intervencion);
+      
+      // Case 1: Standard relationship format
+      if (intervencion && intervencion.tipoIntervencion && intervencion.tipoIntervencion.tipo_intervencion) {
+        return `${intervencion.tipoIntervencion.tipo_intervencion} - S/. ${intervencion.tipoIntervencion.precio}`;
+      } 
+      // Case 2: Using id_tipo_intervencion to look up from available types
+      else if (intervencion && intervencion.id_tipo_intervencion) {
+        const tipo = this.tiposIntervenciones.find(t => t.id === intervencion.id_tipo_intervencion);
+        if (tipo) {
+          return `${tipo.tipo_intervencion} - S/. ${tipo.precio}`;
+        }
+      }
+      // Case 3: Direct tipo_intervencion object
+      else if (intervencion && intervencion.tipo_intervencion && typeof intervencion.tipo_intervencion === 'object') {
+        return `${intervencion.tipo_intervencion.tipo_intervencion} - S/. ${intervencion.tipo_intervencion.precio}`;
+      }
+      // Case 4: Direct tipo_intervencion string
+      else if (intervencion && intervencion.tipo_intervencion && typeof intervencion.tipo_intervencion === 'string') {
+        return intervencion.tipo_intervencion;
+      }
+      
+      // Fallback
+      return 'No especificado';
+    },
+    getMedicoDisplay() {
+      try {
+        // Debug logging to see what data we have
+        console.log('Intervencion in getMedicoDisplay:', this.intervencion);
+        console.log('Available médicos:', this.medicos);
+        console.log('Selected médico:', this.selectedMedico);
+        console.log('Selected médico name:', this.selectedMedicoName);
+
+        // Case 1: Standard relationship format with full object
+        if (
+          this.intervencion &&
+          this.intervencion.medico &&
+          typeof this.intervencion.medico === 'object' &&
+          this.intervencion.medico.nombres &&
+          this.intervencion.medico.ap_paterno
+        ) {
+          return `${this.intervencion.medico.nombres} ${this.intervencion.medico.ap_paterno} ${this.intervencion.medico.ap_materno || ''}`.trim();
+        }
+
+        // Case 2: Using id_medico to look up from available medicos
+        if (this.intervencion && this.intervencion.id_medico) {
+          const medicoId = parseInt(this.intervencion.id_medico, 10);
+          const medico = this.medicos.find((m) => m.id === medicoId);
+          if (medico && medico.nombre) {
+            return medico.nombre;
+          }
+
+          // If we don't have the medico in our list but we have selectedMedicoName
+          if (
+            medicoId === parseInt(this.selectedMedico, 10) &&
+            this.selectedMedicoName
+          ) {
+            return this.selectedMedicoName;
+          }
+        }
+
+        // Case 3: Look at selectedMedicoName from props
+        if (this.selectedMedicoName) {
+          return this.selectedMedicoName;
+        }
+      } catch (error) {
+        console.error('Error in getMedicoDisplay:', error);
+      }
+
+      // Fallback
+      return 'No especificado';
     }
   }
 };

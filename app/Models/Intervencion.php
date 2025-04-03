@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\TimeCast;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -23,8 +24,8 @@ class Intervencion extends Model
 
     protected $casts = [
         'fecha' => 'date',
-        'hora_inicio' => 'time',
-        'hora_fin' => 'time',
+        'hora_inicio' => TimeCast::class,
+        'hora_fin' => TimeCast::class,
         'duracion_minutos' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime'

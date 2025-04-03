@@ -52,10 +52,14 @@
               class="time-slot-row"
               :class="{ 
                 'selected-row': isRowSelected(index),
-                'has-intervention': hasIntervention(intervencion)
+                'has-intervention': hasIntervention(intervencion),
+                'intervention-start': isInterventionStart(intervencion),
+                'intervention-middle': isInterventionMiddle(intervencion),
+                'intervention-end': isInterventionEnd(intervencion)
               }"
-              @mousedown="startDragSelection($event, index)"
-              @mouseover="handleMouseOver($event, index)"
+              @mousedown="handleRowMouseDown($event, index, intervencion)"
+              @mouseover="handleMouseOver($event, index, intervencion)"
+              @click="handleRowClick(intervencion)"
             >
               <td>{{ index + 1 }}</td>
               <td>{{ intervencion.hora }}</td>
@@ -123,14 +127,23 @@ export default {
       scrollInterval: null,
       autoScrollSpeed: 5,
       autoScrollThreshold: 80,
+      
+      // New properties for tracking interventions
+      occupiedTimeSlots: [], // To track time slots that have interventions
+      interventionBlocks: [], // To track complete intervention time blocks
     };
   },
   watch: {
     selectedMedico() {
       this.fetchIntervenciones();
       this.updateSelectedMedicoName();
+      // Also clear any selection when changing médico
+      this.cancelSelection();
     },
     selectedFecha() {
+      // Clear any active selection when the date changes
+      this.cancelSelection();
+      // Then fetch interventions for the new date
       this.fetchIntervenciones();
     }
   },
@@ -188,15 +201,20 @@ export default {
       
       try {
         const fecha = this.formatDate(this.selectedFecha);
-        // Fix: Using 'medico' as the parameter name instead of 'id_medico'
-        const response = await fetch(`/api/intervenciones?medico=${this.selectedMedico}&fecha=${fecha}`);
+        
+        console.log(`Fetching intervenciones for medico=${this.selectedMedico} and fecha=${fecha}`);
+        
+        // Add a timestamp to prevent browser caching
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/intervenciones?medico=${this.selectedMedico}&fecha=${fecha}&_=${timestamp}`);
         
         if (!response.ok) {
           throw new Error(`Error al cargar las intervenciones: ${response.status} ${response.statusText}`);
         }
         
         const data = await response.json();
-        this.mergeIntervencionesWithTimeSlots(data);
+        console.log('Intervenciones received:', data);
+        this.processInterventions(data);
         
       } catch (error) {
         console.error('Error fetchIntervenciones:', error);
@@ -233,33 +251,214 @@ export default {
       
       this.intervenciones = intervenciones;
     },
-    mergeIntervencionesWithTimeSlots(intervenciones) {
-      // Reset slots to empty
+    processInterventions(interventions) {
+      // Reset time slots
       this.generateIntervenciones();
+      this.occupiedTimeSlots = [];
+      this.interventionBlocks = [];
       
-      console.log('Received intervenciones:', intervenciones);
+      if (!interventions || interventions.length === 0) {
+        console.log('No intervenciones to display');
+        return;
+      }
       
-      // Map each intervention to its corresponding time slot
-      intervenciones.forEach(intervencion => {
-        // Use hora_inicio directly instead of extracting from fecha_hora_inicio
-        const time = intervencion.hora_inicio;
-        console.log(`Processing intervención with time: ${time}`, intervencion);
-        
-        const slot = this.intervenciones.find(i => i.hora === time);
-        
-        if (slot) {
-          slot.id = intervencion.id;
-          slot.historia = intervencion.num_historia || '';
-          slot.paciente = intervencion.paciente ? 
-            `${intervencion.paciente.nombres} ${intervencion.paciente.ap_paterno} ${intervencion.paciente.ap_materno}` : 
-            '';
-          slot.tipo_intervencion = intervencion.tipoIntervencion ? 
-            intervencion.tipoIntervencion.tipo_intervencion : '';
-          slot.intervencion = intervencion;
-        } else {
-          console.warn(`No matching slot found for time: ${time}`);
+      // Debug: Log all interventions with their tipo_intervencion data
+      console.log('All interventions received:', interventions.map(i => ({
+        id: i.id,
+        tipoIntervencion: i.tipoIntervencion,
+        id_tipo_intervencion: i.id_tipo_intervencion
+      })));
+      
+      // Process each intervention
+      interventions.forEach(intervencion => {
+        try {
+          // Format start and end times
+          let startTime = intervencion.hora_inicio?.substring(0, 5);
+          let endTime = intervencion.hora_fin?.substring(0, 5);
+          
+          if (!startTime || !endTime) {
+            console.warn('Invalid time format for intervention', intervencion);
+            return;
+          }
+          
+          console.log(`Processing intervention from ${startTime} to ${endTime}`, intervencion);
+          
+          // For display purposes, keep identical times as is
+          // We will only mark one slot as occupied
+          const identicalTimes = startTime === endTime;
+          
+          // Store the full intervention block
+          this.interventionBlocks.push({
+            id: intervencion.id,
+            startTime,
+            endTime: identicalTimes ? startTime : endTime, // Use start time for both if identical
+            intervention: intervencion
+          });
+          
+          // Find all time slots within the range
+          let currentTime = startTime;
+          
+          // If times are identical, just process one slot
+          if (identicalTimes) {
+            const slot = this.intervenciones.find(i => i.hora === currentTime);
+            
+            if (slot) {
+              // Add to occupied slots
+              this.occupiedTimeSlots.push(currentTime);
+              
+              // Populate the slot with intervention data
+              slot.id = intervencion.id;
+              slot.historia = intervencion.num_historia || '';
+              slot.paciente = intervencion.paciente ? 
+                `${intervencion.paciente.nombres} ${intervencion.paciente.ap_paterno} ${intervencion.paciente.ap_materno}` : 
+                '';
+                
+              // Enhanced handling for tipo_intervencion - add fallback paths to find the data
+              if (intervencion.tipoIntervencion && intervencion.tipoIntervencion.tipo_intervencion) {
+                slot.tipo_intervencion = intervencion.tipoIntervencion.tipo_intervencion;
+              } else if (intervencion.tipo_intervencion && typeof intervencion.tipo_intervencion === 'object') {
+                slot.tipo_intervencion = intervencion.tipo_intervencion.tipo_intervencion || 'No especificado';
+              } else if (intervencion.tipo_intervencion && typeof intervencion.tipo_intervencion === 'string') {
+                slot.tipo_intervencion = intervencion.tipo_intervencion;
+              } else {
+                console.warn('No tipo_intervencion found for intervention:', intervencion);
+                slot.tipo_intervencion = 'No especificado';
+              }
+              
+              slot.intervencion = intervencion;
+            }
+          } else {
+            // Process normal range (start time different from end time)
+            while (currentTime <= endTime) {
+              // Find the time slot for this time
+              const slot = this.intervenciones.find(i => i.hora === currentTime);
+              
+              if (slot) {
+                // Add to occupied slots
+                this.occupiedTimeSlots.push(currentTime);
+                
+                // Populate the slot with intervention data
+                slot.id = intervencion.id;
+                slot.historia = intervencion.num_historia || '';
+                slot.paciente = intervencion.paciente ? 
+                  `${intervencion.paciente.nombres} ${intervencion.paciente.ap_paterno} ${intervencion.paciente.ap_materno}` : 
+                  '';
+                
+                // Enhanced handling for tipo_intervencion - add fallback paths to find the data
+                if (intervencion.tipoIntervencion && intervencion.tipoIntervencion.tipo_intervencion) {
+                  slot.tipo_intervencion = intervencion.tipoIntervencion.tipo_intervencion;
+                } else if (intervencion.tipo_intervencion && typeof intervencion.tipo_intervencion === 'object') {
+                  slot.tipo_intervencion = intervencion.tipo_intervencion.tipo_intervencion || 'No especificado';
+                } else if (intervencion.tipo_intervencion && typeof intervencion.tipo_intervencion === 'string') {
+                  slot.tipo_intervencion = intervencion.tipo_intervencion;
+                } else {
+                  console.warn('No tipo_intervencion found for intervention:', intervencion);
+                  slot.tipo_intervencion = 'No especificado';
+                }
+                
+                slot.intervencion = intervencion;
+              } else {
+                console.warn(`No time slot found for time ${currentTime}`);
+              }
+              
+              // If we've reached the end time, break the loop
+              if (currentTime === endTime) {
+                break;
+              }
+              
+              // Move to next time slot
+              currentTime = this.getNextTimeSlot(currentTime);
+            }
+          }
+        } catch (error) {
+          console.error('Error processing intervention:', error, intervencion);
         }
       });
+    },
+    
+    // Handle row click to display intervention details
+    handleRowClick(intervencion) {
+      // Only handle click if it wasn't part of a drag operation
+      if (this.isMouseDown) return;
+      
+      // If this row has an intervention, show its details
+      if (intervencion.intervencion) {
+        this.selectedIntervencion = intervencion.intervencion;
+        this.$refs.intervencionModal.openModal();
+      }
+    },
+    
+    // Handle mousedown to start drag selection
+    handleRowMouseDown(event, index, intervencion) {
+      // Prevent starting a drag on an occupied slot
+      if (intervencion.intervencion || this.isOccupiedTimeSlot(intervencion.hora)) {
+        // If there's an intervention, handle as a click instead
+        if (!this.isDragging) {
+          this.handleRowClick(intervencion);
+        }
+        return;
+      }
+      
+      // Start drag selection if the slot is free
+      this.startDragSelection(event, index);
+    },
+    
+    // Check if a time slot is the start of an intervention
+    isInterventionStart(intervencion) {
+      if (!intervencion.intervencion) return false;
+      
+      // Check if this is the first slot of an intervention
+      return intervencion.hora === intervencion.intervencion.hora_inicio.substring(0, 5);
+    },
+    
+    // Check if a time slot is in the middle of an intervention
+    isInterventionMiddle(intervencion) {
+      if (!intervencion.intervencion) return false;
+      
+      const interventionId = intervencion.intervencion.id;
+      const slotTime = intervencion.hora;
+      
+      // Get the start and end times of this intervention
+      const startTime = intervencion.intervencion.hora_inicio.substring(0, 5);
+      const endTime = intervencion.intervencion.hora_fin.substring(0, 5);
+      
+      // A row is in the middle if it's after the start time and before the end time
+      return slotTime > startTime && slotTime < endTime;
+    },
+    
+    // Check if a time slot is the end of an intervention
+    isInterventionEnd(intervencion) {
+      if (!intervencion.intervencion) return false;
+      
+      // Special handling for intervention #2 and similar cases
+      // Add more debugging to help identify the issue
+      const interventionId = intervencion.intervencion.id;
+      const slotTime = intervencion.hora;
+      const endTime = intervencion.intervencion.hora_fin.substring(0, 5);
+      
+      console.log(`Checking if slot ${slotTime} is end of intervention ${interventionId} with end time ${endTime}`);
+      
+      // Fix: Make a direct string comparison after normalizing formats
+      return slotTime === endTime;
+    },
+    
+    // Get the next time slot (30 min later)
+    getNextTimeSlot(timeStr) {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      let newHours = hours;
+      let newMinutes = minutes + 30;
+      
+      if (newMinutes >= 60) {
+        newHours += 1;
+        newMinutes -= 60;
+      }
+      
+      return `${String(newHours).padStart(2, '0')}:${String(newMinutes).padStart(2, '0')}`;
+    },
+    
+    // Check if a time slot is occupied by any intervention
+    isOccupiedTimeSlot(timeStr) {
+      return this.occupiedTimeSlots.includes(timeStr);
     },
     
     // Modified clearSelection to properly reset all selection state
@@ -298,9 +497,43 @@ export default {
     },
     
     // Handle mouse over during drag
-    handleMouseOver(event, index) {
+    handleMouseOver(event, index, intervencion) {
       if (!this.isMouseDown) return;
       
+      // Don't allow selection over occupied slots
+      if (intervencion.intervencion || this.isOccupiedTimeSlot(intervencion.hora)) {
+        return;
+      }
+      
+      // Check if we're entering an occupied time slot range
+      let canSelectToThisIndex = true;
+      
+      // If dragging downward
+      if (index > this.startRowIndex) {
+        // Check all slots between start and current index
+        for (let i = this.startRowIndex + 1; i <= index; i++) {
+          if (this.intervenciones[i].intervencion || this.isOccupiedTimeSlot(this.intervenciones[i].hora)) {
+            canSelectToThisIndex = false;
+            break;
+          }
+        }
+      } 
+      // If dragging upward
+      else if (index < this.startRowIndex) {
+        // Check all slots between current index and start
+        for (let i = index; i < this.startRowIndex; i++) {
+          if (this.intervenciones[i].intervencion || this.isOccupiedTimeSlot(this.intervenciones[i].hora)) {
+            canSelectToThisIndex = false;
+            break;
+          }
+        }
+      }
+      
+      if (!canSelectToThisIndex) {
+        return;
+      }
+      
+      // Update current row index and selected time range
       this.currentRowIndex = index;
       
       // Update the end time based on the current row
@@ -410,6 +643,19 @@ export default {
     isRowSelected(index) {
       if (!this.isDragging && !this.isMouseDown) return false;
       
+      // Calculate row time
+      const rowTime = this.intervenciones[index].hora;
+      
+      // Check if the row time is within or equal to the selected range
+      if (this.selectedTimeStart && this.selectedTimeEnd) {
+        if (this.selectedTimeStart <= this.selectedTimeEnd) {
+          return rowTime >= this.selectedTimeStart && rowTime <= this.selectedTimeEnd;
+        } else {
+          return rowTime >= this.selectedTimeEnd && rowTime <= this.selectedTimeStart;
+        }
+      }
+      
+      // Fallback to index-based selection
       const start = Math.min(this.startRowIndex, this.currentRowIndex);
       const end = Math.max(this.startRowIndex, this.currentRowIndex);
       
@@ -439,8 +685,25 @@ export default {
         return;
       }
       
-      // Explicitly trigger the modal based on user action
-      this.$refs.intervencionModal.openModal();
+      // Reset the selected intervention to null to ensure a new one is created
+      this.selectedIntervencion = null;
+      
+      // Reset the intervention modal completely before opening
+      if (this.$refs.intervencionModal) {
+        this.$refs.intervencionModal.resetForm();
+        
+        // Explicitly set these values to ensure they're cleared from any previous interactions
+        this.$nextTick(() => {
+          // Set the values for a new intervention
+          this.$refs.intervencionModal.form.id_medico = this.selectedMedico;
+          this.$refs.intervencionModal.form.fecha = this.formatDate(this.selectedFecha);
+          this.$refs.intervencionModal.form.hora_inicio = this.selectedTimeStart;
+          this.$refs.intervencionModal.form.hora_fin = this.selectedTimeEnd;
+          
+          // Then open the modal
+          this.$refs.intervencionModal.openModal();
+        });
+      }
       
       // Reset the selection state
       this.isDragging = false;
@@ -529,17 +792,18 @@ export default {
   overflow: hidden;
 }
 
-/* Improve the visibility of selected rows */
+/* Improve the visibility of selected rows - using light yellow color #fff3cd */
 .time-slot-row.selected-row {
-  background-color: #99ccff !important;
-  border: 1px solid #66a3ff !important;
-  outline: 1px solid #3385ff;
+  background-color: #fff3cd !important; /* Light yellow color */
+  border: 1px solid #664d03 !important; /* Darker border for better contrast */
+  color: #664d03 !important; /* Dark text for contrast */
   position: relative;
   z-index: 2;
 }
 
 .time-slot-row.selected-row td {
-  background-color: #99ccff !important;
+  background-color: #fff3cd !important;
+  color: #664d03 !important;
 }
 
 /* Make the table wrapper have a fixed height for proper scrolling */
@@ -612,5 +876,55 @@ body.dragging-in-progress * {
   justify-content: center;
   gap: 10px;
   border: 1px solid #dee2e6;
+}
+
+/* Styles for intervention slots - using light yellow color #fff3cd */
+.time-slot-row.has-intervention {
+  background-color: #fff3cd !important; /* Light yellow color */
+  color: #664d03 !important;
+  border: 1px solid #664d03 !important; /* Darker border for better contrast */
+}
+
+/* Use light yellow with darker borders for intervention styling */
+.time-slot-row.intervention-start {
+  border: 1px solid #664d03 !important;
+  border-bottom: none !important;
+  background-color: #fff3cd !important;
+  color: #664d03 !important;
+}
+
+.time-slot-row.intervention-middle {
+  border-left: 1px solid #664d03 !important;
+  border-right: 1px solid #664d03 !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  background-color: #fff3cd !important;
+  color: #664d03 !important;
+}
+
+.time-slot-row.intervention-end {
+  border: 1px solid #664d03 !important;
+  border-top: none !important;
+  background-color: #fff3cd !important;
+  color: #664d03 !important;
+}
+
+/* For all cells inside intervention rows */
+.time-slot-row.has-intervention td,
+.time-slot-row.intervention-start td,
+.time-slot-row.intervention-middle td,
+.time-slot-row.intervention-end td {
+  background-color: #fff3cd !important;
+  color: #664d03 !important;
+  border-color: #664d03 !important;
+}
+
+/* Prevent selecting text during dragging */
+.time-slot-row {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 </style>
