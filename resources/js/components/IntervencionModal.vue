@@ -140,7 +140,7 @@
               <div class="d-flex justify-content-end">
                 <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancelar</button>
                 <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
-                  {{ intervencion ? 'Actualizar' : 'Registrar' }}
+                  {{ intervencion ? 'Actualizar' : 'Generar Orden de Cirugía' }}
                 </button>
               </div>
             </form>
