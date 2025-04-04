@@ -65,7 +65,7 @@
               <div class="mb-4">
                 <label class="form-label"><strong>Paciente:</strong></label>
                 <div class="input-group">
-                  <select v-model="form.num_historia" class="form-select" required>
+                  <select v-model="form.num_historia" class="form-select" required :class="{'is-invalid': formValidationErrors.includes('paciente')}">
                     <option value="" disabled>Seleccione un paciente</option>
                     <option v-for="paciente in pacientes" :key="paciente.num_historia" :value="paciente.num_historia">
                       {{ paciente.nombre }}
@@ -83,12 +83,15 @@
                     <i class="fas fa-user-plus"></i>
                   </button>
                 </div>
+                <div class="invalid-feedback" v-if="formValidationErrors.includes('paciente')">
+                  Por favor seleccione un paciente.
+                </div>
               </div>
 
               <div class="mb-4">
                 <label class="form-label"><strong>Tipo de Intervención:</strong></label>
                 <div class="input-group">
-                  <select class="form-select" v-model="form.id_tipo_intervencion" required>
+                  <select class="form-select" v-model="form.id_tipo_intervencion" required :class="{'is-invalid': formValidationErrors.includes('tipo_intervencion')}">
                     <option value="" disabled>Seleccione un tipo</option>
                     <option v-for="tipo in tiposIntervenciones" :key="tipo.id" :value="tipo.id">
                       {{ tipo.tipo_intervencion }} - S/. {{ tipo.precio }}
@@ -102,6 +105,9 @@
                     title="Agregar nuevo tipo de intervención" type="button">
                     <i class="fas fa-plus"></i>
                   </button>
+                </div>
+                <div class="invalid-feedback" v-if="formValidationErrors.includes('tipo_intervencion')">
+                  Por favor seleccione un tipo de intervención.
                 </div>
               </div>
 
@@ -421,6 +427,7 @@ export default {
       tiposIntervenciones: [],
       errorMessage: '',
       isSubmitting: false,
+      formValidationErrors: [],
       // Add properties for local display of date and time
       displayDate: null,
       displayTimeStart: '',
@@ -682,8 +689,25 @@ export default {
       return `${year}-${month}-${day}`;
     },
     async handleSubmit() {
+      // Reset validation errors
+      this.formValidationErrors = [];
+      
+      // Check required fields
+      if (!this.form.num_historia) {
+        this.formValidationErrors.push('paciente');
+      }
+      
+      if (!this.form.id_tipo_intervencion) {
+        this.formValidationErrors.push('tipo_intervencion');
+      }
+      
       if (!this.form.id_medico) {
         this.errorMessage = 'Por favor seleccione un médico';
+        return;
+      }
+
+      // Don't proceed if we have validation errors
+      if (this.formValidationErrors.length > 0) {
         return;
       }
 
