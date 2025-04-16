@@ -239,7 +239,7 @@ class CitaController extends Controller
         $citaStart = $hora;
         $citaEnd = date('H:i:s', strtotime("$hora +30 minutes"));
 
-        // Check if any intervencion overlaps with this cita (for cita creation)
+        // Check if any intervencion overlaps with this cita (for cita creation) for the same doctor
         $intervencionConflict = \App\Models\Intervencion::where('id_medico', $id_medico)
             ->whereDate('fecha', $fecha);
         if ($type === 'intervencion' && $currentId) {
@@ -257,8 +257,26 @@ class CitaController extends Controller
                 'message' => 'El médico ya tiene una intervención en ese rango horario con otro paciente.'
             ], 200);
         }
+        // Check if any intervencion overlaps with this cita (for cita creation) for the same paciente
+        $intervencionPacienteConflict = \App\Models\Intervencion::where('num_historia', $num_historia)
+            ->whereDate('fecha', $fecha);
+        if ($type === 'intervencion' && $currentId) {
+            $intervencionPacienteConflict->where('id', '!=', $currentId);
+        }
+        $intervencionPacienteConflict->where(function($q) use ($citaStart, $citaEnd) {
+            $q->where('hora_inicio', '<', $citaEnd)
+              ->where('hora_fin', '>', $citaStart);
+        });
+        $intervencionPacienteConflict = $intervencionPacienteConflict->first();
+        if ($intervencionPacienteConflict) {
+            return response()->json([
+                'conflict' => true,
+                'type' => 'intervencion',
+                'message' => 'El paciente ya tiene una intervención en ese rango horario con otro médico.'
+            ], 200);
+        }
 
-        // For intervencion creation, check if any cita overlaps with the intervencion range
+        // For intervencion creation, check if any cita overlaps with the intervencion range for the same doctor
         $intervStart = $hora;
         $intervEnd = $hora_fin ?? date('H:i:s', strtotime("$hora +30 minutes"));
         $citaQuery = \App\Models\Cita::where('id_medico', $id_medico)
@@ -267,7 +285,6 @@ class CitaController extends Controller
             $citaQuery->where('id', '!=', $currentId);
         }
         $citaQuery->where(function($q) use ($intervStart, $intervEnd) {
-            // Cita always lasts 30 min, so citaStart = fecha (time), citaEnd = fecha+30min
             $q->whereRaw('TIME(fecha) < ? AND ADDTIME(TIME(fecha), "00:30:00") > ?', [$intervEnd, $intervStart]);
         });
         $citaConflict = $citaQuery->first();
@@ -276,6 +293,23 @@ class CitaController extends Controller
                 'conflict' => true,
                 'type' => 'cita',
                 'message' => 'El médico ya tiene una cita en ese rango horario con otro paciente.'
+            ], 200);
+        }
+        // For intervencion creation, check if any cita overlaps with the intervencion range for the same paciente
+        $citaPacienteQuery = \App\Models\Cita::where('num_historia', $num_historia)
+            ->whereDate('fecha', $fecha);
+        if ($type === 'cita' && $currentId) {
+            $citaPacienteQuery->where('id', '!=', $currentId);
+        }
+        $citaPacienteQuery->where(function($q) use ($intervStart, $intervEnd) {
+            $q->whereRaw('TIME(fecha) < ? AND ADDTIME(TIME(fecha), "00:30:00") > ?', [$intervEnd, $intervStart]);
+        });
+        $citaPacienteConflict = $citaPacienteQuery->first();
+        if ($citaPacienteConflict) {
+            return response()->json([
+                'conflict' => true,
+                'type' => 'cita',
+                'message' => 'El paciente ya tiene una cita en ese rango horario con otro médico.'
             ], 200);
         }
 
