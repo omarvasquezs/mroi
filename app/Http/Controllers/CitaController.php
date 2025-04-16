@@ -210,57 +210,78 @@ class CitaController extends Controller
         ]);
     }
 
-    public function validateConflict(Request $request)
+    /**
+     * Improved: Validate if a paciente/medico has a cita or intervencion at the same date/time or overlapping range.
+     * POST /api/validate-cita-intervencion-conflict
+     * Params: num_historia, id_medico, fecha (Y-m-d), hora (HH:mm), [hora_fin] (optional), [current_id], [type]
+     */
+    public function validateCitaIntervencionConflict(Request $request)
     {
         $validated = $request->validate([
             'num_historia' => 'required|exists:pacientes,num_historia',
             'id_medico' => 'required|exists:medicos,id',
             'fecha' => 'required|date',
             'hora' => 'required',
-            'current_cita_id' => 'nullable|integer' // Optional parameter for rescheduling
+            'hora_fin' => 'nullable',
+            'current_id' => 'nullable|integer',
+            'type' => 'nullable|string'
         ]);
 
-        // Combine date and time
-        $fechaHora = date('Y-m-d H:i:s', strtotime($validated['fecha'] . ' ' . $validated['hora']));
+        $fecha = $validated['fecha'];
+        $hora = $validated['hora'];
+        $hora_fin = $validated['hora_fin'] ?? null;
+        $num_historia = $validated['num_historia'];
+        $id_medico = $validated['id_medico'];
+        $currentId = $validated['current_id'] ?? null;
+        $type = $validated['type'] ?? null;
 
-        // Check if the patient already has an appointment at this time with any doctor
-        $query = Cita::where('num_historia', $validated['num_historia'])
-            ->whereDate('fecha', $validated['fecha'])
-            ->whereTime('fecha', $validated['hora']);
+        // Calculate cita range (30 min window)
+        $citaStart = $hora;
+        $citaEnd = date('H:i:s', strtotime("$hora +30 minutes"));
 
-        // If rescheduling, exclude the current appointment from the check
-        if (isset($validated['current_cita_id'])) {
-            $query->where('id', '!=', $validated['current_cita_id']);
+        // Check if any intervencion overlaps with this cita (for cita creation)
+        $intervencionConflict = \App\Models\Intervencion::where('num_historia', $num_historia)
+            ->where('id_medico', $id_medico)
+            ->whereDate('fecha', $fecha);
+        if ($type === 'intervencion' && $currentId) {
+            $intervencionConflict->where('id', '!=', $currentId);
         }
-
-        $existingAppointment = $query->first();
-
-        if ($existingAppointment) {
+        $intervencionConflict->where(function($q) use ($citaStart, $citaEnd) {
+            $q->where('hora_inicio', '<', $citaEnd)
+              ->where('hora_fin', '>', $citaStart);
+        });
+        $intervencionConflict = $intervencionConflict->first();
+        if ($intervencionConflict) {
             return response()->json([
-                'message' => 'El paciente ya tiene una cita programada a esta hora con otro médico.',
-                'conflicting_doctor' => $existingAppointment->medico->nombre ?? 'Médico desconocido'
-            ], 422);
+                'conflict' => true,
+                'type' => 'intervencion',
+                'message' => 'Ya existe una intervención para este paciente y médico en la fecha y rango horario seleccionados.'
+            ], 200);
         }
 
-        // Check if this doctor is available at this time
-        $query = Cita::where('id_medico', $validated['id_medico'])
-            ->whereDate('fecha', $validated['fecha'])
-            ->whereTime('fecha', $validated['hora']);
-
-        // If rescheduling, exclude the current appointment from the check
-        if (isset($validated['current_cita_id'])) {
-            $query->where('id', '!=', $validated['current_cita_id']);
+        // For intervencion creation, check if any cita overlaps with the intervencion range
+        $intervStart = $hora;
+        $intervEnd = $hora_fin ?? date('H:i:s', strtotime("$hora +30 minutes"));
+        $citaQuery = \App\Models\Cita::where('num_historia', $num_historia)
+            ->where('id_medico', $id_medico)
+            ->whereDate('fecha', $fecha);
+        if ($type === 'cita' && $currentId) {
+            $citaQuery->where('id', '!=', $currentId);
         }
-
-        $doctorAppointment = $query->first();
-
-        if ($doctorAppointment) {
+        $citaQuery->where(function($q) use ($intervStart, $intervEnd) {
+            // Cita always lasts 30 min, so citaStart = fecha (time), citaEnd = fecha+30min
+            $q->whereRaw('TIME(fecha) < ? AND ADDTIME(TIME(fecha), "00:30:00") > ?', [$intervEnd, $intervStart]);
+        });
+        $citaConflict = $citaQuery->first();
+        if ($citaConflict) {
             return response()->json([
-                'message' => 'El médico ya tiene una cita programada a esta hora.'
-            ], 422);
+                'conflict' => true,
+                'type' => 'cita',
+                'message' => 'Ya existe una cita para este paciente y médico en la fecha y rango horario seleccionados (rango de 30 minutos).'
+            ], 200);
         }
 
-        return response()->json(['message' => 'No conflict found.'], 200);
+        return response()->json(['conflict' => false], 200);
     }
 
     public function show($id)

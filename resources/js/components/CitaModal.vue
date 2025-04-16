@@ -680,22 +680,42 @@ export default {
     async saveCita() {
       // Reset validation errors
       this.formValidationErrors = [];
-      this.rescheduleError = ''; // Clear any previous error messages
-      
+      this.rescheduleError = '';
       // Validate form fields
       if (!this.formData.id_tipo_cita) {
         this.formValidationErrors.push('tipo_cita');
       }
-      
       if (!this.formData.num_historia) {
         this.formValidationErrors.push('paciente');
       }
-      
-      // Stop form submission if there are validation errors
       if (this.formValidationErrors.length > 0) {
         return;
       }
-
+      // Cross-type conflict validation
+      try {
+        const adjustedDate = new Date(this.selectedDate.getTime() - this.selectedDate.getTimezoneOffset() * 60000);
+        const fecha = adjustedDate.toISOString().split('T')[0];
+        const hora = this.selectedTime;
+        const conflictRes = await fetch('/api/validate-cita-intervencion-conflict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            num_historia: this.formData.num_historia,
+            id_medico: this.selectedMedico,
+            fecha,
+            hora,
+            type: 'cita'
+          })
+        });
+        const conflictData = await conflictRes.json();
+        if (conflictData.conflict) {
+          this.rescheduleError = conflictData.message;
+          return;
+        }
+      } catch (e) {
+        this.rescheduleError = 'Error validando conflicto de cita/intervención.';
+        return;
+      }
       try {
         const adjustedDate = new Date(this.selectedDate.getTime() - this.selectedDate.getTimezoneOffset() * 60000);
         
@@ -908,7 +928,7 @@ export default {
         
         // Reopen the cita modal
         setTimeout(() => {
-          const citaModal = new bootstrap.Modal(document.getElementById('citaModal'));
+          const citaModal = new Modal(document.getElementById('citaModal'));
           citaModal.show();
         }, 500);
       } catch (error) {

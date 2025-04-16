@@ -693,29 +693,46 @@ export default {
     async handleSubmit() {
       // Reset validation errors
       this.formValidationErrors = [];
-      
       // Check required fields
       if (!this.form.num_historia) {
         this.formValidationErrors.push('paciente');
       }
-      
       if (!this.form.id_tipo_intervencion) {
         this.formValidationErrors.push('tipo_intervencion');
       }
-      
       if (!this.form.id_medico) {
         this.errorMessage = 'Por favor seleccione un médico';
         return;
       }
-
-      // Don't proceed if we have validation errors
       if (this.formValidationErrors.length > 0) {
         return;
       }
-
+      // Cross-type conflict validation (send hora_fin for range)
+      try {
+        const conflictRes = await fetch('/api/validate-cita-intervencion-conflict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            num_historia: this.form.num_historia,
+            id_medico: this.form.id_medico,
+            fecha: this.form.fecha,
+            hora: this.form.hora_inicio,
+            hora_fin: this.form.hora_fin,
+            type: 'intervencion'
+          })
+        });
+        const conflictData = await conflictRes.json();
+        if (conflictData.conflict) {
+          this.errorMessage = conflictData.message;
+          return;
+        }
+      } catch (e) {
+        this.errorMessage = 'Error validando conflicto de cita/intervención.';
+        return;
+      }
+      // ...existing code for submitting intervencion...
       this.isSubmitting = true;
       this.errorMessage = '';
-      
       try {
         const method = this.form.id ? 'PUT' : 'POST';
         const url = this.form.id ? `/api/intervenciones/${this.form.id}` : '/api/intervenciones';

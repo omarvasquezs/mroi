@@ -89,3 +89,6 @@ Route::post('/comprobantes/{id}/generate', [ComprobanteController::class, 'gener
 Route::get('/comprobantes/{id}/pdf', [ComprobanteController::class, 'generatePdf']);
 
 Route::post('/update-stock', 'App\Http\Controllers\StockController@updateStock');
+
+// Cross-type cita/intervencion conflict validation
+Route::post('/validate-cita-intervencion-conflict', [CitaController::class, 'validateCitaIntervencionConflict']);
