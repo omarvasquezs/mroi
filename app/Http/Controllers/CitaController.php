@@ -240,8 +240,7 @@ class CitaController extends Controller
         $citaEnd = date('H:i:s', strtotime("$hora +30 minutes"));
 
         // Check if any intervencion overlaps with this cita (for cita creation)
-        $intervencionConflict = \App\Models\Intervencion::where('num_historia', $num_historia)
-            ->where('id_medico', $id_medico)
+        $intervencionConflict = \App\Models\Intervencion::where('id_medico', $id_medico)
             ->whereDate('fecha', $fecha);
         if ($type === 'intervencion' && $currentId) {
             $intervencionConflict->where('id', '!=', $currentId);
@@ -255,15 +254,14 @@ class CitaController extends Controller
             return response()->json([
                 'conflict' => true,
                 'type' => 'intervencion',
-                'message' => 'Ya existe una intervención para este paciente y médico en la fecha y rango horario seleccionados.'
+                'message' => 'El médico ya tiene una intervención en ese rango horario con otro paciente.'
             ], 200);
         }
 
         // For intervencion creation, check if any cita overlaps with the intervencion range
         $intervStart = $hora;
         $intervEnd = $hora_fin ?? date('H:i:s', strtotime("$hora +30 minutes"));
-        $citaQuery = \App\Models\Cita::where('num_historia', $num_historia)
-            ->where('id_medico', $id_medico)
+        $citaQuery = \App\Models\Cita::where('id_medico', $id_medico)
             ->whereDate('fecha', $fecha);
         if ($type === 'cita' && $currentId) {
             $citaQuery->where('id', '!=', $currentId);
@@ -277,7 +275,7 @@ class CitaController extends Controller
             return response()->json([
                 'conflict' => true,
                 'type' => 'cita',
-                'message' => 'Ya existe una cita para este paciente y médico en la fecha y rango horario seleccionados (rango de 30 minutos).'
+                'message' => 'El médico ya tiene una cita en ese rango horario con otro paciente.'
             ], 200);
         }
 
