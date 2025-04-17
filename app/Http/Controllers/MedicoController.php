@@ -74,9 +74,13 @@ class MedicoController extends Controller
     }
     public function getAllMedicos()
     {
-        $medicos = Medico::select('id', 
-            DB::raw("CONCAT(nombres, ' ', ap_paterno, ' ', ap_materno) as nombre"))
-            ->get();
+        $medicos = Medico::select(
+            'id', 
+            'nombres', 
+            'ap_paterno', 
+            'ap_materno',
+            DB::raw("CONCAT(nombres, ' ', ap_paterno, ' ', ap_materno) as nombre")
+        )->orderBy('nombres')->get();
         return response()->json($medicos);
     }
 }

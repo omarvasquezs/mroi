@@ -61,4 +61,9 @@ class LocalController extends Controller
         $local->delete();
         return response()->json(['message' => 'Local eliminado']);
     }
+
+    public function all()
+    {
+        return Local::select('id', 'nombre', 'direccion')->orderBy('nombre')->get();
+    }
 }

@@ -95,3 +95,4 @@ Route::post('/update-stock', 'App\Http\Controllers\StockController@updateStock')
 Route::post('/validate-cita-intervencion-conflict', [CitaController::class, 'validateCitaIntervencionConflict']);
 
 Route::apiResource('locales', LocalController::class);
+Route::get('/locales-list', [App\Http\Controllers\LocalController::class, 'all']);

@@ -111,6 +111,60 @@
                 </div>
               </div>
 
+              <div class="mb-4">
+                <label class="form-label"><strong>Clínica Inicial:</strong></label>
+                <div class="input-group">
+                  <select v-model="form.clinica_inicial_id" class="form-select">
+                    <option value="" disabled>Seleccione una clínica</option>
+                    <option v-for="local in locales" :key="local.id" :value="local.id">
+                      {{ local.nombre }}
+                    </option>
+                  </select>
+                  <button @click="editLocal(locales.find(l => l.id === form.clinica_inicial_id))" class="btn btn-success ms-2" v-if="form.clinica_inicial_id" type="button">
+                    <i class="fas fa-pencil-alt"></i>
+                  </button>
+                  <button @click="showNewLocalForm" class="btn btn-primary ms-2" title="Agregar nueva clínica" type="button">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label"><strong>Médico que Indica:</strong></label>
+                <div class="input-group">
+                  <select v-model="form.medico_que_indica_id" class="form-select">
+                    <option value="" disabled>Seleccione un médico</option>
+                    <option v-for="medico in medicos" :key="medico.id" :value="medico.id">
+                      {{ medico.nombres }} {{ medico.ap_paterno }} {{ medico.ap_materno }}
+                    </option>
+                  </select>
+                  <button @click="editMedico(medicos.find(m => m.id === form.medico_que_indica_id))" class="btn btn-success ms-2" v-if="form.medico_que_indica_id" type="button">
+                    <i class="fas fa-pencil-alt"></i>
+                  </button>
+                  <button @click="showNewMedicoForm" class="btn btn-primary ms-2" title="Agregar nuevo médico" type="button">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label"><strong>Sede de Operación:</strong></label>
+                <div class="input-group">
+                  <select v-model="form.sede_operacion_id" class="form-select">
+                    <option value="" disabled>Seleccione una sede</option>
+                    <option v-for="local in locales" :key="local.id" :value="local.id">
+                      {{ local.nombre }}
+                    </option>
+                  </select>
+                  <button @click="editLocal(locales.find(l => l.id === form.sede_operacion_id))" class="btn btn-success ms-2" v-if="form.sede_operacion_id" type="button">
+                    <i class="fas fa-pencil-alt"></i>
+                  </button>
+                  <button @click="showNewLocalForm" class="btn btn-primary ms-2" title="Agregar nueva sede" type="button">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+              </div>
+
               <!-- Hidden fecha field - No longer visible but still stores the value -->
               <input type="hidden" v-model="form.fecha">
 
@@ -466,7 +520,8 @@ export default {
       pacienteFormErrors: [],
       editingPacienteId: null,
       pacienteModal: null,
-      rescheduling: false
+      rescheduling: false,
+      locales: [],
     };
   },
   computed: {
@@ -537,6 +592,7 @@ export default {
     this.fetchPacientes();
     this.fetchMedicos();
     this.fetchTiposIntervenciones();
+    this.fetchLocales();
   },
   methods: {
     async fetchPacientes() {
@@ -559,15 +615,15 @@ export default {
     
     async fetchMedicos() {
       try {
+        console.log('Fetching médicos for dropdown...');
         const response = await fetch('/api/medicos-list');
         if (!response.ok) {
           throw new Error('Error al cargar los médicos');
         }
         const data = await response.json();
-        this.medicos = data.map(medico => ({
-          id: medico.id,
-          nombre: `${medico.nombres} ${medico.ap_paterno} ${medico.ap_materno}`
-        }));
+        console.log('Médicos fetched:', data);
+        // Store the data directly, as it now contains the required fields
+        this.medicos = data; 
       } catch (error) {
         console.error('Error fetching medicos:', error);
       }
@@ -599,6 +655,53 @@ export default {
       }
     },
     
+    async fetchLocales() {
+      try {
+        // Use the new endpoint that returns all locales without pagination
+        const response = await fetch('/api/locales-list');
+        if (!response.ok) throw new Error('Error al cargar los locales');
+        const data = await response.json();
+        this.locales = Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching locales:', error);
+      }
+    },
+    // Locales modal logic
+    showNewLocalForm() {
+      const intervencionModalElement = document.getElementById('intervencionModal');
+      const intervencionModal = Modal.getInstance(intervencionModalElement);
+      intervencionModal.hide();
+      setTimeout(() => {
+        this.$root.$emit('showLocalModal', { onSaved: this.fetchLocales });
+      }, 500);
+    },
+    editLocal(local) {
+      if (!local) return;
+      const intervencionModalElement = document.getElementById('intervencionModal');
+      const intervencionModal = Modal.getInstance(intervencionModalElement);
+      intervencionModal.hide();
+      setTimeout(() => {
+        this.$root.$emit('showLocalModal', { local, onSaved: this.fetchLocales });
+      }, 500);
+    },
+    // Medicos modal logic
+    showNewMedicoForm() {
+      const intervencionModalElement = document.getElementById('intervencionModal');
+      const intervencionModal = Modal.getInstance(intervencionModalElement);
+      intervencionModal.hide();
+      setTimeout(() => {
+        this.$root.$emit('showMedicoModal', { onSaved: this.fetchMedicos });
+      }, 500);
+    },
+    editMedico(medico) {
+      if (!medico) return;
+      const intervencionModalElement = document.getElementById('intervencionModal');
+      const intervencionModal = Modal.getInstance(intervencionModalElement);
+      intervencionModal.hide();
+      setTimeout(() => {
+        this.$root.$emit('showMedicoModal', { medico, onSaved: this.fetchMedicos });
+      }, 500);
+    },
     openModal() {
       this.loading = true;
       this.errorMessage = '';
@@ -654,7 +757,10 @@ export default {
         hora_inicio: '',
         hora_fin: '',
         observaciones: '',
-        id_tipo_intervencion: ''
+        id_tipo_intervencion: '',
+        clinica_inicial_id: '',
+        medico_que_indica_id: '',
+        sede_operacion_id: ''
       };
       this.rescheduling = false;
     },
@@ -736,14 +842,14 @@ export default {
       try {
         const method = this.form.id ? 'PUT' : 'POST';
         const url = this.form.id ? `/api/intervenciones/${this.form.id}` : '/api/intervenciones';
-        
-        // Prepare form data for submission - using the new field structure
         const formData = {
           ...this.form,
-          // Make sure we're sending the correct fields according to the new database structure
           fecha: this.form.fecha,
           hora_inicio: this.form.hora_inicio,
           hora_fin: this.form.hora_fin || this.form.hora_inicio,
+          clinica_inicial_id: this.form.clinica_inicial_id || null,
+          medico_que_indica_id: this.form.medico_que_indica_id || null,
+          sede_operacion_id: this.form.sede_operacion_id || null,
         };
         
         const response = await fetch(url, {
@@ -1053,7 +1159,7 @@ export default {
       // Reset form and errors
       this.pacienteFormErrors = [];
       
-      // Reopen the intervencion modal
+      // Reopen the intervención modal
       setTimeout(() => {
         this.modal = new Modal(document.getElementById('intervencionModal'));
         this.modal.show();
