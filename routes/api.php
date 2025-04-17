@@ -15,6 +15,7 @@ use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\IntervencionController;
 use App\Http\Controllers\TipoIntervencionController;
+use App\Http\Controllers\LocalController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -92,3 +93,5 @@ Route::post('/update-stock', 'App\Http\Controllers\StockController@updateStock')
 
 // Cross-type cita/intervencion conflict validation
 Route::post('/validate-cita-intervencion-conflict', [CitaController::class, 'validateCitaIntervencionConflict']);
+
+Route::apiResource('locales', LocalController::class);

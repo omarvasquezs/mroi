@@ -121,7 +121,8 @@ export default {
                     icon: 'fas fa-money-bill', 
                     url: '/metodos-pago', 
                     condition: 'Entidades|Utilitarios' 
-                }
+                },
+                { type: 'link', label: 'Gestionar Locales', icon: 'fas fa-map-marker-alt', url: '/locales', condition: 'Entidades|Utilitarios' }
             ]
         };
     },
