@@ -41,6 +41,24 @@
               </div>
             </div>
             <div class="row mb-3">
+              <div class="col-md-3"><strong>Clínica Inicial:</strong></div>
+              <div class="col-md-9">
+                {{ getClinicaDisplay(intervencion.clinica_inicial_id) || 'No especificada' }}
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-3"><strong>Médico que Indica:</strong></div>
+              <div class="col-md-9">
+                {{ getMedicoQueIndicaDisplay(intervencion.medico_que_indica_id) || 'No especificado' }}
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-3"><strong>Sede de Operación:</strong></div>
+              <div class="col-md-9">
+                {{ getClinicaDisplay(intervencion.sede_operacion_id) || 'No especificada' }}
+              </div>
+            </div>
+            <div class="row mb-3">
               <div class="col-md-3"><strong>Observaciones:</strong></div>
               <div class="col-md-9">{{ intervencion.observaciones || 'Sin observaciones' }}</div>
             </div>
@@ -233,6 +251,130 @@
             <div class="d-flex justify-content-end gap-2">
               <button type="submit" class="btn btn-primary">{{ isEditingTipoIntervencion ? 'Actualizar' : 'Guardar' }}</button>
               <button type="button" @click="closeTipoIntervencionModal" class="btn btn-secondary">Cerrar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal for Creating/Editing Locales -->
+  <div class="modal fade" id="localModal" tabindex="-1" aria-labelledby="localModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="localModalLabel">{{ isEditingLocal ? 'Editar Clínica/Sede' : 'Crear Clínica/Sede' }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form @submit.prevent="submitLocalForm">
+            <div v-if="localFormErrors.length" class="alert alert-danger alert-dismissible fade show" role="alert">
+              <ul class="mb-0">
+                <li v-for="(error, idx) in localFormErrors" :key="idx">{{ error }}</li>
+              </ul>
+              <button type="button" class="btn-close" @click="localFormErrors = []" aria-label="Close"></button>
+            </div>
+            <div class="mb-3">
+              <label for="nombreLocal" class="form-label">Nombre*:</label>
+              <input type="text" v-model="localForm.nombre" id="nombreLocal" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="direccionLocal" class="form-label">Dirección:</label>
+              <input type="text" v-model="localForm.direccion" id="direccionLocal" class="form-control">
+            </div>
+            <div class="d-flex justify-content-end gap-2">
+              <button type="submit" class="btn btn-primary">{{ isEditingLocal ? 'Actualizar' : 'Guardar' }}</button>
+              <button type="button" @click="closeLocalModal" class="btn btn-secondary">Cerrar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Creating/Editing Médicos -->
+  <div class="modal fade" id="medicoModal" tabindex="-1" aria-labelledby="medicoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="medicoModalLabel">{{ isEditingMedico ? 'Editar Médico' : 'Crear Médico' }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form @submit.prevent="submitMedicoForm" class="mb-5" autocomplete="off">
+            <div v-if="medicoFormErrors.includes('DNI ya existe en la base de datos.')" class="alert alert-danger alert-dismissible fade show" role="alert">
+              DNI ya existe en la base de datos.
+              <button type="button" class="btn-close" @click="closeMedicoFormErrorAlert('DNI ya existe en la base de datos.')" aria-label="Close"></button>
+            </div>
+            <div v-if="medicoFormErrors.includes('CMP ya existe en la base de datos.')" class="alert alert-danger alert-dismissible fade show" role="alert">
+              CMP ya existe en la base de datos.
+              <button type="button" class="btn-close" @click="closeMedicoFormErrorAlert('CMP ya existe en la base de datos.')" aria-label="Close"></button>
+            </div>
+            <div class="mb-3">
+              <label for="nombresMedico" class="form-label">Nombres*:</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                <input type="text" v-model="medicoForm.nombres" id="nombresMedico" class="form-control" placeholder="Ej: Juan" required>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="apPaternoMedico" class="form-label">Apellido Paterno*:</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fas fa-user"></i></span>
+                  <input type="text" v-model="medicoForm.ap_paterno" id="apPaternoMedico" class="form-control" placeholder="Ej: Pérez" required>
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="apMaternoMedico" class="form-label">Apellido Materno*:</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fas fa-user"></i></span>
+                  <input type="text" v-model="medicoForm.ap_materno" id="apMaternoMedico" class="form-control" placeholder="Ej: Gómez" required>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="dniMedico" class="form-label">DNI*:</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                  <input type="text" v-model="medicoForm.dni" @input="onlyNumbers" id="dniMedico" class="form-control" placeholder="Ej: 00123456" required minlength="8" maxlength="8">
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="cmpMedico" class="form-label">CMP*:</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fas fa-id-badge"></i></span>
+                  <input type="text" v-model="medicoForm.cmp" @input="onlyNumbers" id="cmpMedico" class="form-control" placeholder="Ej: 001234" required maxlength="6">
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="telefonoMedico" class="form-label">Teléfono*:</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                  <input type="tel" v-model="medicoForm.telefono" id="telefonoMedico" class="form-control" placeholder="Ej: 987654321" required maxlength="9">
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="emailMedico" class="form-label">Email*:</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                  <input type="email" v-model="medicoForm.email" id="emailMedico" class="form-control" placeholder="Ej: juan@example.com" required>
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="direccionMedico" class="form-label">Dirección*:</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                <input type="text" v-model="medicoForm.direccion" id="direccionMedico" class="form-control" placeholder="Ej: Calle Falsa 123" required>
+              </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2">
+              <button type="submit" class="btn btn-primary">{{ isEditingMedico ? 'Actualizar' : 'Guardar' }}</button>
+              <button type="button" @click="closeMedicoModal" class="btn btn-secondary">Cerrar</button>
             </div>
           </form>
         </div>
@@ -520,6 +662,30 @@ export default {
       pacienteFormErrors: [],
       editingPacienteId: null,
       pacienteModal: null,
+      // For local modal
+      isEditingLocal: false,
+      localForm: {
+        nombre: '',
+        direccion: '',
+        telefono: ''
+      },
+      localModal: null,
+      localFormErrors: [],
+      // For médico modal
+      isEditingMedico: false,
+      medicoForm: {
+        nombres: '',
+        ap_paterno: '',
+        ap_materno: '',
+        dni: '',
+        cmp: '',
+        telefono: '',
+        email: '',
+        direccion: '',
+        estado: 1
+      },
+      medicoModal: null,
+      medicoFormErrors: [],
       rescheduling: false,
       locales: [],
     };
@@ -668,39 +834,320 @@ export default {
     },
     // Locales modal logic
     showNewLocalForm() {
+      // Hide the intervencion modal
       const intervencionModalElement = document.getElementById('intervencionModal');
       const intervencionModal = Modal.getInstance(intervencionModalElement);
       intervencionModal.hide();
+
+      // Reset the local form
+      this.localForm = {
+        nombre: '',
+        direccion: '',
+        telefono: ''
+      };
+      
+      // Set editing flag to false
+      this.isEditingLocal = false;
+      
+      // Show the local modal
       setTimeout(() => {
-        this.$root.$emit('showLocalModal', { onSaved: this.fetchLocales });
+        this.localModal = new Modal(document.getElementById('localModal'));
+        this.localModal.show();
       }, 500);
     },
+    
     editLocal(local) {
       if (!local) return;
+      
+      // Hide the intervencion modal
       const intervencionModalElement = document.getElementById('intervencionModal');
       const intervencionModal = Modal.getInstance(intervencionModalElement);
       intervencionModal.hide();
+
+      // Copy local data to form
+      this.localForm = { ...local };
+      
+      // Set editing flag
+      this.isEditingLocal = true;
+      
+      // Show the local modal
       setTimeout(() => {
-        this.$root.$emit('showLocalModal', { local, onSaved: this.fetchLocales });
+        this.localModal = new Modal(document.getElementById('localModal'));
+        this.localModal.show();
       }, 500);
     },
-    // Medicos modal logic
+    
+    async submitLocalForm() {
+      this.localFormErrors = [];
+      
+      try {
+        let response;
+        
+        if (this.isEditingLocal) {
+          // Update existing local
+          response = await fetch(`/api/locales/${this.localForm.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify(this.localForm)
+          });
+        } else {
+          // Create new local
+          response = await fetch('/api/locales', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify(this.localForm)
+          });
+        }
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Error al guardar la clínica/sede');
+        }
+        
+        // Close modal and refresh locales
+        this.closeLocalModal();
+        this.fetchLocales();
+        
+        // Show success message
+        alert(this.isEditingLocal ? 'Clínica/Sede actualizada exitosamente' : 'Clínica/Sede creada exitosamente');
+        
+      } catch (error) {
+        console.error('Error saving local:', error);
+        
+        if (error.response && error.response.status === 422) {
+          this.localFormErrors = Object.values(error.response.data.errors).flat();
+        } else {
+          this.localFormErrors = ['Error al guardar la clínica/sede'];
+        }
+      }
+    },
+    
+    closeLocalModal() {
+      if (this.localModal) {
+        this.localModal.hide();
+      }
+      
+      // Reset form and errors
+      this.localFormErrors = [];
+      
+      // Reopen the intervención modal
+      setTimeout(() => {
+        this.modal = new Modal(document.getElementById('intervencionModal'));
+        this.modal.show();
+      }, 500);
+    },
+    
+    // Médicos modal logic
     showNewMedicoForm() {
+      // Hide the intervencion modal
       const intervencionModalElement = document.getElementById('intervencionModal');
       const intervencionModal = Modal.getInstance(intervencionModalElement);
       intervencionModal.hide();
+
+      // Reset the médico form
+      this.medicoForm = {
+        nombres: '',
+        ap_paterno: '',
+        ap_materno: '',
+        dni: '',
+        cmp: '',
+        telefono: '',
+        email: '',
+        direccion: '',
+        estado: 1
+      };
+      
+      // Set editing flag to false
+      this.isEditingMedico = false;
+      
+      // Show the médico modal
       setTimeout(() => {
-        this.$root.$emit('showMedicoModal', { onSaved: this.fetchMedicos });
+        this.medicoModal = new Modal(document.getElementById('medicoModal'));
+        this.medicoModal.show();
       }, 500);
     },
-    editMedico(medico) {
+    
+    async editMedico(medico) {
       if (!medico) return;
+      
+      // Hide the intervencion modal
       const intervencionModalElement = document.getElementById('intervencionModal');
       const intervencionModal = Modal.getInstance(intervencionModalElement);
       intervencionModal.hide();
+      
+      try {
+        console.log('Fetching complete médico details for:', medico.id);
+        
+        // Fetch complete médico details from the dedicated endpoint
+        const response = await fetch(`/api/medicos-detail/${medico.id}`);
+        
+        if (!response.ok) {
+          throw new Error(`Error fetching médico details: ${response.status}`);
+        }
+        
+        // Get the complete médico data with all fields
+        const medicoDetails = await response.json();
+        console.log('Complete médico details:', medicoDetails);
+        
+        // Copy médico data to form using the returned details
+        this.medicoForm = { 
+          id: medicoDetails.id,
+          nombres: medicoDetails.nombres || '',
+          ap_paterno: medicoDetails.ap_paterno || '',
+          ap_materno: medicoDetails.ap_materno || '',
+          dni: medicoDetails.dni || '',
+          cmp: medicoDetails.cmp || '',
+          telefono: medicoDetails.telefono || '',
+          email: medicoDetails.email || '',
+          direccion: medicoDetails.direccion || '',
+          estado: medicoDetails.estado || 1
+        };
+        
+        console.log('Form data after mapping:', this.medicoForm);
+        
+        // Set editing flag
+        this.isEditingMedico = true;
+        
+        // Show the médico modal
+        setTimeout(() => {
+          this.medicoModal = new Modal(document.getElementById('medicoModal'));
+          this.medicoModal.show();
+        }, 500);
+        
+      } catch (error) {
+        console.error('Error in editMedico:', error);
+        alert('Error al cargar los datos del médico. Por favor intente nuevamente.');
+        
+        // Reopen the intervención modal if there was an error
+        setTimeout(() => {
+          this.modal = new Modal(document.getElementById('intervencionModal'));
+          this.modal.show();
+        }, 500);
+      }
+    },
+    
+    async submitMedicoForm() {
+      this.medicoFormErrors = [];
+      
+      try {
+        // Check if DNI already exists (for new doctors or changed DNIs)
+        if (!this.isEditingMedico || 
+            (this.isEditingMedico && this.medicoForm.dni !== this.medicos.find(m => m.id === this.medicoForm.id)?.dni)) {
+          const dniExists = await this.checkDniExists(this.medicoForm.dni);
+          if (dniExists) {
+            this.medicoFormErrors.push('DNI ya existe en la base de datos.');
+            return;
+          }
+        }
+        
+        // Check if CMP already exists
+        if (!this.isEditingMedico || 
+            (this.isEditingMedico && this.medicoForm.cmp !== this.medicos.find(m => m.id === this.medicoForm.id)?.cmp)) {
+          const cmpExists = await this.checkCmpExists(this.medicoForm.cmp);
+          if (cmpExists) {
+            this.medicoFormErrors.push('CMP ya existe en la base de datos.');
+            return;
+          }
+        }
+        
+        let response;
+        
+        if (this.isEditingMedico) {
+          // Update existing médico
+          response = await fetch(`/api/medicos/${this.medicoForm.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify(this.medicoForm)
+          });
+        } else {
+          // Create new médico
+          response = await fetch('/api/medicos', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify(this.medicoForm)
+          });
+        }
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Error al guardar el médico');
+        }
+        
+        // Close modal and refresh médicos
+        this.closeMedicoModal();
+        this.fetchMedicos();
+        
+        // Show success message
+        alert(this.isEditingMedico ? 'Médico actualizado exitosamente' : 'Médico creado exitosamente');
+        
+      } catch (error) {
+        console.error('Error saving médico:', error);
+        
+        if (error.response && error.response.status === 422) {
+          this.medicoFormErrors = Object.values(error.response.data.errors).flat();
+        } else {
+          this.medicoFormErrors = ['Error al guardar el médico'];
+        }
+      }
+    },
+    
+    closeMedicoModal() {
+      if (this.medicoModal) {
+        this.medicoModal.hide();
+      }
+      
+      // Reset form and errors
+      this.medicoFormErrors = [];
+      
+      // Reopen the intervención modal
       setTimeout(() => {
-        this.$root.$emit('showMedicoModal', { medico, onSaved: this.fetchMedicos });
+        this.modal = new Modal(document.getElementById('intervencionModal'));
+        this.modal.show();
       }, 500);
+    },
+    
+    closeMedicoFormErrorAlert(error) {
+      if (error) {
+        this.medicoFormErrors = this.medicoFormErrors.filter(e => e !== error);
+      } else {
+        this.medicoFormErrors = [];
+      }
+    },
+    
+    async checkDniExists(dni) {
+      try {
+        const response = await fetch(`/api/medicos/check-dni?dni=${dni}`);
+        if (!response.ok) throw new Error('Error al verificar DNI');
+        const data = await response.json();
+        return data.exists;
+      } catch (error) {
+        console.error('Error checking DNI:', error);
+        return false;
+      }
+    },
+    
+    async checkCmpExists(cmp) {
+      try {
+        const response = await fetch(`/api/medicos/check-cmp?cmp=${cmp}`);
+        if (!response.ok) throw new Error('Error al verificar CMP');
+        const data = await response.json();
+        return data.exists;
+      } catch (error) {
+        console.error('Error checking CMP:', error);
+        return false;
+      }
     },
     openModal() {
       this.loading = true;
@@ -782,7 +1229,10 @@ export default {
                     minute: '2-digit'
                   }) : ''),
         observaciones: this.intervencion.observaciones || '',
-        id_tipo_intervencion: this.intervencion.id_tipo_intervencion || ''
+        id_tipo_intervencion: this.intervencion.id_tipo_intervencion || '',
+        clinica_inicial_id: this.intervencion.clinica_inicial_id || '',
+        medico_que_indica_id: this.intervencion.medico_que_indica_id || '',
+        sede_operacion_id: this.intervencion.sede_operacion_id || ''
       };
       
       console.log('Populated form from intervencion:', this.form);
@@ -842,15 +1292,20 @@ export default {
       try {
         const method = this.form.id ? 'PUT' : 'POST';
         const url = this.form.id ? `/api/intervenciones/${this.form.id}` : '/api/intervenciones';
+        
+        // Ensure the new fields are properly formatted and included in the submission
         const formData = {
           ...this.form,
           fecha: this.form.fecha,
           hora_inicio: this.form.hora_inicio,
           hora_fin: this.form.hora_fin || this.form.hora_inicio,
-          clinica_inicial_id: this.form.clinica_inicial_id || null,
-          medico_que_indica_id: this.form.medico_que_indica_id || null,
-          sede_operacion_id: this.form.sede_operacion_id || null,
+          // Convert to integers if present, otherwise null
+          clinica_inicial_id: this.form.clinica_inicial_id ? parseInt(this.form.clinica_inicial_id, 10) : null,
+          medico_que_indica_id: this.form.medico_que_indica_id ? parseInt(this.form.medico_que_indica_id, 10) : null,
+          sede_operacion_id: this.form.sede_operacion_id ? parseInt(this.form.sede_operacion_id, 10) : null,
         };
+        
+        console.log('Submitting intervention with data:', formData);
         
         const response = await fetch(url, {
           method,
@@ -1179,6 +1634,40 @@ export default {
     
     onlyNumbers(event) {
       event.target.value = event.target.value.replace(/[^\d]/g, '');
+    },
+    getClinicaDisplay(clinicaId) {
+      if (!clinicaId) return null;
+      
+      // Debug logging to see what data we have
+      console.log('getClinicaDisplay for clinicaId:', clinicaId);
+      console.log('Available locales:', this.locales);
+      console.log('Intervencion relation data:', this.intervencion);
+      
+      // First check if the clinic data is available via relationship
+      if (this.intervencion && this.intervencion.clinicaInicial && clinicaId === this.intervencion.clinica_inicial_id) {
+        return this.intervencion.clinicaInicial.nombre;
+      } else if (this.intervencion && this.intervencion.sedeOperacion && clinicaId === this.intervencion.sede_operacion_id) {
+        return this.intervencion.sedeOperacion.nombre;
+      }
+      
+      // Fallback to the locales array if relationship data isn't available
+      // Convert clinicaId to number for proper comparison
+      const clinicaIdNum = parseInt(clinicaId, 10);
+      const clinica = this.locales.find(c => parseInt(c.id, 10) === clinicaIdNum);
+      return clinica ? clinica.nombre : `Clínica ID: ${clinicaId}`;
+    },
+    getMedicoQueIndicaDisplay(medicoId) {
+      if (!medicoId) return null;
+      
+      // First check if the doctor data is available via relationship
+      if (this.intervencion && this.intervencion.medicoQueIndica && medicoId === this.intervencion.medico_que_indica_id) {
+        const medico = this.intervencion.medicoQueIndica;
+        return `${medico.nombres} ${medico.ap_paterno} ${medico.ap_materno}`;
+      }
+      
+      // Fallback to the medicos array if relationship data isn't available
+      const medico = this.medicos.find(m => m.id === medicoId);
+      return medico ? `${medico.nombres} ${medico.ap_paterno} ${medico.ap_materno}` : `Médico ID: ${medicoId}`;
     },
     getTipoIntervencionDisplay(intervencion) {
       // Debug logging

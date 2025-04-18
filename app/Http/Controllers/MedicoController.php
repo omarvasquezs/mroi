@@ -83,4 +83,10 @@ class MedicoController extends Controller
         )->orderBy('nombres')->get();
         return response()->json($medicos);
     }
+    
+    public function getMedicoDetail($id)
+    {
+        $medico = Medico::findOrFail($id);
+        return response()->json($medico);
+    }
 }

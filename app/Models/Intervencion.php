@@ -19,7 +19,10 @@ class Intervencion extends Model
         'hora_fin',
         'duracion_minutos',
         'estado',
-        'observaciones'
+        'observaciones',
+        'clinica_inicial_id',
+        'medico_que_indica_id',
+        'sede_operacion_id'
     ];
 
     protected $casts = [
@@ -72,5 +75,20 @@ class Intervencion extends Model
         return $this->belongsToMany(Comprobante::class, 'intervencion_comprobante')
             ->withPivot('monto')
             ->withTimestamps();
+    }
+
+    public function clinicaInicial(): BelongsTo
+    {
+        return $this->belongsTo(Local::class, 'clinica_inicial_id');
+    }
+
+    public function medicoQueIndica(): BelongsTo
+    {
+        return $this->belongsTo(Medico::class, 'medico_que_indica_id');
+    }
+
+    public function sedeOperacion(): BelongsTo
+    {
+        return $this->belongsTo(Local::class, 'sede_operacion_id');
     }
 }

@@ -32,6 +32,7 @@ Route::get('/medicos/check-cmp', [MedicoController::class, 'checkCmp']);
 Route::get('/proveedores/check-ruc', [ProveedorController::class, 'checkRuc']);
 Route::get('/proveedores/check-correo', [ProveedorController::class, 'checkCorreo']);
 Route::get('/medicos-list', [MedicoController::class, 'getAllMedicos']);
+Route::get('/medicos-detail/{id}', [MedicoController::class, 'getMedicoDetail']);
 Route::get('/pacientes-list', [PacienteController::class, 'getAllPacientes']);
 Route::get('/pacientes-with-citas', [PacienteController::class, 'getPacientesWithCitas']); // New route for patients with appointments
 

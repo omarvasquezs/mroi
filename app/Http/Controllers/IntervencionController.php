@@ -19,8 +19,17 @@ class IntervencionController extends Controller
             'hora_inicio' => 'required',
             'hora_fin' => 'required',
             'observaciones' => 'nullable|string',
-            'id_tipo_intervencion' => 'required|exists:tipos_intervenciones,id'
+            'id_tipo_intervencion' => 'required|exists:tipos_intervenciones,id',
+            'estado' => 'nullable|string',
+            'clinica_inicial_id' => 'nullable|exists:locales,id',
+            'medico_que_indica_id' => 'nullable|exists:medicos,id',
+            'sede_operacion_id' => 'nullable|exists:locales,id'
         ]);
+        
+        // Set default estado if not provided
+        if (!isset($validated['estado'])) {
+            $validated['estado'] = 'd'; // Default estado value (pendiente)
+        }
 
         $intervencion = Intervencion::create([
             'num_historia' => $validated['num_historia'],
@@ -29,7 +38,11 @@ class IntervencionController extends Controller
             'hora_inicio' => $validated['hora_inicio'],
             'hora_fin' => $validated['hora_fin'],
             'observaciones' => $validated['observaciones'],
-            'id_tipo_intervencion' => $validated['id_tipo_intervencion']
+            'id_tipo_intervencion' => $validated['id_tipo_intervencion'],
+            'estado' => $validated['estado'],
+            'clinica_inicial_id' => $validated['clinica_inicial_id'] ?? null,
+            'medico_que_indica_id' => $validated['medico_que_indica_id'] ?? null,
+            'sede_operacion_id' => $validated['sede_operacion_id'] ?? null
         ]);
 
         return response()->json($intervencion, 201);
@@ -44,15 +57,15 @@ class IntervencionController extends Controller
             return response()->json([], 400);
         }
 
+        // Include clinic, referring doctor and operation site in the JSON
         $intervenciones = Intervencion::where('id_medico', $medicoId)
             ->whereDate('fecha', $fecha)
             ->with([
-                'paciente' => function($query) {
-                    $query->select('num_historia', 'nombres', 'ap_paterno', 'ap_materno');
-                },
-                'tipoIntervencion' => function($query) {
-                    $query->select('id', 'tipo_intervencion', 'precio');
-                }
+                'paciente:id,num_historia,nombres,ap_paterno,ap_materno',
+                'tipoIntervencion:id,tipo_intervencion,precio',
+                'clinicaInicial:id,nombre',
+                'medicoQueIndica:id,nombres,ap_paterno,ap_materno',
+                'sedeOperacion:id,nombre'
             ])
             ->get([
                 'id',
@@ -62,7 +75,10 @@ class IntervencionController extends Controller
                 'hora_inicio',
                 'hora_fin',
                 'observaciones',
-                'id_tipo_intervencion'
+                'id_tipo_intervencion',
+                'clinica_inicial_id',
+                'medico_que_indica_id',
+                'sede_operacion_id'
             ]);
 
         return response()->json($intervenciones);
@@ -228,7 +244,7 @@ class IntervencionController extends Controller
 
     public function show($id)
     {
-        $intervencion = Intervencion::with(['paciente', 'medico', 'tipoIntervencion'])
+        $intervencion = Intervencion::with(['paciente', 'medico', 'tipoIntervencion', 'clinicaInicial', 'medicoQueIndica', 'sedeOperacion'])
             ->findOrFail($id);
         
         return response()->json($intervencion);
