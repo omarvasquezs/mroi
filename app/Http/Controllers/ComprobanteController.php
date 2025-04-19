@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Comprobante;
 use App\Models\Cita;
 use App\Models\ProductoComprobante;
+use App\Models\Intervencion; // Add Intervencion model
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Illuminate\Support\Facades\Log;
@@ -75,6 +76,15 @@ class ComprobanteController extends Controller
                     if ($comprobante->productoComprobante) {
                         $comprobante->paciente_nombre = $comprobante->productoComprobante->nombres;
                     }
+                } elseif ($comprobante->intervenciones()->exists()) {
+                    $comprobante->servicio = 'Intervención';
+                    
+                    // Add patient information from intervención relation
+                    $intervencion = $comprobante->intervenciones->first();
+                    if ($intervencion && $intervencion->paciente) {
+                        $paciente = $intervencion->paciente;
+                        $comprobante->paciente_nombre = trim($paciente->nombres . ' ' . $paciente->ap_paterno . ' ' . $paciente->ap_materno);
+                    }
                 } else {
                     $comprobante->servicio = 'Desconocido';
                 }
@@ -102,6 +112,15 @@ class ComprobanteController extends Controller
             } elseif ($request->has('productos_comprobante_id')) {
                 $productoComprobante = ProductoComprobante::findOrFail($request->productos_comprobante_id);
                 $monto_total = $productoComprobante->monto_total;
+            } elseif ($request->has('intervenciones')) {
+                // Handle intervenciones
+                $intervenciones = Intervencion::whereIn('id', $request->intervenciones)
+                    ->with('tipoIntervencion')
+                    ->get();
+
+                foreach ($intervenciones as $intervencion) {
+                    $monto_total += $intervencion->tipoIntervencion->precio;
+                }
             }
 
             $comprobante = Comprobante::create([
@@ -109,9 +128,7 @@ class ComprobanteController extends Controller
                 'serie' => $request->tipo === 'b' ? 'B001' : 'F001',
                 'correlativo' => $this->getNextCorrelativo($request->tipo),
                 'id_metodo_pago' => $request->id_metodo_pago,
-                'paciente_id' => $request->paciente_id ?? null,
-                'monto_total' => $monto_total,
-                'pagado' => true
+                'monto_total' => $monto_total
             ]);
 
             if ($request->has('citas')) {
@@ -124,9 +141,19 @@ class ComprobanteController extends Controller
                 $productoComprobante = ProductoComprobante::findOrFail($request->productos_comprobante_id);
                 $productoComprobante->comprobante_id = $comprobante->id;
                 $productoComprobante->save();
+            } elseif ($request->has('intervenciones')) {
+                // Process and update intervenciones
+                foreach ($intervenciones as $intervencion) {
+                    // Update estado from 'd' to 'p'
+                    $intervencion->estado = 'p';
+                    $intervencion->save();
+                    
+                    // Attach to the comprobante with the monto
+                    $comprobante->intervenciones()->attach($intervencion->id, ['monto' => $intervencion->tipoIntervencion->precio]);
+                }
             }
 
-            return response()->json(['comprobante' => $comprobante->load('citas')]);
+            return response()->json(['comprobante' => $comprobante->load(['citas', 'intervenciones'])]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
@@ -192,9 +219,13 @@ class ComprobanteController extends Controller
     private function generatePdfDocument($comprobante, $isThermal = false)
     {
         // Determine the view based on comprobante type
-        $view = $comprobante->servicio === 'Producto'
-            ? 'comprobantes.productos_pdf'
-            : 'comprobantes.pdf';
+        $view = 'comprobantes.pdf';
+        
+        if ($comprobante->servicio === 'Producto') {
+            $view = 'comprobantes.productos_pdf';
+        } elseif ($comprobante->servicio === 'Intervención') {
+            $view = 'comprobantes.intervenciones_pdf'; // You may need to create this view
+        }
 
         // First render to measure body height
         $pdf = PDF::loadView($view, ['comprobante' => $comprobante]);
@@ -248,7 +279,9 @@ class ComprobanteController extends Controller
             'citas.tipoCita',
             'metodoPago',
             'paciente',
-            'productoComprobante.items.stock'
+            'productoComprobante.items.stock',
+            'intervenciones.tipoIntervencion', // Add intervenciones relationship
+            'intervenciones.medico'
         ])->findOrFail($id);
 
         // Determine the service type
@@ -256,6 +289,8 @@ class ComprobanteController extends Controller
             $comprobante->servicio = 'Cita';
         } elseif ($comprobante->productoComprobante) {
             $comprobante->servicio = 'Producto';
+        } elseif ($comprobante->intervenciones()->exists()) {
+            $comprobante->servicio = 'Intervención';
         } else {
             $comprobante->servicio = 'Desconocido';
         }

@@ -8,10 +8,10 @@ class Comprobante extends Model
 {
     protected $fillable = [
         'tipo',
-        'serie',          // Changed from numero_serie
-        'correlativo',    // Changed from numero_correlativo
+        'serie',
+        'correlativo',
         'monto_total',
-        'id_metodo_pago' // Added this field
+        'id_metodo_pago'
     ];
 
     public function paciente()
@@ -34,5 +34,12 @@ class Comprobante extends Model
     public function productoComprobante()
     {
         return $this->hasOne(ProductoComprobante::class, 'comprobante_id');
+    }
+
+    public function intervenciones()
+    {
+        return $this->belongsToMany(Intervencion::class, 'intervencion_comprobante')
+            ->withPivot('monto')
+            ->withTimestamps();
     }
 }

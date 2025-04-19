@@ -15,6 +15,7 @@
                         <option value="" disabled selected class="pointer">Seleccione tipo de servicio</option>
                         <option value="citas" class="pointer">Citas</option>
                         <option value="productos" class="pointer">Productos</option>
+                        <option value="intervenciones" class="pointer">Intervenciones</option>
                     </select>
                     <i class="fas fa-chevron-down select-arrow"></i>
                 </div>
@@ -28,15 +29,15 @@
                 <div class="card-header">Búsqueda de Paciente</div>
                 <div class="card-body">
                     <div class="form-group position-relative select-wrapper">
-                        <label for="paciente-select">Seleccionar Paciente</label>
-                        <select 
-                            v-model="selectedPatientId" 
-                            class="form-control pointer" 
-                            id="paciente-select"
+                        <label for="paciente-cita-select">Seleccionar Paciente (con Citas Pendientes)</label>
+                        <select
+                            v-model="selectedPatientId"
+                            class="form-control pointer"
+                            id="paciente-cita-select"
                             @change="fetchPatientAppointments"
                         >
                             <option value="" disabled selected class="pointer">Seleccione un paciente</option>
-                            <option v-for="paciente in pacientes" :key="paciente.id" :value="paciente.id" class="pointer">
+                            <option v-for="paciente in pacientesCitas" :key="paciente.id" :value="paciente.id" class="pointer">
                                 {{ paciente.num_historia }} - {{ paciente.nombre }}
                             </option>
                         </select>
@@ -154,8 +155,68 @@
             </div>
         </div>
 
+        <!-- Intervenciones Section -->
+        <div v-if="comprobanteType === 'intervenciones'">
+            <!-- Search Patient Section -->
+            <div class="card mb-4">
+                <div class="card-header">Búsqueda de Paciente</div>
+                <div class="card-body">
+                    <div class="form-group position-relative select-wrapper">
+                        <label for="paciente-intervencion-select">Seleccionar Paciente (con Intervenciones Pendientes)</label>
+                        <select
+                            v-model="selectedPatientId"
+                            class="form-control pointer"
+                            id="paciente-intervencion-select"
+                            @change="fetchPatientIntervenciones"
+                        >
+                            <option value="" disabled selected class="pointer">Seleccione un paciente</option>
+                            <option v-for="paciente in pacientesIntervenciones" :key="paciente.id" :value="paciente.id" class="pointer">
+                                {{ paciente.num_historia }} - {{ paciente.nombre }}
+                            </option>
+                        </select>
+                        <i class="fas fa-chevron-down select-arrow"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patient Pending Interventions Section -->
+            <div v-if="selectedPatient" class="card mb-4">
+                <div class="card-header">
+                    Intervenciones Pendientes - {{ selectedPatient.nombre }}
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Seleccionar</th>
+                                <th>Fecha y Rangos de Horas</th>
+                                <th>Tipo de Intervención</th>
+                                <th>Médico</th>
+                                <th>Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="intervencion in pendingIntervenciones" :key="intervencion.id" @click="selectIntervencion(intervencion.id)" class="clickable-row">
+                                <td>
+                                    <input
+                                        type="radio"
+                                        v-model="selectedIntervencionId"
+                                        :value="intervencion.id"
+                                    >
+                                </td>
+                                <td>{{ formatIntervencionDateTime(intervencion) }}</td>
+                                <td>{{ intervencion.tipo_intervencion ? intervencion.tipo_intervencion.nombre : 'N/A' }}</td>
+                                <td>{{ intervencion.medico ? intervencion.medico.nombre : 'N/A' }}</td>
+                                <td>{{ formatCurrency(intervencion.monto) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- Payment Section -->
-        <div v-if="(comprobanteType === 'citas' && selectedAppointmentId) || (comprobanteType === 'productos' && selectedProductoComprobante)" class="card mb-4">
+        <div v-if="(comprobanteType === 'citas' && selectedAppointmentId) || (comprobanteType === 'productos' && selectedProductoComprobante) || (comprobanteType === 'intervenciones' && selectedIntervencionId)" class="card mb-4">
             <div class="card-header">Generar Comprobante</div>
             <div class="card-body">
                 <div class="row">
@@ -203,13 +264,15 @@
 export default {
     data() {
         return {
-            comprobanteType: '', // Type of service selected (citas or productos)
-            searchTerm: '', // Search term for filtering patients
-            pacientes: [], // List of patients
+            comprobanteType: '', // Type of service selected (citas, productos, or intervenciones)
+            pacientesCitas: [], // Patients with pending appointments
+            pacientesIntervenciones: [], // Patients with pending interventions
             selectedPatientId: '', // ID of the selected patient
             selectedPatient: null, // Details of the selected patient
             pendingAppointments: [], // List of pending appointments for the selected patient
             selectedAppointmentId: '', // ID of the selected appointment
+            pendingIntervenciones: [], // List of pending interventions for the selected patient
+            selectedIntervencionId: '', // ID of the selected intervention
             metodosPago: [], // List of payment methods
             comprobante: {
                 tipo: 'b', // Type of comprobante (boleta or factura)
@@ -221,6 +284,31 @@ export default {
             productoComprobanteItems: [] // List of items in the selected product purchase request
         }
     },
+    watch: {
+        // Watch for changes in the selected service type
+        comprobanteType(newType, oldType) {
+            console.log(`Comprobante type changed from ${oldType} to ${newType}`);
+            // Reset selections when type changes
+            this.selectedPatientId = '';
+            this.selectedPatient = null;
+            this.pendingAppointments = [];
+            this.selectedAppointmentId = '';
+            this.pendingIntervenciones = [];
+            this.selectedIntervencionId = '';
+            this.selectedProductoComprobanteId = '';
+            this.selectedProductoComprobante = null;
+            this.productoComprobanteItems = [];
+
+            // Fetch the appropriate patient list
+            if (newType === 'citas') {
+                this.fetchPacientesWithCitas();
+            } else if (newType === 'intervenciones') {
+                this.fetchPacientesWithIntervenciones();
+            } else if (newType === 'productos') {
+                this.fetchProductoComprobantes(); // Fetch product requests if needed
+            }
+        }
+    },
     computed: {
         // Calculate the total price of the selected product purchase request items
         totalPrecio() {
@@ -228,43 +316,107 @@ export default {
         }
     },
     mounted() {
-        // Fetch initial data when the component is mounted
-        this.fetchPacientes();
+        // Fetch initial data common to all types
         this.fetchMetodosPago();
-        this.fetchProductoComprobantes();
+        // Initial fetch based on default or initial comprobanteType if set
+        if (this.comprobanteType === 'citas') {
+            this.fetchPacientesWithCitas();
+        } else if (this.comprobanteType === 'intervenciones') {
+            this.fetchPacientesWithIntervenciones();
+        } else if (this.comprobanteType === 'productos') {
+             this.fetchProductoComprobantes();
+        }
     },
     methods: {
         // Navigate back to the previous page
         goBack() {
             window.history.back();
         },
-        // Fetch the list of patients from the API
-        async fetchPacientes() {
+
+        // Fetch patients with pending appointments (estado='d')
+        async fetchPacientesWithCitas() {
+            console.log("Fetching patients with citas...");
             try {
-                // Updated to use the new endpoint that returns only patients with citas
                 const response = await axios.get('/api/pacientes-with-citas');
-                this.pacientes = response.data;
+                this.pacientesCitas = response.data;
+                console.log("Fetched patients with citas:", this.pacientesCitas);
             } catch (error) {
-                console.error('Error fetching pacientes:', error);
-                this.pacientes = [];
+                console.error('Error fetching pacientes with citas:', error);
+                this.pacientesCitas = [];
             }
         },
-        // Fetch the appointments of the selected patient from the API
-        async fetchPatientAppointments() {
+
+        // Fetch patients with pending interventions (estado='d')
+        async fetchPacientesWithIntervenciones() {
+            console.log("Fetching patients with intervenciones...");
             try {
-                const selectedPatient = this.pacientes.find(p => p.id === this.selectedPatientId);
-                if (!selectedPatient) {
-                    console.error('No patient found with selected ID');
-                    return;
+                const response = await axios.get('/api/pacientes-with-intervenciones');
+                this.pacientesIntervenciones = response.data;
+                console.log("Fetched patients with intervenciones:", this.pacientesIntervenciones);
+            } catch (error) {
+                console.error('Error fetching pacientes with intervenciones:', error);
+                this.pacientesIntervenciones = [];
+            }
+        },
+
+        // Fetch appointments for the selected patient (using num_historia)
+        async fetchPatientAppointments() {
+            // Find patient details from the citas list
+            const selectedPatientDetails = this.pacientesCitas.find(p => p.id === this.selectedPatientId);
+            if (!selectedPatientDetails) {
+                console.error('Selected patient details not found in pacientesCitas list.');
+                this.selectedPatient = null;
+                this.pendingAppointments = [];
+                return;
+            }
+            this.selectedPatient = selectedPatientDetails; // Store full patient details
+            console.log(`Fetching appointments for patient ID: ${this.selectedPatientId}, Num Historia: ${this.selectedPatient.num_historia}`);
+
+            try {
+                // Use the search endpoint which expects num_historia
+                const response = await axios.get(`/api/pacientes/search/${this.selectedPatient.num_historia}`);
+                // Ensure the response structure matches expectations
+                if (response.data && response.data.pendingAppointments) {
+                    this.pendingAppointments = response.data.pendingAppointments;
+                    console.log("Fetched pending appointments:", this.pendingAppointments);
+                } else {
+                    console.warn('Unexpected response structure for pending appointments:', response.data);
+                    this.pendingAppointments = [];
                 }
-                
-                const response = await axios.get(`/api/pacientes/search/${selectedPatient.num_historia}`);
-                this.selectedPatient = response.data.patient;
-                this.pendingAppointments = response.data.pendingAppointments;
+                this.selectedAppointmentId = ''; // Reset selection
             } catch (error) {
                 console.error('Error fetching patient appointments:', error);
+                this.pendingAppointments = [];
+                this.selectedAppointmentId = '';
             }
         },
+
+        // Fetch interventions for the selected patient (using patient ID)
+        async fetchPatientIntervenciones() {
+            // Find patient details from the intervenciones list
+            const selectedPatientDetails = this.pacientesIntervenciones.find(p => p.id === this.selectedPatientId);
+             if (!selectedPatientDetails) {
+                console.error('Selected patient details not found in pacientesIntervenciones list.');
+                this.selectedPatient = null;
+                this.pendingIntervenciones = [];
+                return;
+            }
+            this.selectedPatient = selectedPatientDetails; // Store full patient details
+            console.log(`Fetching interventions for patient ID: ${this.selectedPatientId}`);
+
+            try {
+                const response = await axios.get(`/api/pacientes/${this.selectedPatientId}/intervenciones-pendientes`);
+                console.log("API Response data for interventions:", JSON.stringify(response.data)); // Log raw response data
+                this.pendingIntervenciones = response.data; // Assign data
+                console.log("Updated pendingIntervenciones state:", JSON.stringify(this.pendingIntervenciones)); // Log state after update
+                this.selectedIntervencionId = ''; // Reset selection
+            } catch (error) {
+                console.error('Error fetching patient interventions:', error);
+                this.pendingIntervenciones = []; // Reset on error
+                this.selectedIntervencionId = '';
+            }
+        },
+
         // Fetch the list of payment methods from the API
         async fetchMetodosPago() {
             try {
@@ -300,7 +452,43 @@ export default {
                 console.error('Error fetching producto comprobante items:', error);
             }
         },
-        // Format a date to a readable string
+        // Format a date to a readable string (Date only)
+        formatDateOnly(date) {
+            if (!date) return 'N/A';
+            return new Date(date).toLocaleDateString('es-PE', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                timeZone: 'UTC' // Assuming date from DB is UTC or doesn't have timezone issues
+            });
+        },
+
+        // Format time string (HH:MM:SS) to HH:MM
+        formatTime(time) {
+            if (!time || typeof time !== 'string') return '';
+            const parts = time.split(':');
+            if (parts.length >= 2) {
+                return `${parts[0]}:${parts[1]}`;
+            }
+            return time; // Return original if format is unexpected
+        },
+
+        // Format intervention date and time range
+        formatIntervencionDateTime(intervencion) {
+            const datePart = this.formatDateOnly(intervencion.fecha);
+            const startTime = this.formatTime(intervencion.hora_inicio);
+            const endTime = this.formatTime(intervencion.hora_fin);
+            let dateTimeString = datePart;
+            if (startTime) {
+                dateTimeString += ` ${startTime}`;
+                if (endTime) {
+                    dateTimeString += ` - ${endTime}`;
+                }
+            }
+            return dateTimeString;
+        },
+
+        // Format a date to a readable string (including time)
         formatDate(date) {
             if (!date) return 'N/A';
             return new Date(date).toLocaleString('es-PE', {
@@ -311,6 +499,7 @@ export default {
                 minute: '2-digit'
             });
         },
+
         // Format a number to a currency string
         formatCurrency(amount) {
             return new Intl.NumberFormat('es-PE', {
@@ -322,6 +511,10 @@ export default {
         selectAppointment(id) {
             this.selectedAppointmentId = id;
         },
+        // Select a specific intervention
+        selectIntervencion(id) {
+            this.selectedIntervencionId = id;
+        },
         // Select a product purchase request and fetch its items
         selectProductoComprobante(id) {
             this.selectedProductoComprobanteId = id;
@@ -329,7 +522,7 @@ export default {
         },
         // Generate a comprobante based on the selected service type and details
         async generateComprobante() {
-            if (this.comprobanteType === 'citas' && !this.selectedPatient) {
+            if ((this.comprobanteType === 'citas' || this.comprobanteType === 'intervenciones') && !this.selectedPatient) {
                 alert('Seleccione un paciente antes de generar el comprobante.');
                 return;
             }
@@ -340,21 +533,35 @@ export default {
             }
 
             try {
-                let response;
+                let payload = {
+                    tipo: this.comprobante.tipo,
+                    id_metodo_pago: this.comprobante.id_metodo_pago,
+                };
+
                 if (this.comprobanteType === 'citas') {
-                    response = await axios.post('/api/comprobantes', {
-                        tipo: this.comprobante.tipo,
-                        id_metodo_pago: this.comprobante.id_metodo_pago,
-                        citas: [this.selectedAppointmentId],
-                        paciente_id: this.selectedPatient.id
-                    });
+                    if (!this.selectedAppointmentId) {
+                         alert('Seleccione una cita.');
+                         return;
+                    }
+                    payload.citas = [this.selectedAppointmentId];
+                    payload.paciente_id = this.selectedPatient.id;
                 } else if (this.comprobanteType === 'productos') {
-                    response = await axios.post('/api/comprobantes', {
-                        tipo: this.comprobante.tipo,
-                        id_metodo_pago: this.comprobante.id_metodo_pago,
-                        productos_comprobante_id: this.selectedProductoComprobanteId
-                    });
+                     if (!this.selectedProductoComprobanteId) {
+                         alert('Seleccione una solicitud de compra.');
+                         return;
+                    }
+                    payload.productos_comprobante_id = this.selectedProductoComprobanteId;
+                } else if (this.comprobanteType === 'intervenciones') {
+                     if (!this.selectedIntervencionId) {
+                         alert('Seleccione una intervención.');
+                         return;
+                    }
+                    // Assuming the backend expects an 'intervenciones' array or similar
+                    payload.intervenciones = [this.selectedIntervencionId];
+                    payload.paciente_id = this.selectedPatient.id;
                 }
+
+                const response = await axios.post('/api/comprobantes', payload);
 
                 if (response.data.error) {
                     alert('Error: ' + response.data.error);

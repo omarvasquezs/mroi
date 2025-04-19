@@ -34,7 +34,9 @@ Route::get('/proveedores/check-correo', [ProveedorController::class, 'checkCorre
 Route::get('/medicos-list', [MedicoController::class, 'getAllMedicos']);
 Route::get('/medicos-detail/{id}', [MedicoController::class, 'getMedicoDetail']);
 Route::get('/pacientes-list', [PacienteController::class, 'getAllPacientes']);
-Route::get('/pacientes-with-citas', [PacienteController::class, 'getPacientesWithCitas']); // New route for patients with appointments
+Route::get('/pacientes-with-citas', [PacienteController::class, 'getPacientesWithCitas']);
+Route::get('/pacientes-with-intervenciones', [PacienteController::class, 'getPacientesWithIntervenciones']); // New route
+Route::get('/pacientes/{id}/intervenciones-pendientes', [PacienteController::class, 'getPendingInterventions']);
 
 // Routes for appointment management
 Route::get('citas/check', [CitaController::class, 'checkCita']);

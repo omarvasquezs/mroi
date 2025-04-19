@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Paciente;
 use App\Models\Cita;
+use App\Models\Intervencion; // Import the Intervencion model
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PacienteController extends Controller
 {
@@ -214,13 +216,87 @@ class PacienteController extends Controller
      */
     public function getPacientesWithCitas()
     {
-        $pacientes = Paciente::select('pacientes.*', DB::raw("CONCAT(nombres, ' ', ap_paterno, ' ', ap_materno) as nombre"))
+        $pacientes = Paciente::select('pacientes.id', 'pacientes.num_historia', DB::raw("CONCAT(nombres, ' ', ap_paterno, ' ', ap_materno) as nombre"))
             ->join('citas', 'pacientes.num_historia', '=', 'citas.num_historia')
-            ->where('citas.estado', '=', 'd')  // Filter for appointments with estado = 'd'
+            ->where('citas.estado', '=', 'd')
             ->distinct()
-            ->orderBy('nombres')
+            ->orderBy('nombre')
             ->get();
 
         return response()->json($pacientes);
+    }
+
+    /**
+     * Get all patients who have interventions with estado = 'd'
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function getPacientesWithIntervenciones()
+    {
+        try {
+            $pacientes = Paciente::select('pacientes.id', 'pacientes.num_historia', DB::raw("CONCAT(pacientes.nombres, ' ', pacientes.ap_paterno, ' ', pacientes.ap_materno) as nombre"))
+                ->join('intervenciones', 'pacientes.num_historia', '=', 'intervenciones.num_historia')
+                ->where('intervenciones.estado', '=', 'd')
+                ->distinct()
+                ->orderBy('nombre')
+                ->get();
+
+            return response()->json($pacientes);
+        } catch (\Exception $e) {
+            Log::error('Error fetching pacientes with interventions: ' . $e->getMessage());
+            return response()->json(['error' => 'Error fetching patients with interventions'], 500);
+        }
+    }
+
+
+    /**
+     * Get pending interventions for a specific patient.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function getPendingInterventions($id)
+    {
+        try {
+            $paciente = Paciente::findOrFail($id);
+
+            $pendingIntervenciones = Intervencion::where('num_historia', $paciente->num_historia)
+                ->where('estado', 'd') // Filter by estado = 'd'
+                ->with([
+                    'medico:id,nombres,ap_paterno,ap_materno',
+                    'tipoIntervencion:id,tipo_intervencion,precio'
+                ])
+                ->get();
+
+            Log::info('Fetched pending interventions for patient ' . $id . ': ' . $pendingIntervenciones->count());
+
+            $formattedIntervenciones = $pendingIntervenciones->map(function ($intervencion) {
+                return [
+                    'id' => $intervencion->id,
+                    'fecha' => $intervencion->fecha,
+                    'hora_inicio' => $intervencion->hora_inicio, // Add hora_inicio
+                    'hora_fin' => $intervencion->hora_fin,       // Add hora_fin
+                    'tipo_intervencion' => $intervencion->tipoIntervencion ? [
+                        'nombre' => $intervencion->tipoIntervencion->tipo_intervencion
+                     ] : null,
+                    'medico' => $intervencion->medico ? [
+                        'nombre' => $intervencion->medico->nombres . ' ' . $intervencion->medico->ap_paterno
+                    ] : null,
+                    'monto' => $intervencion->tipoIntervencion ? $intervencion->tipoIntervencion->precio : 0
+                ];
+            });
+
+            return response()->json($formattedIntervenciones);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::warning('Patient not found for pending interventions: ' . $id);
+            return response()->json(['error' => 'Paciente no encontrado'], 404);
+        } catch (\Exception $e) {
+            Log::error('Error fetching pending interventions for patient ' . $id . ': ' . $e->getMessage() . '\n' . $e->getTraceAsString());
+            return response()->json([
+                'error' => 'Error fetching pending interventions',
+                 'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }
