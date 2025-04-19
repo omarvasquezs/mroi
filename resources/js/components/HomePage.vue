@@ -160,6 +160,10 @@ export default {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    user-select: none; /* Prevent text selection */
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+/Edge */
 }
 
 .custom-btn:hover {
@@ -210,5 +214,17 @@ export default {
 
 .submenu-scroll-container::-webkit-scrollbar-thumb:hover {
     background-color: rgba(0,0,0,0.4);
+}
+
+/* Prevent text selection throughout the application */
+.no-select, 
+.submenu-item, 
+.empty-submenu-message,
+.list-group-item,
+.card-header {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 </style>
