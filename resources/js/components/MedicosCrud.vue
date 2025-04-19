@@ -379,9 +379,9 @@ export default {
     changePage(url) {
       axios.get(url)
         .then(response => {
-          const { data, meta } = response.data;
+          const { data, ...pagination } = response.data;
           this.medicos = data;
-          this.pagination = meta.pagination;
+          this.pagination = pagination;
         })
         .catch(error => {
           console.error(error);
