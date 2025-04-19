@@ -195,7 +195,6 @@ export default {
 .submenu-scrollable {
     flex-wrap: nowrap;
     min-width: min-content; /* Ensures all items are displayed */
-    padding: 10px 0;
 }
 
 /* Show scrollbar on hover for better UX */
