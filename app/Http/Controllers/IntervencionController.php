@@ -78,7 +78,8 @@ class IntervencionController extends Controller
                 'id_tipo_intervencion',
                 'clinica_inicial_id',
                 'medico_que_indica_id',
-                'sede_operacion_id'
+                'sede_operacion_id',
+                'estado'
             ]);
 
         return response()->json($intervenciones);
