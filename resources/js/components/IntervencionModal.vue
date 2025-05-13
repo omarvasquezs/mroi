@@ -5,7 +5,7 @@
         <div class="modal-header bg-primary text-white">
           <h5 class="modal-title" id="intervencionModalLabel">
             <i class="fas fa-file-medical me-2"></i>
-            {{ intervencion ? (isEditingIntervention ? 'Editar Intervención' : 'Información de la Intervención') : 'Registrar Nueva Intervención' }}
+            {{ intervencion ? 'Información de la Intervención' : 'Registrar Nueva Intervención' }}
           </h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
@@ -16,7 +16,7 @@
             </div>
             <p class="mt-2">Cargando...</p>
           </div>
-          <div v-else-if="intervencion && !isRescheduling && !isEditingIntervention">
+          <div v-else-if="intervencion && !isRescheduling">
             <!-- Display intervention details view -->
             <div class="card shadow-sm mb-4">
               <div class="card-header bg-light">
@@ -85,9 +85,7 @@
             </div>
             
             <div class="d-flex justify-content-end pt-3 border-top">
-              <button v-if="intervencion" type="button" class="btn btn-primary me-2" @click="switchToEditMode">
-                <i class="fas fa-pencil-alt me-2"></i> Editar Intervención
-              </button>
+              <!-- Removed "Editar Intervención" button -->
               <button v-if="intervencion" type="button" class="btn btn-danger" @click="confirmDelete">
                 <i class="fas fa-trash-alt me-2"></i> Eliminar Intervención
               </button>
@@ -226,15 +224,15 @@
               </div>
 
               <div class="d-flex justify-content-end">
-                <button type="button" class="btn btn-secondary me-2" @click="cancelEditOrClose">{{ intervencion && isEditingIntervention ? 'Cancelar Edición' : 'Cancelar' }}</button>
+                <button type="button" class="btn btn-secondary me-2" @click="cancelEditOrClose">Cancelar</button>
                 <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
-                  {{ intervencion && isEditingIntervention ? 'Actualizar Intervención' : (intervencion ? 'Actualizar' : 'Generar Orden de Cirugía') }}
+                  {{ intervencion ? 'Actualizar Intervención' : 'Generar Orden de Cirugía' }}
                 </button>
               </div>
             </form>
           </div>
         </div>
-        <div class="modal-footer" v-if="intervencion && !isRescheduling && !isEditingIntervention">
+        <div class="modal-footer" v-if="intervencion && !isRescheduling">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times me-2"></i>CERRAR</button>
         </div>
       </div>
@@ -628,17 +626,13 @@ export default {
       loading: false,
       form: {
         id: '',
-        id_medico: this.selectedMedico || '',
+        id_medico: '',
         num_historia: '',
-        fecha: this.selectedDate ? this.formatDateForInput(this.selectedDate) : '',
-        hora_inicio: this.selectedTime || '',
-        hora_fin: this.selectedTimeEnd || this.getDefaultEndTime(this.selectedTime) || '',
+        fecha: '',
+        hora_inicio: '',
+        hora_fin: '',
         observaciones: '',
-        id_tipo_intervencion: '', // Corrected field name
-        clinica_inicial_id: '',
-        medico_que_indica_id: '',
-        sede_operacion_id: '',
-        estado: 'n' // Default to 'n' for new interventions
+        tipo_intervencion_id: ''
       },
       pacientes: [],
       medicos: [],
@@ -646,7 +640,6 @@ export default {
       errorMessage: '',
       isSubmitting: false,
       formValidationErrors: [],
-      isEditingIntervention: false, // Added for edit mode
       // Add properties for local display of date and time
       displayDate: null,
       displayTimeStart: '',
@@ -782,10 +775,6 @@ export default {
     this.fetchLocales();
   },
   methods: {
-    switchToEditMode() {
-      this.isEditingIntervention = true;
-      this.populateForm(); // Ensure form is populated with current intervention data
-    },
     async fetchPacientes() {
       try {
         const response = await fetch('/api/pacientes-list');
@@ -1178,7 +1167,6 @@ export default {
       this.loading = true;
       this.errorMessage = '';
       this.isSubmitting = false;
-      this.isEditingIntervention = false; // Ensure edit mode is off when opening for new/view
       
       // Reset form first - always start with a clean form
       this.resetForm();
@@ -1224,168 +1212,147 @@ export default {
     resetForm() {
       this.form = {
         id: '',
-        id_medico: this.selectedMedico || '',
+        id_medico: '',
         num_historia: '',
-        fecha: this.selectedDate ? this.formatDateForInput(this.selectedDate) : '',
-        hora_inicio: this.selectedTime || '',
-        hora_fin: this.selectedTimeEnd || this.getDefaultEndTime(this.selectedTime) || '',
+        fecha: '',
+        hora_inicio: '',
+        hora_fin: '',
         observaciones: '',
-        id_tipo_intervencion: '', // Corrected field name
+        id_tipo_intervencion: '',
         clinica_inicial_id: '',
         medico_que_indica_id: '',
-        sede_operacion_id: '',
-        estado: 'n' // Default to 'n' for new interventions
+        sede_operacion_id: ''
       };
-      this.formValidationErrors = [];
-      this.errorMessage = '';
-      this.isEditingIntervention = false; // Reset edit mode on form reset
       this.rescheduling = false;
     },
     populateForm() {
-      if (this.intervencion) {
-        this.form = {
-          ...this.intervencion,
-          id_tipo_intervencion: this.intervencion.id_tipo_intervencion || this.intervencion.tipo_intervencion_id,
-          fecha: this.intervencion.fecha ? this.formatDateForInput(new Date(this.intervencion.fecha)) : '',
-          // Ensure other fields are correctly mapped if names differ
-        };
-        // If editing, set the selected medico and patient if not already set by intervention data
-        if (!this.form.id_medico && this.selectedMedico) {
-          this.form.id_medico = this.selectedMedico;
-        }
-        // Populate display date/time as well if needed for the form's display elements
-        this.displayDate = new Date(this.intervencion.fecha);
-        this.displayTimeStart = this.intervencion.hora_inicio;
-        this.displayTimeEnd = this.intervencion.hora_fin;
-      } else {
-        // This case is for new interventions, handled by openModal/resetForm
-        this.resetForm();
-      }
-      console.log('Form populated:', this.form);
+      // Populate form with intervention data
+      this.form = {
+        id: this.intervencion.id || '',
+        id_medico: this.intervencion.id_medico || this.selectedMedico || '',
+        num_historia: this.intervencion.num_historia || '',
+        fecha: this.intervencion.fecha ? this.formatDate(new Date(this.intervencion.fecha)) : '',
+        hora_inicio: this.intervencion.hora_inicio || 
+                 (this.intervencion.fecha ? new Date(this.intervencion.fecha).toLocaleTimeString('es-ES', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }) : ''),
+        hora_fin: this.intervencion.hora_fin || this.intervencion.hora_inicio || 
+                 (this.intervencion.fecha ? new Date(this.intervencion.fecha).toLocaleTimeString('es-ES', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }) : ''),
+        observaciones: this.intervencion.observaciones || '',
+        id_tipo_intervencion: this.intervencion.id_tipo_intervencion || '',
+        clinica_inicial_id: this.intervencion.clinica_inicial_id || '',
+        medico_que_indica_id: this.intervencion.medico_que_indica_id || '',
+        sede_operacion_id: this.intervencion.sede_operacion_id || ''
+      };
+      
+      console.log('Populated form from intervencion:', this.form);
+      console.log('Original intervencion data:', this.intervencion);
     },
-    formatDateForInput(date) {
+    formatDate(date) {
       if (!date) return '';
       const d = new Date(date);
-      let month = '' + (d.getMonth() + 1);
-      let day = '' + d.getDate();
       const year = d.getFullYear();
-      if (month.length < 2) month = '0' + month;
-      if (day.length < 2) day = '0' + day;
-      return [year, month, day].join('-');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     },
     async handleSubmit() {
-      this.isSubmitting = true;
-      this.errorMessage = '';
+      // Reset validation errors
       this.formValidationErrors = [];
-
-      // Basic Validations
-      if (!this.form.num_historia) this.formValidationErrors.push('paciente');
-      if (!this.form.id_tipo_intervencion) this.formValidationErrors.push('tipo_intervencion');
-      // Add other necessary validations here, e.g., for horario if it's mandatory
-
-      if (this.formValidationErrors.length > 0) {
-        this.isSubmitting = false;
-        this.errorMessage = "Por favor, corrija los errores del formulario.";
+      // Check required fields
+      if (!this.form.num_historia) {
+        this.formValidationErrors.push('paciente');
+      }
+      if (!this.form.id_tipo_intervencion) {
+        this.formValidationErrors.push('tipo_intervencion');
+      }
+      if (!this.form.id_medico) {
+        this.errorMessage = 'Por favor seleccione un médico';
         return;
       }
-
-      const payload = { ...this.form };
-
-      // Ensure fecha is in YYYY-MM-DD format if it's coming from a Date object
-      if (payload.fecha && payload.fecha instanceof Date) {
-        payload.fecha = this.formatDateForInput(payload.fecha);
+      if (this.formValidationErrors.length > 0) {
+        return;
       }
-      
-      // If hora_inicio or hora_fin are not set from selection, try to use form's existing values
-      // This might be relevant if the user edits other fields without re-selecting time
-      if (!this.selectedTime && payload.hora_inicio) {
-        // Keep existing form.hora_inicio
-      } else {
-        payload.hora_inicio = this.selectedTime || payload.hora_inicio || '00:00'; 
-      }
-
-      if (!this.selectedTimeEnd && payload.hora_fin) {
-        // Keep existing form.hora_fin
-      } else {
-        payload.hora_fin = this.selectedTimeEnd || payload.hora_fin || this.getDefaultEndTime(payload.hora_inicio) || '00:30';
-      }
-
+      // Cross-type conflict validation (send hora_fin for range)
       try {
-        let response;
-        let url;
-        let method;
-
-        if (this.intervencion && this.isEditingIntervention) {
-          // Updating existing intervention
-          url = `/api/intervenciones/${this.intervencion.id}`;
-          method = 'PUT';
-        } else if (this.intervencion && this.rescheduling) {
-          // Rescheduling an existing intervention (handled by specific logic if different from update)
-          // For now, let's assume rescheduling is a form of update
-          url = `/api/intervenciones/${this.intervencion.id}/reschedule`; // Or just update endpoint
-          method = 'PUT'; // Or POST if your reschedule endpoint expects that
-        } else {
-          // Creating new intervention
-          url = '/api/intervenciones';
-          method = 'POST';
+        const conflictRes = await fetch('/api/validate-cita-intervencion-conflict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            num_historia: this.form.num_historia,
+            id_medico: this.form.id_medico,
+            fecha: this.form.fecha,
+            hora: this.form.hora_inicio,
+            hora_fin: this.form.hora_fin,
+            type: 'intervencion'
+          })
+        });
+        const conflictData = await conflictRes.json();
+        if (conflictData.conflict) {
+          this.errorMessage = conflictData.message;
+          return;
         }
-
-        response = await fetch(url, {
-          method: method,
+      } catch (e) {
+        this.errorMessage = 'Error validando conflicto de cita/intervención.';
+        return;
+      }
+      // ...existing code for submitting intervencion...
+      this.isSubmitting = true;
+      this.errorMessage = '';
+      try {
+        const method = this.form.id ? 'PUT' : 'POST';
+        const url = this.form.id ? `/api/intervenciones/${this.form.id}` : '/api/intervenciones';
+        
+        // Ensure the new fields are properly formatted and included in the submission
+        const formData = {
+          ...this.form,
+          fecha: this.form.fecha,
+          hora_inicio: this.form.hora_inicio,
+          hora_fin: this.form.hora_fin || this.form.hora_inicio,
+          // Convert to integers if present, otherwise null
+          clinica_inicial_id: this.form.clinica_inicial_id ? parseInt(this.form.clinica_inicial_id, 10) : null,
+          medico_que_indica_id: this.form.medico_que_indica_id ? parseInt(this.form.medico_que_indica_id, 10) : null,
+          sede_operacion_id: this.form.sede_operacion_id ? parseInt(this.form.sede_operacion_id, 10) : null,
+        };
+        
+        console.log('Submitting intervention with data:', formData);
+        
+        const response = await fetch(url, {
+          method,
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(formData)
         });
-
-        const responseData = await response.json();
-
-        if (!response.ok) {
-          if (response.status === 422 && responseData.errors) {
-            this.errorMessage = "Por favor, corrija los errores del formulario.";
-            // Populate formValidationErrors based on responseData.errors for more specific feedback
-            Object.keys(responseData.errors).forEach(key => {
-              // You might need to map backend error keys to frontend field names
-              this.formValidationErrors.push(key);
-            });
-          } else {
-            this.errorMessage = responseData.message || 'Ocurrió un error al guardar la intervención.';
-          }
-          throw new Error(this.errorMessage);
-        }
-
-        this.$emit('intervencionSaved', responseData); // Emit event with saved data
-        this.modal.hide();
-        this.resetForm(); // Reset form after successful submission
         
-        // Show success alert
-        alert(`Intervención ${this.isEditingIntervention ? 'actualizada' : 'registrada'} exitosamente.`);
-
-      } catch (error) {
-        console.error('Error submitting intervention:', error);
-        // errorMessage is already set or will be set by the response check
-        if (!this.errorMessage) {
-            this.errorMessage = 'Ocurrió un error inesperado.';
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Error al guardar la intervención');
         }
+        
+        const data = await response.json();
+        
+        // Close modal
+        const modalElement = document.getElementById('intervencionModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        modalInstance.hide();
+        
+        // Emit event to refresh data
+        this.$emit('intervencionCreated', data);
+        
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        this.errorMessage = error.message || 'Ocurrió un error al guardar la intervención';
       } finally {
         this.isSubmitting = false;
       }
     },
-    cancelEditOrClose() {
-      if (this.isEditingIntervention) {
-        this.isEditingIntervention = false;
-        // Optionally, repopulate form with original intervention data if changes were made but not saved
-        // or simply revert to display view, which will use original `intervencion` prop data.
-        // For now, just switch back to display view.
-        if (this.intervencion) {
-            this.populateForm(); // Revert to original data if needed, or just let the view re-render
-        }
-      } else {
-        this.modal.hide();
-      }
-    },
+    
     async confirmDelete() {
       if (confirm('¿Está seguro que desea eliminar esta intervención?')) {
         try {
