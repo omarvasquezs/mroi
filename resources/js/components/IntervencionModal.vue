@@ -25,9 +25,9 @@
               <div class="card-body">
                 <div class="row mb-2">
                   <div class="col-md-2"><strong>Historia:</strong></div>
-                  <div class="col-md-3">{{ intervencion.num_historia }}</div>
+                  <div class="col-md-4">{{ intervencion.num_historia }}</div>
                   <div class="col-md-2"><strong>Paciente:</strong></div>
-                  <div class="col-md-5">
+                  <div class="col-md-4">
                     {{ intervencion.paciente ? `${intervencion.paciente.nombres} ${intervencion.paciente.ap_paterno} ${intervencion.paciente.ap_materno}` : '' }}
                   </div>
                 </div>
@@ -40,52 +40,46 @@
               </div>
               <div class="card-body">
                 <div class="row mb-2">
-                  <div class="col-md-3"><strong>Médico:</strong></div>
-                  <div class="col-md-9">
+                  <div class="col-md-2"><strong>Médico:</strong></div>
+                  <div class="col-md-4">
                     {{ selectedMedicoName }}
                   </div>
-                </div>
-                <div class="row mb-2">
-                  <div class="col-md-3"><strong>Horario:</strong></div>
-                  <div class="col-md-9">{{ formattedDate }} | {{ formattedTimeRange }}</div>
-                </div>
-                <div class="row mb-2">
-                  <div class="col-md-3"><strong>Tipo de Intervención:</strong></div>
-                  <div class="col-md-9">
-                    {{ getTipoIntervencionDisplay(intervencion) }}
-                  </div>
-                </div>
-                <div class="row mb-2">
-                  <div class="col-md-3"><strong>Clínica Inicial:</strong></div>
-                  <div class="col-md-9">
-                    {{ getClinicaDisplay(intervencion.clinica_inicial_id) || 'No especificada' }}
-                  </div>
-                </div>
-                <div class="row mb-2">
-                  <div class="col-md-3"><strong>Médico que Indica:</strong></div>
-                  <div class="col-md-9">
+                  <div class="col-md-2"><strong>Médico que Indica:</strong></div>
+                  <div class="col-md-4">
                     {{ getMedicoQueIndicaDisplay(intervencion.medico_que_indica_id) || 'No especificado' }}
                   </div>
                 </div>
                 <div class="row mb-2">
-                  <div class="col-md-3"><strong>Sede de Operación:</strong></div>
-                  <div class="col-md-9">
+                  <div class="col-md-2"><strong>Clínica Inicial:</strong></div>
+                  <div class="col-md-4">
+                    {{ getClinicaDisplay(intervencion.clinica_inicial_id) || 'No especificada' }}
+                  </div>
+                  <div class="col-md-2"><strong>Sede de Operación:</strong></div>
+                  <div class="col-md-4">
                     {{ getClinicaDisplay(intervencion.sede_operacion_id) || 'No especificada' }}
                   </div>
                 </div>
                 <div class="row mb-2">
-                  <div class="col-md-3"><strong>Observaciones:</strong></div>
-                  <div class="col-md-9"><pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">{{ intervencion.observaciones || 'Sin observaciones' }}</pre></div>
+                  <div class="col-md-2"><strong>Horario:</strong></div>
+                  <div class="col-md-4">{{ formattedDate }} | {{ formattedTimeRange }}</div>
+                  <div class="col-md-2"><strong>Tipo de Intervención:</strong></div>
+                  <div class="col-md-4">
+                    {{ getTipoIntervencionDisplay(intervencion) }}
+                  </div>
                 </div>
                 <div class="row mb-2">
-                  <div class="col-md-3"><strong>Estado de Pago:</strong></div>
-                  <div class="col-md-9">
+                  <div class="col-md-2"><strong>Estado de Pago:</strong></div>
+                  <div class="col-md-10">
                     <span :class="['badge', intervencion.estado === 'p' ? 'bg-success-subtle text-success-emphasis' : 'bg-warning-subtle text-warning-emphasis']"
                       style="font-size: 0.9em; padding: 0.5em 1em;">
                       <i :class="['fas', intervencion.estado === 'p' ? 'fa-check-circle' : 'fa-hourglass-half', 'me-1']"></i>
                       {{ intervencion.estado === 'p' ? 'PAGADO' : 'PENDIENTE' }}
                     </span>
                   </div>
+                </div>
+                <div class="row mb-2">
+                  <div class="col-md-2"><strong>Observaciones:</strong></div>
+                  <div class="col-md-10"><pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">{{ intervencion.observaciones || 'Sin observaciones' }}</pre></div>
                 </div>
               </div>
             </div>
