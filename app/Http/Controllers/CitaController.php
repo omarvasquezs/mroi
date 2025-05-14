@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Cita;
 use App\Models\Medico;
 use App\Models\TipoCita;
+use App\Models\Intervencion;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class CitaController extends Controller
 {
@@ -59,10 +59,10 @@ class CitaController extends Controller
         $citas = Cita::where('id_medico', $medicoId)
             ->whereDate('fecha', $fecha)
             ->with([
-                'paciente' => function($query) {
+                'paciente' => function ($query) {
                     $query->select('num_historia', 'nombres', 'ap_paterno', 'ap_materno');
                 },
-                'tipoCita' => function($query) {
+                'tipoCita' => function ($query) {
                     $query->select('id', 'tipo_cita', 'precio');
                 }
             ])
@@ -240,14 +240,14 @@ class CitaController extends Controller
         $citaEnd = date('H:i:s', strtotime("$hora +30 minutes"));
 
         // Check if any intervencion overlaps with this cita (for cita creation) for the same doctor
-        $intervencionConflict = \App\Models\Intervencion::where('id_medico', $id_medico)
+        $intervencionConflict = Intervencion::where('id_medico', $id_medico)
             ->whereDate('fecha', $fecha);
         if ($type === 'intervencion' && $currentId) {
             $intervencionConflict->where('id', '!=', $currentId);
         }
-        $intervencionConflict->where(function($q) use ($citaStart, $citaEnd) {
+        $intervencionConflict->where(function ($q) use ($citaStart, $citaEnd) {
             $q->where('hora_inicio', '<', $citaEnd)
-              ->where('hora_fin', '>', $citaStart);
+                ->where('hora_fin', '>', $citaStart);
         });
         $intervencionConflict = $intervencionConflict->first();
         if ($intervencionConflict) {
@@ -258,14 +258,14 @@ class CitaController extends Controller
             ], 200);
         }
         // Check if any intervencion overlaps with this cita (for cita creation) for the same paciente
-        $intervencionPacienteConflict = \App\Models\Intervencion::where('num_historia', $num_historia)
+        $intervencionPacienteConflict = Intervencion::where('num_historia', $num_historia)
             ->whereDate('fecha', $fecha);
         if ($type === 'intervencion' && $currentId) {
             $intervencionPacienteConflict->where('id', '!=', $currentId);
         }
-        $intervencionPacienteConflict->where(function($q) use ($citaStart, $citaEnd) {
+        $intervencionPacienteConflict->where(function ($q) use ($citaStart, $citaEnd) {
             $q->where('hora_inicio', '<', $citaEnd)
-              ->where('hora_fin', '>', $citaStart);
+                ->where('hora_fin', '>', $citaStart);
         });
         $intervencionPacienteConflict = $intervencionPacienteConflict->first();
         if ($intervencionPacienteConflict) {
@@ -279,12 +279,12 @@ class CitaController extends Controller
         // For intervencion creation, check if any cita overlaps with the intervencion range for the same doctor
         $intervStart = $hora;
         $intervEnd = $hora_fin ?? date('H:i:s', strtotime("$hora +30 minutes"));
-        $citaQuery = \App\Models\Cita::where('id_medico', $id_medico)
+        $citaQuery = Cita::where('id_medico', $id_medico)
             ->whereDate('fecha', $fecha);
         if ($type === 'cita' && $currentId) {
             $citaQuery->where('id', '!=', $currentId);
         }
-        $citaQuery->where(function($q) use ($intervStart, $intervEnd) {
+        $citaQuery->where(function ($q) use ($intervStart, $intervEnd) {
             $q->whereRaw('TIME(fecha) < ? AND ADDTIME(TIME(fecha), "00:30:00") > ?', [$intervEnd, $intervStart]);
         });
         $citaConflict = $citaQuery->first();
@@ -296,12 +296,12 @@ class CitaController extends Controller
             ], 200);
         }
         // For intervencion creation, check if any cita overlaps with the intervencion range for the same paciente
-        $citaPacienteQuery = \App\Models\Cita::where('num_historia', $num_historia)
+        $citaPacienteQuery = Cita::where('num_historia', $num_historia)
             ->whereDate('fecha', $fecha);
         if ($type === 'cita' && $currentId) {
             $citaPacienteQuery->where('id', '!=', $currentId);
         }
-        $citaPacienteQuery->where(function($q) use ($intervStart, $intervEnd) {
+        $citaPacienteQuery->where(function ($q) use ($intervStart, $intervEnd) {
             $q->whereRaw('TIME(fecha) < ? AND ADDTIME(TIME(fecha), "00:30:00") > ?', [$intervEnd, $intervStart]);
         });
         $citaPacienteConflict = $citaPacienteQuery->first();
@@ -320,23 +320,23 @@ class CitaController extends Controller
     {
         $cita = Cita::with(['paciente', 'medico', 'tipoCita'])
             ->findOrFail($id);
-        
+
         return response()->json($cita);
     }
 
     public function destroy($id)
     {
         $cita = Cita::findOrFail($id);
-        
+
         // Only allow deletion of citas with estado = 'd' (pendiente)
         if ($cita->estado !== 'd') {
             return response()->json([
                 'message' => 'Solo se pueden eliminar citas con estado pendiente.'
             ], 403);
         }
-        
+
         $cita->delete();
-        
+
         return response()->json([
             'message' => 'Cita eliminada exitosamente'
         ]);
