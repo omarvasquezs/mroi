@@ -522,14 +522,19 @@ export default {
     },
     formattedTime() {
       // Use displayTime if available, otherwise fallback to selectedTime
-      const timeToFormat = this.displayTime || this.selectedTime;
+      // If localCita exists and has hora_inicio, use it
+      let timeToFormat = this.displayTime || this.selectedTime;
+      if (this.localCita && this.localCita.hora_inicio) {
+      timeToFormat = this.localCita.hora_inicio;
+      }
+      if (!timeToFormat) return '';
       const [hour, minute] = timeToFormat.split(':');
       const date = new Date();
       date.setHours(hour, minute);
       return date.toLocaleTimeString('es-ES', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
       }).toUpperCase();
     },
     // Add new computed property for reschedule form validation
