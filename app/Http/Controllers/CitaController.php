@@ -144,8 +144,10 @@ class CitaController extends Controller
 
         $cita = Cita::findOrFail($id);
 
-        // Combine date and time
-        $fechaHora = date('Y-m-d H:i:s', strtotime($validated['fecha'] . ' ' . $validated['hora']));
+        // Prepare date and time fields
+        $fecha = $validated['fecha'];           // date (Y-m-d)
+        $hora_inicio = $validated['hora'];     // time (HH:mm)
+        $hora_fin = date('H:i:s', strtotime($hora_inicio . ' +30 minutes'));
 
         // Check if the patient already has an appointment at this time with any doctor (excluding this appointment)
         $patientConflict = Cita::where('num_historia', $validated['num_historia'])
@@ -172,11 +174,18 @@ class CitaController extends Controller
             return response()->json(['message' => 'El médico ya tiene una cita programada a esta hora.'], 422);
         }
 
+        // Calculate new start and end times
+        $hora_inicio = $validated['hora'];
+        $hora_fin = date('H:i:s', strtotime($hora_inicio . ' +30 minutes'));
+        // Update cita with new data
         $cita->update([
-            'id_medico' => $validated['id_medico'],
-            'fecha' => $fechaHora,
-            'observaciones' => $validated['observaciones'],
-            'num_historia' => $validated['num_historia']
+            'num_historia'  => $validated['num_historia'],
+            'id_medico'     => $validated['id_medico'],
+            // Keep tipo_cita unchanged on reschedule
+            'fecha'         => $fecha,
+            'hora_inicio'   => $hora_inicio,
+            'hora_fin'      => $hora_fin,
+            'observaciones' => $validated['observaciones'] ?? $cita->observaciones,
         ]);
 
         // Refresh the cita with all relationships
@@ -195,14 +204,26 @@ class CitaController extends Controller
         }
 
         // Get all appointments for the selected doctor and date
-        $citas = Cita::where('id_medico', $medicoId)
+        $doctorCitas = Cita::where('id_medico', $medicoId)
             ->whereDate('fecha', $fecha)
-            ->get(['id', 'fecha']);
-
-        // Convert to a list of occupied time slots (hours)
-        $occupiedSlots = $citas->map(function ($cita) {
-            return date('H:i', strtotime($cita->fecha));
+            ->get(['hora_inicio']);
+        // Map doctor's occupied time slots
+        $doctorSlots = $doctorCitas->map(function ($cita) {
+            return substr($cita->hora_inicio, 0, 5);
         });
+        // Optionally include patient appointments to block slots
+        $patientSlots = collect();
+        if ($request->has('num_historia')) {
+            $numHistoria = $request->query('num_historia');
+            $pacienteCitas = Cita::where('num_historia', $numHistoria)
+                ->whereDate('fecha', $fecha)
+                ->get(['hora_inicio']);
+            $patientSlots = $pacienteCitas->map(function ($cita) {
+                return substr($cita->hora_inicio, 0, 5);
+            });
+        }
+        // Combine occupied slots
+        $occupiedSlots = $doctorSlots->merge($patientSlots)->unique();
 
         // Get working hours (8:00 to 19:00 with 30 minute intervals)
         $workingHours = [];
@@ -229,9 +250,13 @@ class CitaController extends Controller
 
     /**
      * Improved: Validate if a paciente/medico has a cita or intervencion at the same date/time or overlapping range.
-     * POST /api/validate-cita-intervencion-conflict
-     * Params: num_historia, id_medico, fecha (Y-m-d), hora (HH:mm), [hora_fin] (optional), [current_id], [type]
+     * POST /api/citas/validate-conflict
+     * Alias for validateCitaIntervencionConflict to match route.
      */
+    public function validateConflict(Request $request)
+    {
+        return $this->validateCitaIntervencionConflict($request);
+    }
     public function validateCitaIntervencionConflict(Request $request)
     {
         $validated = $request->validate([

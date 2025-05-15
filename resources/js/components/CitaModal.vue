@@ -87,15 +87,13 @@
               <div class="mb-4">
                 <label class="form-label"><strong>Hora:</strong></label>
                 <div class="time-slots-container">
-                  <button 
-                    v-for="slot in availableTimeSlots" 
-                    :key="slot.time" 
-                    class="btn time-slot" 
-                    :class="{ 
-                      'btn-primary': rescheduleData.hora === slot.time,
-                      'btn-outline-primary': rescheduleData.hora !== slot.time && slot.available, 
-                      'btn-outline-secondary disabled': !slot.available 
-                    }"
+                  <button
+                    v-for="slot in availableTimeSlots"
+                    :key="slot.time"
+                    class="btn time-slot"
+                    :class="slot.available
+                      ? (rescheduleData.hora === slot.time ? 'btn-primary' : 'btn-outline-primary')
+                      : 'btn-secondary'"
                     :disabled="!slot.available"
                     @click="rescheduleData.hora = slot.time"
                   >
@@ -1148,7 +1146,8 @@ export default {
       try {
         const params = new URLSearchParams({
           medico: this.rescheduleData.id_medico,
-          fecha: this.rescheduleData.fecha
+          fecha: this.rescheduleData.fecha,
+          num_historia: this.rescheduleData.num_historia
         });
         
         const response = await fetch(`/api/citas/availability?${params.toString()}`);
@@ -1188,38 +1187,40 @@ export default {
         // Validate that the selected paciente does not conflict with another appointment
         const validationResponse = await fetch(`/api/citas/validate-conflict`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             num_historia: this.rescheduleData.num_historia,
             id_medico: this.rescheduleData.id_medico,
             fecha: this.rescheduleData.fecha,
             hora: this.rescheduleData.hora,
-            current_cita_id: this.localCita.id // Add the current cita ID to exclude from conflict checks
+            current_cita_id: this.localCita.id
           })
         });
-    
         if (!validationResponse.ok) {
-          const errorData = await validationResponse.json();
-          throw new Error(errorData.message || 'Error validating appointment conflict');
+          let msg = 'Error validating appointment conflict';
+          const ct = validationResponse.headers.get('content-type') || '';
+          if (ct.includes('application/json')) {
+            try {
+              const errJson = await validationResponse.json();
+              msg = errJson.message || msg;
+            } catch (_) {}
+          } else {
+            try {
+              msg = await validationResponse.text();
+            } catch (_) {}
+          }
+          throw new Error(msg);
         }
     
-        // Proceed with saving the rescheduled appointment
-        const response = await fetch(`/api/citas/${this.localCita.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(this.rescheduleData)
-        });
-    
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Error updating appointment');
+        // Proceed with saving the rescheduled appointment via Axios (includes CSRF/token headers)
+        let updatedCita;
+        try {
+          const res = await axios.put(`/api/citas/${this.localCita.id}`, this.rescheduleData);
+          updatedCita = res.data;
+        } catch (err) {
+          const message = err.response?.data?.message || err.message || 'Error updating appointment';
+          throw new Error(message);
         }
-    
-        const updatedCita = await response.json();
         console.log('Updated cita:', updatedCita);
     
         // Update local cita data with the response that should include paciente relation
