@@ -158,40 +158,49 @@ export default {
 
       // Use local date without UTC adjustment
       const date = this.formatLocalDate(this.selectedFecha);
-      const time = this.selectedTime.padStart(5, '0');
+      const time = this.selectedTime.padStart(5, '0'); // Ensures HH:mm format
 
       // Encode parameters
       const params = new URLSearchParams({
         medico: this.selectedMedico,
         fecha: date,
-        hora: `${time}:00`
+        hora: `${time}:00` // Send as HH:mm:ss
       });
 
       const url = `/api/citas/check?${params.toString()}`;
+      console.log('Requesting URL:', url); // Log the request URL
 
       try {
         const response = await fetch(url);
         const contentType = response.headers.get('content-type');
 
         if (response.ok && contentType && contentType.includes('application/json')) {
-          const cita = await response.json();
-          console.log('Cita found:', cita); // Debug line
-          if (cita && Object.keys(cita).length > 0) {
-            this.selectedCita = cita; // Set the selected cita
+          const responseData = await response.json();
+          console.log('Response from /api/citas/check:', responseData); // Log the full response
+
+          // The backend now returns { cita: citaObjectOrNull }
+          const citaDetails = responseData.cita; 
+
+          if (citaDetails && Object.keys(citaDetails).length > 0) {
+            this.selectedCita = citaDetails; // Assign the actual cita object
+            console.log('Cita details found, showing info modal:', this.selectedCita);
+            this.$refs.citaModal.showCitaInfoMethod(this.selectedCita);
           } else {
             this.selectedCita = null; // No matching cita found
+            console.log('No cita details found, showing form modal.');
+            this.$refs.citaModal.showForm();
           }
         } else {
           const responseText = await response.text();
           console.error('Expected JSON response but got:', contentType, responseText);
-          this.selectedCita = null; // Error in fetching cita
+          this.selectedCita = null; 
+          this.$refs.citaModal.showForm();
         }
       } catch (error) {
         console.error('Error checking cita:', error);
-        this.selectedCita = null; // Error in fetching cita
+        this.selectedCita = null; 
+        this.$refs.citaModal.showForm();
       }
-
-      this.$refs.citaModal.openModal(); // Open the modal
     },
     generateTimeSlots() {
       const slots = [];
@@ -230,26 +239,18 @@ export default {
         const response = await fetch(url);
         if (response.ok) {
           const data = await response.json();
-          console.log('Raw citas data:', data);
-          
           const slots = this.generateTimeSlots();
           if (Array.isArray(data)) {
             // Build citasMap with proper time formatting
             const citasMap = new Map();
-            
-            // Process each cita
             data.forEach(cita => {
-              // Extract time from fecha field (assuming format "YYYY-MM-DD HH:mm:ss")
               const timeStr = cita.hora ? cita.hora.substring(0, 5) : null;
               if (timeStr) {
                 citasMap.set(timeStr, cita);
               }
             });
-
-            // Map slots to citas
             this.citas = slots.map(slot => {
               const matchingCita = citasMap.get(slot.hora);
-              
               if (matchingCita) {
                 const pacienteData = matchingCita.paciente || {};
                 const pacienteNombre = [
@@ -257,7 +258,6 @@ export default {
                   pacienteData.ap_paterno,
                   pacienteData.ap_materno
                 ].filter(Boolean).join(' ');
-                
                 return {
                   hora: slot.hora,
                   historia: matchingCita.num_historia || '',
@@ -275,7 +275,6 @@ export default {
           }
         }
       } catch (error) {
-        console.error('Error:', error);
         this.citas = this.generateTimeSlots().map(slot => ({ ...slot, tipo_cita: '' }));
       }
     }
