@@ -14,12 +14,16 @@ class Cita extends Model
         'id_medico',
         'id_tipo_cita',
         'fecha',
+        'hora_inicio',
+        'hora_fin',
         'estado',
         'observaciones'
     ];
 
     protected $casts = [
-        'fecha' => 'datetime',
+        'fecha' => 'date',
+        'hora_inicio' => 'string',
+        'hora_fin' => 'string',
         'created_at' => 'datetime',
         'updated_at' => 'datetime'
     ];
