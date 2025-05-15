@@ -168,7 +168,12 @@
                       {{ tipo.tipo_cita }} - S/. {{ tipo.precio }}
                     </option>
                   </select>
-                  <button @click="editTipoCita(tiposCitas.find(t => t.id === formData.id_tipo_cita))" class="btn btn-success ms-2"><i class="fas fa-pencil-alt"></i></button>
+                    <button 
+                    v-if="formData.id_tipo_cita" 
+                    @click="editTipoCita(tiposCitas.find(t => t.id === formData.id_tipo_cita))" 
+                    class="btn btn-success ms-2">
+                    <i class="fas fa-pencil-alt"></i>
+                    </button>
                   <button @click="showCreateTipoCitaForm" class="btn btn-primary ms-2" title="Agregar nuevo tipo de cita">
                     <i class="fas fa-plus"></i>
                   </button>
