@@ -66,7 +66,11 @@
             <div v-else-if="isRescheduling">
               <div class="mb-4">
                 <label class="form-label"><strong>Paciente:</strong></label>
-                <select v-model="rescheduleData.num_historia" class="form-select">
+                <select
+                  v-model="rescheduleData.num_historia"
+                  @change="checkMedicoAvailability"
+                  class="form-select"
+                >
                   <option v-for="paciente in pacientes" :key="paciente.num_historia" :value="paciente.num_historia">
                     {{ paciente.nombre.toUpperCase() }}
                   </option>
