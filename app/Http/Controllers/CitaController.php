@@ -21,13 +21,14 @@ class CitaController extends Controller
             'id_tipo_cita' => 'required|exists:tipos_citas,id'
         ]);
 
-        // Combine date and time
-        $fechaHora = date('Y-m-d H:i:s', strtotime($validated['fecha'] . ' ' . $validated['hora']));
+        // Calculate hora_inicio and hora_fin
+        $hora_inicio = $validated['hora'];
+        $hora_fin = date('H:i:s', strtotime($hora_inicio . ' +30 minutes'));
 
         // Check if patient already has an appointment at the same time (with any doctor)
         $existingPatientAppointment = Cita::where('num_historia', $validated['num_historia'])
-            ->whereDate('fecha', $validated['fecha'])
-            ->whereTime('fecha', $validated['hora'])
+            ->where('fecha', $validated['fecha'])
+            ->where('hora_inicio', $hora_inicio)
             ->first();
 
         if ($existingPatientAppointment) {
@@ -39,7 +40,9 @@ class CitaController extends Controller
         $cita = Cita::create([
             'num_historia' => $validated['num_historia'],
             'id_medico' => $validated['id_medico'],
-            'fecha' => $fechaHora,
+            'fecha' => $validated['fecha'],
+            'hora_inicio' => $hora_inicio,
+            'hora_fin' => $hora_fin,
             'observaciones' => $validated['observaciones'],
             'id_tipo_cita' => $validated['id_tipo_cita']
         ]);
@@ -57,7 +60,7 @@ class CitaController extends Controller
         }
 
         $citas = Cita::where('id_medico', $medicoId)
-            ->whereDate('fecha', $fecha)
+            ->where('fecha', $fecha)
             ->with([
                 'paciente' => function ($query) {
                     $query->select('num_historia', 'nombres', 'ap_paterno', 'ap_materno');
@@ -71,6 +74,8 @@ class CitaController extends Controller
                 'num_historia',
                 'id_medico',
                 'fecha',
+                'hora_inicio',
+                'hora_fin',
                 'observaciones',
                 'id_tipo_cita'
             ]);
@@ -81,7 +86,8 @@ class CitaController extends Controller
                 'id' => $cita->id,
                 'num_historia' => $cita->num_historia,
                 'fecha' => $cita->fecha,
-                'hora' => date('H:i:s', strtotime($cita->fecha)),
+                'hora' => $cita->hora_inicio,
+                'hora_fin' => $cita->hora_fin,
                 'observaciones' => $cita->observaciones,
                 'paciente' => $cita->paciente,
                 'tipoCita' => $cita->tipoCita
@@ -100,19 +106,30 @@ class CitaController extends Controller
     {
         $medicoId = $request->query('medico');
         $fecha = $request->query('fecha');
-        $hora = $request->query('hora');
 
-        if (!$medicoId || !$fecha || !$hora) {
-            return response()->json(null, 400); // Bad request if parameters are missing
+        // Ensure 'hora' parameter is treated as hora_inicio (HH:mm:ss)
+        $hora_inicio = $request->query('hora');
+
+        if (!$medicoId || !$fecha || !$hora_inicio) {
+            return response()->json(['error' => 'Médico, fecha y hora de inicio son requeridos.'], 400);
         }
 
-        $cita = Cita::where('id_medico', $medicoId)
-            ->whereDate('fecha', $fecha)
-            ->whereTime('fecha', $hora)
-            ->with(['paciente', 'tipoCita']) // Include tipoCita relation
-            ->first();
+        try {
+            $cita = Cita::with(['paciente', 'tipoCita', 'medico'])
+                ->where('id_medico', $medicoId)
+                ->where('fecha', $fecha) // 'fecha' column is DATE type
+                ->where('hora_inicio', $hora_inicio) // Query by 'hora_inicio'
+                ->first();
 
-        return response()->json($cita);
+            // For server-side debugging, you can uncomment the following line:
+            // \Log::info("CheckCita request:", ['medico' => $medicoId, 'fecha' => $fecha, 'hora_inicio' => $hora_inicio, 'found_cita_id' => $cita ? $cita->id : null]);
+
+            return response()->json(['cita' => $cita]); // Consistent response structure
+        } catch (\Exception $e) {
+            // For server-side debugging, you can uncomment the following line:
+            // \Log::error('Error in checkCita: ' . $e->getMessage(), ['exception' => $e, 'request_params' => $request->all()]);
+            return response()->json(['error' => 'Error al verificar la cita.', 'details' => $e->getMessage()], 500);
+        }
     }
 
     public function update(Request $request, $id)
