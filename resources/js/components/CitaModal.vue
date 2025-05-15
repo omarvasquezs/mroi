@@ -152,7 +152,7 @@
                   </select>
                     <button v-if="formData.num_historia" @click="editPaciente(pacientes.find(p => p.num_historia === formData.num_historia))" class="btn btn-success ms-2"><i class="fas fa-pencil-alt"></i></button>
                   <button @click="showNewPacienteForm" class="btn btn-primary ms-2" title="Agregar nuevo paciente">
-                    <i class="fas fa-user-plus"></i>
+                    <i class="fas fa-plus"></i>
                   </button>
                 </div>
                 <div class="invalid-feedback" v-if="formValidationErrors.includes('paciente')">
