@@ -104,9 +104,6 @@
                     {{ slot.time }}
                   </button>
                 </div>
-                <div v-if="availableTimeSlots.length === 0" class="alert alert-info mt-2">
-                  Seleccione un médico y una fecha para ver las horas disponibles.
-                </div>
               </div>
               <div class="mb-4">
                 <label class="form-label"><strong>Observaciones:</strong></label>
