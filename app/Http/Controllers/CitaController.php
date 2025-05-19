@@ -208,9 +208,9 @@ class CitaController extends Controller
             ->whereDate('fecha', $fecha)
             ->get(['hora_inicio']);
         // Map doctor's occupied time slots
-        $doctorSlots = $doctorCitas->map(function ($cita) {
+        $doctorSlots = collect($doctorCitas->map(function ($cita) {
             return substr($cita->hora_inicio, 0, 5);
-        });
+        }));
         // Optionally include patient appointments to block slots
         $patientSlots = collect();
         if ($request->has('num_historia')) {
@@ -218,9 +218,9 @@ class CitaController extends Controller
             $pacienteCitas = Cita::where('num_historia', $numHistoria)
                 ->whereDate('fecha', $fecha)
                 ->get(['hora_inicio']);
-            $patientSlots = $pacienteCitas->map(function ($cita) {
+            $patientSlots = collect($pacienteCitas->map(function ($cita) {
                 return substr($cita->hora_inicio, 0, 5);
-            });
+            }));
         }
         // Combine occupied slots
         $occupiedSlots = $doctorSlots->merge($patientSlots)->unique();
