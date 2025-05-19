@@ -87,22 +87,32 @@
               <div class="mb-4">
                 <label class="form-label"><strong>Fecha:</strong></label>
                 <input type="date" v-model="rescheduleData.fecha" class="form-control" @change="checkMedicoAvailability">
-              </div>
-              <div class="mb-4">
+              </div>                <div class="mb-4">
                 <label class="form-label"><strong>Hora:</strong></label>
-                <div class="time-slots-container">
+                <!-- Show loading indicator when loading -->
+                <div v-if="loadingTimeSlots" class="alert alert-info">
+                  <i class="fas fa-spinner fa-spin me-2"></i> Cargando horarios disponibles...
+                </div>
+                <!-- Show time slots when not loading and there are slots available -->
+                <div v-else-if="availableTimeSlots.length > 0" class="time-slots-container">
                   <button
                     v-for="slot in availableTimeSlots"
                     :key="slot.time"
                     class="btn time-slot"
-                    :class="slot.available
-                      ? (rescheduleData.hora === slot.time ? 'btn-primary' : 'btn-outline-primary')
-                      : 'btn-secondary'"
+                    :class="{
+                      'btn-primary': rescheduleData.hora === slot.time && slot.available,
+                      'btn-outline-primary': rescheduleData.hora !== slot.time && slot.available,
+                      'btn-secondary': !slot.available
+                    }"
                     :disabled="!slot.available"
                     @click="rescheduleData.hora = slot.time"
                   >
                     {{ slot.time }}
                   </button>
+                </div>
+                <!-- Show a message when not loading but no slots are available -->
+                <div v-else class="alert alert-warning">
+                  No hay horarios disponibles para este médico en la fecha seleccionada.
                 </div>
               </div>
               <div class="mb-4">
@@ -493,6 +503,7 @@ export default {
       formValidationErrors: [], // Add this field to store validation errors
       // Add new data properties for rescheduling
       isRescheduling: false,
+      loadingTimeSlots: false, // Add this to track time slots loading state
       rescheduleData: {
         id_medico: '',
         fecha: '',
@@ -1118,14 +1129,28 @@ export default {
       this.isRescheduling = true;
       this.modalTitle = 'Reprogramar Cita';
       
+      // Reset time slots and set loading state
+      this.availableTimeSlots = [];
+      this.loadingTimeSlots = true;
+      
+      // Extract the current time from localCita if available
+      let currentTime = '';
+      if (this.localCita.hora_inicio) {
+        currentTime = this.localCita.hora_inicio.substring(0, 5); // Get HH:MM format
+      } else if (this.selectedTime) {
+        currentTime = this.selectedTime;
+      }
+      
       // Set initial values for rescheduleData
       this.rescheduleData = {
         id_medico: this.selectedMedico,
         fecha: this.formatLocalDate(this.selectedDate),
-        hora: this.selectedTime,
+        hora: currentTime,
         observaciones: this.localCita.observaciones || '',
         num_historia: this.localCita.num_historia // Set initial paciente
       };
+      
+      console.log('Starting rescheduling with data:', this.rescheduleData);
       
       // Check availability with initial values
       this.checkMedicoAvailability();
@@ -1136,43 +1161,65 @@ export default {
       this.modalTitle = 'Información de la Cita';
       this.availableTimeSlots = [];
       this.rescheduleError = '';
+      this.loadingTimeSlots = false;
     },
     
     async checkMedicoAvailability() {
       if (!this.rescheduleData.id_medico || !this.rescheduleData.fecha) {
         this.availableTimeSlots = [];
+        this.loadingTimeSlots = false;
         return;
       }
       
       try {
+        // Set loading state to true before starting the request
+        this.loadingTimeSlots = true;
+        this.availableTimeSlots = []; // Clear previous slots
+        
         const params = new URLSearchParams({
           medico: this.rescheduleData.id_medico,
           fecha: this.rescheduleData.fecha,
           num_historia: this.rescheduleData.num_historia
         });
         
+        console.log('Checking availability with params:', params.toString());
         const response = await fetch(`/api/citas/availability?${params.toString()}`);
         if (!response.ok) throw new Error('Error checking availability');
         
         const data = await response.json();
-        this.availableTimeSlots = data.availableSlots;
+        console.log('Availability response:', data);
+        console.log('Response contains availableSlots?', data.hasOwnProperty('availableSlots'));
+        console.log('Response availableSlots type:', data.availableSlots ? typeof data.availableSlots : 'undefined');
+        console.log('Response availableSlots length:', data.availableSlots ? data.availableSlots.length : 0);
         
-        // Mark the current appointment's time slot as available
-        if (this.localCita && 
-            this.rescheduleData.id_medico == this.selectedMedico &&
-            this.rescheduleData.fecha == this.formatLocalDate(this.selectedDate)) {
+        // Set the time slots
+        if (data && Array.isArray(data.availableSlots)) {
+          this.availableTimeSlots = data.availableSlots;
           
-          const currentTimeSlot = this.availableTimeSlots.find(
-            slot => slot.time === this.selectedTime
-          );
-          
-          if (currentTimeSlot) {
-            currentTimeSlot.available = true;
+          // Always make the current appointment's time slot available if this is a reschedule
+          if (this.localCita && this.localCita.hora_inicio) {
+            const currentTime = this.localCita.hora_inicio.substring(0, 5); // Get HH:MM format
+            
+            // Make sure the current time slot shows as available for selection
+            const currentTimeSlot = this.availableTimeSlots.find(
+              slot => slot.time === currentTime
+            );
+            
+            if (currentTimeSlot) {
+              console.log('Making current time slot available:', currentTime);
+              currentTimeSlot.available = true;
+            }
           }
+        } else {
+          console.error('Invalid response format:', data);
+          this.availableTimeSlots = [];
         }
       } catch (error) {
         console.error('Error checking availability:', error);
         this.availableTimeSlots = [];
+      } finally {
+        // Always set loading state to false when done
+        this.loadingTimeSlots = false;
       }
     },
     
